@@ -5,10 +5,22 @@
     xmlns:local="using:Elementary"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    muxc:BackdropMaterial.ApplyToRootOrPageBackground="True">
 
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
+        <Grid Height="32" Grid.Row="0">
+            <StackPanel Orientation="Horizontal" Margin="12,0,0,0" Spacing="8">
+                <Ellipse Height="16" Width="16" Stroke="White"/>
+                <TextBlock Style="{StaticResource CaptionTextBlockStyle}" VerticalAlignment="Center">Elementary</TextBlock>
+            </StackPanel>
+        </Grid>
+        <muxc:NavigationView Grid.Row="1" IsTitleBarAutoPaddingEnabled="false" IsBackButtonVisible="Collapsed" IsPaneOpen="False"/>
     </Grid>
 </Page>
