@@ -24,7 +24,7 @@ namespace Elementary
     {
         public BiblePage()
         {
-            this.InitializeComponent();
+            InitializeComponent();
         }
 
         private void textBlock_SelectionChanged(object sender, RoutedEventArgs e)
