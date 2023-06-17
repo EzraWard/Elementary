@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Elementary.ViewModels;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -22,9 +23,17 @@ namespace Elementary
     /// </summary>
     public sealed partial class BiblePage : Page
     {
+        public BiblePageViewModel _viewModel;
+
         public BiblePage()
         {
+            _viewModel = new BiblePageViewModel();
+            DataContext = _viewModel;
+
             InitializeComponent();
+
+            //VM intialization
+            _viewModel.Initialize();
         }
 
         private void textBlock_SelectionChanged(object sender, RoutedEventArgs e)

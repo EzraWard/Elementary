@@ -23,6 +23,8 @@ namespace Elementary
         public MainPage()
         {
             this.InitializeComponent();
+
+            NavigateToView("BiblePage");
         }
 
         private void NavigationView_ItemInvoked(MUXC.NavigationView sender, MUXC.NavigationViewItemInvokedEventArgs args)
