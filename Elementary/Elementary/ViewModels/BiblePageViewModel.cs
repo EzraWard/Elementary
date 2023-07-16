@@ -1,5 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using HtmlAgilityPack;
+using Elementary.Objects;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using VersOne.Epub;
 using Windows.Storage;
+using Windows.UI.ViewManagement;
 
 namespace Elementary.ViewModels
 {
@@ -26,6 +27,7 @@ namespace Elementary.ViewModels
         private List<int> _currentBookChapters;
         private int _currentBookChapter;
         private string _currentChapterText;
+        private string _currentChapterContent;
 
         public EpubBook CurrentBible { 
             get 
@@ -37,11 +39,32 @@ namespace Elementary.ViewModels
                 _currentBible = value; 
             } 
         }
+
+        public List<string> CurrentBibleBooks
+        {
+            get => _currentBibleBooks;
+            set => SetProperty( ref _currentBibleBooks, value);
+        }
+
+        public List<int> CurrentBookChapters
+        {
+            get => _currentBookChapters;
+            set => SetProperty(ref _currentBookChapters, value);
+        }
+
         public string CurrentChapterText
         {
             get => _currentChapterText;
             set => SetProperty(ref _currentChapterText, value);
         }
+
+        public string CurrentChapterContent
+        {
+            get => _currentChapterContent;
+            set => SetProperty(ref _currentChapterContent, value);
+        }
+
+        public Bible Bible { get; set; }
 
         public BiblePageViewModel()
         {}
@@ -57,28 +80,28 @@ namespace Elementary.ViewModels
 
             //Enumerate Books
             _currentBibleBooks = new List<string>();
+            Bible = new Bible();
             foreach(var book in _currentBible.Navigation)
             {
-                _currentBibleBooks.Add(book.Title);
+                Bible.Books.Add(new Book
+                {
+                    Title = book.Title
+                });
             }
+            foreach (var book in Bible.Books)
+            {
+                book.Chapters = null;
+            }
+
             _currentBookChapters = new List<int>
             {
                 1
             };
-            CurrentChapterText = PrintTextContentFile(_currentBible.ReadingOrder[20]);
-            CurrentChapterText = CurrentChapterText.Replace(Environment.NewLine, " ");
-        }
+            //CurrentChapterText = PrintTextContentFile(_currentBible.ReadingOrder[0]);
+            //CurrentChapterText = CurrentChapterText.Replace(Environment.NewLine, " ");
 
-        private string PrintTextContentFile(EpubLocalTextContentFile textContentFile)
-        {
-            HtmlDocument htmlDocument = new HtmlDocument();
-            htmlDocument.LoadHtml(textContentFile.Content);
-            StringBuilder sb = new StringBuilder();
-            foreach (HtmlNode node in htmlDocument.DocumentNode.SelectNodes("//text()"))
-            {
-                sb.AppendLine(node.InnerText.Trim());
-            }
-            return sb.ToString();
+            //First chapter in Genesis
+            CurrentChapterContent = _currentBible.ReadingOrder[3].Content;
         }
     }
 }

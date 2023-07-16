@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Toolkit.Uwp.Helpers;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,6 +9,7 @@ using Windows.ApplicationModel.Activation;
 using Windows.ApplicationModel.Core;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.UI;
 using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -41,7 +43,8 @@ namespace Elementary
         /// <param name="e">Details about the launch request and process.</param>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
-            CoreApplication.GetCurrentView().TitleBar.ExtendViewIntoTitleBar = true;
+            var titleBar = CoreApplication.GetCurrentView().TitleBar;
+            titleBar.ExtendViewIntoTitleBar = true;
 
             Frame rootFrame = Window.Current.Content as Frame;
 
@@ -74,6 +77,8 @@ namespace Elementary
                 }
                 // Ensure the current window is active
                 Window.Current.Activate();
+
+                SetCaptionButtonColorsWindows10();
             }
         }
 
@@ -99,6 +104,19 @@ namespace Elementary
             var deferral = e.SuspendingOperation.GetDeferral();
             //TODO: Save application state and stop any background activity
             deferral.Complete();
+        }
+
+        private void SetCaptionButtonColorsWindows10()
+        {
+            OSVersion OperatingSystemVersion = SystemInformation.Instance.OperatingSystemVersion;
+            if (OperatingSystemVersion.Build < 22000)
+            {
+                var titleBar = ApplicationView.GetForCurrentView().TitleBar;
+
+                //set caption button colors
+                titleBar.BackgroundColor = Color.FromArgb(255, 32, 32, 32);
+                titleBar.ButtonBackgroundColor = Color.FromArgb(255, 32, 32, 32);
+            }
         }
     }
 }

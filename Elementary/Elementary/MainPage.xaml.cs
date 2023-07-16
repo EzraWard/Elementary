@@ -10,6 +10,10 @@ using MUXC = Microsoft.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls;
 using System.Reflection;
 using Windows.UI.Xaml.Media.Animation;
+using Windows.UI.Xaml;
+using Windows.UI.ViewManagement;
+using Windows.UI.Core;
+using Windows.UI;
 
 namespace Elementary
 {
@@ -24,6 +28,11 @@ namespace Elementary
         {
             this.InitializeComponent();
 
+            Window.Current.SizeChanged += WindowSizeChanged;
+            WindowSizeChanged(this, null);
+
+            //By default, navigate to the Bible Page
+            NavigationView.SelectedItem = BiblePageNavigationViewItem;
             NavigateToView("BiblePage");
         }
 
@@ -52,6 +61,42 @@ namespace Elementary
         private void ContentFrame_NavigationFailed(object sender, Windows.UI.Xaml.Navigation.NavigationFailedEventArgs e)
         {
 
+        }
+
+        private void WindowSizeChanged(object sender, WindowSizeChangedEventArgs e)
+        {
+            var titleBar = ApplicationView.GetForCurrentView().TitleBar;
+
+            switch (UIViewSettings.GetForCurrentView().UserInteractionMode)
+            {
+                case UserInteractionMode.Mouse:
+                    //VisualStateManager.GoToState(this, "MouseLayout", true);
+                    TitlebarGrid.Visibility = Visibility.Visible;
+                    TitleBarRow.Height = new GridLength(32);
+
+                    //set caption button colors
+                    //titleBar.BackgroundColor = Color.FromArgb(255, 32, 32, 32);
+                    titleBar.ButtonBackgroundColor = Color.FromArgb(255, 32, 32, 32);
+                    break;
+
+                case UserInteractionMode.Touch:
+                    //VisualStateManager.GoToState(this, "TouchLayout", true);
+
+                    TitlebarGrid.Visibility = Visibility.Collapsed;
+                    TitleBarRow.Height = new GridLength(0);
+
+                    //set caption button colors
+                    //titleBar.BackgroundColor = Color.FromArgb(255, 39, 39, 39);
+
+                    //For some reason, UWP seems to ignore this when the app's primary mode is tablet.
+                    //So, I just turned it off, and will allow the default color to stay.
+                    //titleBar.ButtonBackgroundColor = Color.FromArgb(255, 39, 39, 39); 
+                    break;
+
+                default:
+                    break;
+
+            }
         }
     }
 }

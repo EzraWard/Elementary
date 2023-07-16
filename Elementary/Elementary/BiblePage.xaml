@@ -10,7 +10,17 @@
     Background="Transparent"
     Tag="BiblePage">
 
-    <Grid>
-        <TextBlock x:Name="textBlock" TextWrapping="Wrap" Text="{Binding CurrentChapterText}" VerticalAlignment="Top" HorizontalAlignment="Center" SelectionChanged="textBlock_SelectionChanged"/>
+    <Grid MaxWidth="700" MinWidth="300" Margin="16,0,16,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <StackPanel Orientation="Horizontal" Grid.Row="0" HorizontalAlignment="Center" Spacing="8" Margin="8,8,8,8">
+            <ComboBox x:Name="BibleBookComboBox" ItemsSource="{x:Bind _viewModel.Bible.Books}" DisplayMemberPath="Title" PlaceholderText="Book"/>
+            <ComboBox x:Name="BookChapterComboBox" ItemsSource="{x:Bind _viewModel.CurrentBookChapters}" PlaceholderText="Chapter"/>
+        </StackPanel>
+        <ScrollViewer Grid.Row="1">
+            <WebView x:Name="ChapterView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" DefaultBackgroundColor="Transparent"/>
+        </ScrollViewer>
     </Grid>
 </Page>

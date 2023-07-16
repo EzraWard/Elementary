@@ -11,6 +11,35 @@
     Tag="Settings">
 
     <Grid>
-        <TextBlock x:Name="textBlock" TextWrapping="Wrap" Text="This is the SettingsPage" VerticalAlignment="Center" HorizontalAlignment="Center" />
+        <StackPanel Spacing="8" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,8">
+            <TextBlock Text="Acknowledgements" FontWeight="Bold" />
+            <muxc:Expander Width="500" >
+                <muxc:Expander.Header>
+                    <TextBlock Text="NET Bible" />
+                </muxc:Expander.Header>
+                <muxc:Expander.Content>
+                    <TextBlock TextWrapping="Wrap">Scripture quoted by permission. Quotations designated (NET) are from the NET Bible® copyright ©1996, 2019 by Biblical Studies Press, L.L.C. http://netbible.com All rights reserved.</TextBlock>
+                </muxc:Expander.Content>
+            </muxc:Expander>
+
+            <TextBlock Text="General" FontWeight="Bold" Margin="0,48,0,0"/>
+            <muxc:Expander Width="500" >
+                <muxc:Expander.Header>
+                    <Grid>
+                        <StackPanel Orientation="Horizontal" Spacing="12" Margin="8,8,8,8">
+                            <Image Height="50" Source="ms-appx:///Assets/logo.png" />
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="About Elementary" />
+                                <TextBlock Text="© Grant Street Design" />
+                            </StackPanel>
+                        </StackPanel>
+                        <TextBlock Text="0.1.0" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                    </Grid>
+                </muxc:Expander.Header>
+                <muxc:Expander.Content>
+                    <TextBlock>👨🏻‍👩🏻‍👧🏻‍👦🏻 Hello from Marietta</TextBlock>
+                </muxc:Expander.Content>
+            </muxc:Expander>
+        </StackPanel>
     </Grid>
 </Page>

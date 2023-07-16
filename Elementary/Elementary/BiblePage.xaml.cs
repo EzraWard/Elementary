@@ -1,9 +1,12 @@
 ﻿using Elementary.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading;
+using Windows.ApplicationModel.Background;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.UI.Xaml;
@@ -34,11 +37,31 @@ namespace Elementary
 
             //VM intialization
             _viewModel.Initialize();
+
+            ChapterView.NavigateToString(_viewModel.CurrentChapterContent);
+            //ChapterView.Navigate(new Uri("https://www.windowscentral.com"));
+            //ChapterView.NavigationCompleted += ConfigureWebview();
+            //ConfigureWebview();
+
+            BibleBookComboBox.SelectedIndex = 0;
+            BookChapterComboBox.SelectedIndex = 0;
+
+            ChapterView.NavigationCompleted += ConfigureWebview;
         }
 
-        private void textBlock_SelectionChanged(object sender, RoutedEventArgs e)
+        private async void ConfigureWebview(WebView sender, WebViewNavigationCompletedEventArgs e)
         {
-
+            await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.font=\"18px Segoe UI, sans-serif\"" });
+            await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.color=\"#FFFFFF\"" });
         }
+
+        private static string[] SetBodyOverFlowHiddenString = new string[] { "document.body.style.overflow = \"hidden\";" };
+        private static string[] SetFontSizeString = new string[] { "document.getElementsByTagName(\"p\")[0].style.fontSize=\"" + 30 + "\";" };
+        private static string[] test = new string[] { @"function setScrollbar()
+                                                        {
+                                                            //document.body.style.overflow = 'hidden';  
+                                                            document.body.style.msOverflowStyle='scrollbar';   
+                                                        }" };
     }
 }
+
