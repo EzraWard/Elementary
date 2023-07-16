@@ -53,6 +53,18 @@ namespace Elementary
         {
             await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.font=\"18px Segoe UI, sans-serif\"" });
             await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.color=\"#FFFFFF\"" });
+            //await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.msOverflowStyle='scrollbar'" });
+
+            //Determine height of current content, and set the webview height to it.
+            var contentHeight = await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.scrollHeight.toString()" });
+
+            if (int.TryParse(contentHeight, out int height))
+            {
+                // Update the WebView's height to match the HTML content
+                ChapterView.Height = height;
+            }
+
+
         }
 
         private static string[] SetBodyOverFlowHiddenString = new string[] { "document.body.style.overflow = \"hidden\";" };
