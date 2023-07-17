@@ -12,7 +12,8 @@
 
     <Grid>
         <StackPanel Spacing="8" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,8">
-            <TextBlock Text="Acknowledgements" FontWeight="Bold" />
+            <TextBlock Text="Settings" FontWeight="SemiBold" FontSize="20"/>
+            <TextBlock Text="Acknowledgements" FontWeight="Bold"/>
             <muxc:Expander Width="500" >
                 <muxc:Expander.Header>
                     <TextBlock Text="NET Bible" />
