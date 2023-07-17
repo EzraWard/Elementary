@@ -26,7 +26,7 @@
             <muxc:Expander Width="500" >
                 <muxc:Expander.Header>
                     <Grid>
-                        <StackPanel Orientation="Horizontal" Spacing="12" Margin="8,8,8,8">
+                        <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,12,12,12">
                             <Image Height="50" Source="ms-appx:///Assets/logo.png" />
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="About Elementary" />

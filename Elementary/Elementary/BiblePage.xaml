@@ -10,7 +10,7 @@
     Background="Transparent"
     Tag="BiblePage">
 
-    <Grid MaxWidth="700" MinWidth="300" Margin="16,0,16,0">
+    <Grid Width="Auto">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -19,7 +19,7 @@
             <ComboBox x:Name="BibleBookComboBox" ItemsSource="{x:Bind _viewModel.Bible.Books}" DisplayMemberPath="Title" PlaceholderText="Book"/>
             <ComboBox x:Name="BookChapterComboBox" ItemsSource="{x:Bind _viewModel.CurrentBookChapters}" PlaceholderText="Chapter"/>
         </StackPanel>
-        <ScrollViewer Grid.Row="1">
+        <ScrollViewer Grid.Row="1" Padding="25,0,25,0">
             <WebView x:Name="ChapterView" DefaultBackgroundColor="Transparent"/>
         </ScrollViewer>
     </Grid>
