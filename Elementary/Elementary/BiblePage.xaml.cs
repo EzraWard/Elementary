@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
+using System.Threading.Tasks;
 using Windows.ApplicationModel.Background;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
@@ -55,16 +56,41 @@ namespace Elementary
             await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.color=\"#FFFFFF\"" });
             //await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.msOverflowStyle='scrollbar'" });
 
+            await ResizeWebViewToContent(ChapterView);
+
+
+        }
+
+        private async void WebViewGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            var gridWidth = ((Grid) sender).ActualWidth;
+
+            if (gridWidth > 750)
+            {
+                ChapterView.Width = 700;
+                return;
+            }
+            if (gridWidth < 350)
+            {
+                ChapterView.Width = 300;
+                return;
+            }
+
+            ChapterView.Width = gridWidth - 50;
+
+            await ResizeWebViewToContent(ChapterView);
+        }
+
+        private async Task ResizeWebViewToContent(WebView webView)
+        {
             //Determine height of current content, and set the webview height to it.
-            var contentHeight = await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.scrollHeight.toString()" });
+            var contentHeight = await webView.InvokeScriptAsync("eval", new string[] { "document.body.scrollHeight.toString()" });
 
             if (int.TryParse(contentHeight, out int height))
             {
                 // Update the WebView's height to match the HTML content
-                ChapterView.Height = height;
+                webView.Height = height;
             }
-
-
         }
 
         private static string[] SetBodyOverFlowHiddenString = new string[] { "document.body.style.overflow = \"hidden\";" };
