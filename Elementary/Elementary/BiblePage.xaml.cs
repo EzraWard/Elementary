@@ -54,7 +54,7 @@ namespace Elementary
         {
             await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.font=\"18px Segoe UI, sans-serif\"" });
             await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.color=\"#FFFFFF\"" });
-            //await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.msOverflowStyle='scrollbar'" });
+            await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.overflow = 'hidden'" });
 
             await ResizeWebViewToContent(ChapterView);
 
@@ -95,10 +95,10 @@ namespace Elementary
 
         private static string[] SetBodyOverFlowHiddenString = new string[] { "document.body.style.overflow = \"hidden\";" };
         private static string[] SetFontSizeString = new string[] { "document.getElementsByTagName(\"p\")[0].style.fontSize=\"" + 30 + "\";" };
-        private static string[] test = new string[] { @"function setScrollbar()
+        private static string[] DisableScroll = new string[] { @"function setScrollbar()
                                                         {
-                                                            //document.body.style.overflow = 'hidden';  
-                                                            document.body.style.msOverflowStyle='scrollbar';   
+                                                            document.body.style.overflow = 'hidden';  
+                                                            //document.body.style.msOverflowStyle='scrollbar';   
                                                         }" };
     }
 }
