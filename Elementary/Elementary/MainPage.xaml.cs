@@ -77,6 +77,7 @@ namespace Elementary
                     //set caption button colors
                     //titleBar.BackgroundColor = Color.FromArgb(255, 32, 32, 32);
                     titleBar.ButtonBackgroundColor = Color.FromArgb(255, 32, 32, 32);
+                    titleBar.ButtonInactiveBackgroundColor = Color.FromArgb(255, 32, 32, 32);
                     break;
 
                 case UserInteractionMode.Touch:
