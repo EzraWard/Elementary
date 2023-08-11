@@ -1,4 +1,5 @@
 ﻿using Elementary.ViewModels;
+using Elementary.Objects;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -28,6 +29,7 @@ namespace Elementary
     public sealed partial class BiblePage : Page
     {
         public BiblePageViewModel _viewModel;
+        public bool _isLoaded = false;
 
         public BiblePage()
         {
@@ -40,25 +42,19 @@ namespace Elementary
             _viewModel.Initialize();
 
             ChapterView.NavigateToString(_viewModel.CurrentChapterContent);
-            //ChapterView.Navigate(new Uri("https://www.windowscentral.com"));
-            //ChapterView.NavigationCompleted += ConfigureWebview();
-            //ConfigureWebview();
-
-            BibleBookComboBox.SelectedIndex = 0;
-            BookChapterComboBox.SelectedIndex = 0;
 
             ChapterView.NavigationCompleted += ConfigureWebview;
+
+            _isLoaded = true;
         }
 
         private async void ConfigureWebview(WebView sender, WebViewNavigationCompletedEventArgs e)
         {
             await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.font=\"18px Segoe UI, sans-serif\"" });
             await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.color=\"#FFFFFF\"" });
-            await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.overflow = 'hidden'" });
+            await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.overflow = \"hidden\"" });
 
             await ResizeWebViewToContent(ChapterView);
-
-
         }
 
         private async void WebViewGrid_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -100,6 +96,31 @@ namespace Elementary
                                                             document.body.style.overflow = 'hidden';  
                                                             //document.body.style.msOverflowStyle='scrollbar';   
                                                         }" };
+
+        private void BibleBookComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!_isLoaded) return;
+            var comboBox = sender as ComboBox;
+            var book = (Book) comboBox.SelectedItem;
+            _viewModel.Book = book;
+            _viewModel.Chapter = book.Chapters.FirstOrDefault();
+
+            BookChapterComboBox.ItemsSource = _viewModel.Book.Chapters;
+            BookChapterComboBox.SelectedItem = _viewModel.Chapter;
+            ChapterView.NavigateToString(_viewModel.CurrentBible.ReadingOrder[_viewModel.Book.ReadingOrderIndex + 1].Content);
+        }
+
+        private void BookChapterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!_isLoaded) return;
+            var comboBox = sender as ComboBox;
+            var selectedItem = comboBox.SelectedItem as Chapter;
+            if (selectedItem is null) return;
+
+            _viewModel.SetCurrentChapterContent(selectedItem.ReadingOrderIndex);
+            ChapterView.NavigateToString(_viewModel.CurrentChapterContent);
+
+        }
     }
 }
 
