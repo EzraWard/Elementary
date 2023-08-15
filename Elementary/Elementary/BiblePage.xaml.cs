@@ -51,7 +51,13 @@ namespace Elementary
         private async void ConfigureWebview(WebView sender, WebViewNavigationCompletedEventArgs e)
         {
             await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.font=\"18px Segoe UI, sans-serif\"" });
-            await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.color=\"#FFFFFF\"" });
+            
+            //get theme and only change color if dark theme
+            var theme = App.Current.RequestedTheme.ToString();
+            if (theme == "Dark")
+            {
+                await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.color=\"#FFFFFF\"" });
+            }
             await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.overflow = \"hidden\"" });
 
             await ResizeWebViewToContent(ChapterView);

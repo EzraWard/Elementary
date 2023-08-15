@@ -34,7 +34,7 @@
                                 <TextBlock Text="© Grant Street Design" />
                             </StackPanel>
                         </StackPanel>
-                        <TextBlock Text="0.1.0" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="VersionTextBlock" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                     </Grid>
                 </muxc:Expander.Header>
                 <muxc:Expander.Content>
