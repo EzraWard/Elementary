@@ -85,14 +85,26 @@ namespace Elementary
 
         private async Task ResizeWebViewToContent(WebView webView)
         {
+            /*
+             * For some reason the JS called below results in a crash the first time it's launched when the screen is very narrow. 
+             * Not sure why. It's also possible that simply the "InvokeScriptAsync" causing the problem. Nonetheless, if I wrap it in a 
+             * try/catch the problem is "solved". 
+             * 
+             * One other thing to fix is figuing out why that this is called twice on app initialization instead of just once once the 
+             * first chapter of Genesis is loaded.
+            */
             //Determine height of current content, and set the webview height to it.
-            var contentHeight = await webView.InvokeScriptAsync("eval", new string[] { "document.body.scrollHeight.toString()" });
-
-            if (int.TryParse(contentHeight, out int height))
+            try
             {
-                // Update the WebView's height to match the HTML content
-                webView.Height = height;
+                var contentHeight = await webView.InvokeScriptAsync("eval", new string[] { "document.body.scrollHeight.toString()" });
+                if (int.TryParse(contentHeight, out int height))
+                {
+                    // Update the WebView's height to match the HTML content
+                    webView.Height = height;
+                    return;
+                }
             }
+            catch{ }
         }
 
         private static string[] SetBodyOverFlowHiddenString = new string[] { "document.body.style.overflow = \"hidden\";" };
