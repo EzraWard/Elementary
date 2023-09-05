@@ -130,6 +130,7 @@
     <Compile Include="BiblePage.xaml.cs">
       <DependentUpon>BiblePage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Helpers\WindowHelpers.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>

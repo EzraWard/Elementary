@@ -1,4 +1,5 @@
-﻿using Microsoft.Toolkit.Uwp.Helpers;
+﻿using Elementary.Helpers;
+using Microsoft.Toolkit.Uwp.Helpers;
 using Microsoft.Toolkit.Uwp.UI.Helpers;
 using System;
 using System.Collections.Generic;
@@ -35,9 +36,6 @@ namespace Elementary
         {
             this.InitializeComponent();
             this.Suspending += OnSuspending;
-
-            var listener = new ThemeListener();
-            listener.ThemeChanged += OnThemeChanged;
         }
 
         /// <summary>
@@ -85,7 +83,7 @@ namespace Elementary
                 if (SystemInformation.Instance.OperatingSystemVersion.Build <= 20348)
                 {
                     var currentTheme = Application.Current.RequestedTheme;
-                    SetCaptionButtonColors(currentTheme);
+                    WindowHelpers.SetCaptionButtonColors(currentTheme);
                 }
             }
         }
@@ -112,31 +110,6 @@ namespace Elementary
             var deferral = e.SuspendingOperation.GetDeferral();
             //TODO: Save application state and stop any background activity
             deferral.Complete();
-        }
-
-        private void OnThemeChanged(ThemeListener sender)
-        {
-            if (SystemInformation.Instance.OperatingSystemVersion.Build <= 20348)
-            {
-                SetCaptionButtonColors(sender.CurrentTheme);
-            }
-        }
-
-        private void SetCaptionButtonColors(ApplicationTheme currentTheme)
-        {
-            var titleBar = ApplicationView.GetForCurrentView().TitleBar;
-
-            switch (currentTheme)
-            {
-                case ApplicationTheme.Dark:
-                    titleBar.BackgroundColor = Color.FromArgb(255, 32, 32, 32);
-                    titleBar.ButtonBackgroundColor = Color.FromArgb(255, 32, 32, 32);
-                    break;
-
-                case ApplicationTheme.Light:
-
-                    break;
-            }
         }
     }
 }

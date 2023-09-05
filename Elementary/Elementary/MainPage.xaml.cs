@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Elementary.Helpers;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,6 +16,7 @@ using Windows.UI.ViewManagement;
 using Windows.UI.Core;
 using Windows.UI;
 using Microsoft.Toolkit.Uwp.Helpers;
+using Microsoft.Toolkit.Uwp.UI.Helpers;
 
 namespace Elementary
 {
@@ -31,6 +33,9 @@ namespace Elementary
 
             Window.Current.SizeChanged += WindowSizeChanged;
             WindowSizeChanged(this, null);
+
+            var listener = new ThemeListener();
+            listener.ThemeChanged += OnThemeChanged;
 
             //By default, navigate to the Bible Page
             NavigationView.SelectedItem = BiblePageNavigationViewItem;
@@ -94,6 +99,13 @@ namespace Elementary
                 default:
                     break;
 
+            }
+        }
+        private void OnThemeChanged(ThemeListener sender)
+        {
+            if (SystemInformation.Instance.OperatingSystemVersion.Build <= 20348)
+            {
+                WindowHelpers.SetCaptionButtonColors(sender.CurrentTheme);
             }
         }
     }
