@@ -1,4 +1,5 @@
 ﻿using Microsoft.Toolkit.Uwp.Helpers;
+using Microsoft.Toolkit.Uwp.UI.Helpers;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -34,6 +35,9 @@ namespace Elementary
         {
             this.InitializeComponent();
             this.Suspending += OnSuspending;
+
+            var listener = new ThemeListener();
+            listener.ThemeChanged += OnThemeChanged;
         }
 
         /// <summary>
@@ -78,7 +82,11 @@ namespace Elementary
                 // Ensure the current window is active
                 Window.Current.Activate();
 
-                SetCaptionButtonColorsWindows10();
+                if (SystemInformation.Instance.OperatingSystemVersion.Build <= 20348)
+                {
+                    var currentTheme = Application.Current.RequestedTheme;
+                    SetCaptionButtonColors(currentTheme);
+                }
             }
         }
 
@@ -106,16 +114,28 @@ namespace Elementary
             deferral.Complete();
         }
 
-        private void SetCaptionButtonColorsWindows10()
+        private void OnThemeChanged(ThemeListener sender)
         {
-            OSVersion OperatingSystemVersion = SystemInformation.Instance.OperatingSystemVersion;
-            if (OperatingSystemVersion.Build < 22000)
+            if (SystemInformation.Instance.OperatingSystemVersion.Build <= 20348)
             {
-                var titleBar = ApplicationView.GetForCurrentView().TitleBar;
+                SetCaptionButtonColors(sender.CurrentTheme);
+            }
+        }
 
-                //set caption button colors
-                titleBar.BackgroundColor = Color.FromArgb(255, 32, 32, 32);
-                titleBar.ButtonBackgroundColor = Color.FromArgb(255, 32, 32, 32);
+        private void SetCaptionButtonColors(ApplicationTheme currentTheme)
+        {
+            var titleBar = ApplicationView.GetForCurrentView().TitleBar;
+
+            switch (currentTheme)
+            {
+                case ApplicationTheme.Dark:
+                    titleBar.BackgroundColor = Color.FromArgb(255, 32, 32, 32);
+                    titleBar.ButtonBackgroundColor = Color.FromArgb(255, 32, 32, 32);
+                    break;
+
+                case ApplicationTheme.Light:
+
+                    break;
             }
         }
     }
