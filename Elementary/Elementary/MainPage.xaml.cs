@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Elementary.Helpers;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,6 +16,7 @@ using Windows.UI.ViewManagement;
 using Windows.UI.Core;
 using Windows.UI;
 using Microsoft.Toolkit.Uwp.Helpers;
+using Microsoft.Toolkit.Uwp.UI.Helpers;
 
 namespace Elementary
 {
@@ -31,6 +33,9 @@ namespace Elementary
 
             Window.Current.SizeChanged += WindowSizeChanged;
             WindowSizeChanged(this, null);
+
+            var listener = new ThemeListener();
+            listener.ThemeChanged += OnThemeChanged;
 
             //By default, navigate to the Bible Page
             NavigationView.SelectedItem = BiblePageNavigationViewItem;
@@ -75,13 +80,6 @@ namespace Elementary
                     TitlebarGrid.Visibility = Visibility.Visible;
                     TitleBarRow.Height = new GridLength(32);
 
-                    //set caption button colors, but only on Windows 10, Server 2019, and Server 2022
-                    //titleBar.BackgroundColor = Color.FromArgb(255, 32, 32, 32);
-                    if (SystemInformation.Instance.OperatingSystemVersion.Build <= 20348)
-                    {
-                        titleBar.ButtonBackgroundColor = Color.FromArgb(255, 32, 32, 32);
-                        titleBar.ButtonInactiveBackgroundColor = Color.FromArgb(255, 32, 32, 32);
-                    }
                     break;
 
                 case UserInteractionMode.Touch:
@@ -101,6 +99,13 @@ namespace Elementary
                 default:
                     break;
 
+            }
+        }
+        private void OnThemeChanged(ThemeListener sender)
+        {
+            if (SystemInformation.Instance.OperatingSystemVersion.Build <= 20348)
+            {
+                WindowHelpers.SetCaptionButtonColors(sender.CurrentTheme);
             }
         }
     }

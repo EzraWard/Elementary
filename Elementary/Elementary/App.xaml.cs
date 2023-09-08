@@ -1,4 +1,6 @@
-﻿using Microsoft.Toolkit.Uwp.Helpers;
+﻿using Elementary.Helpers;
+using Microsoft.Toolkit.Uwp.Helpers;
+using Microsoft.Toolkit.Uwp.UI.Helpers;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -78,7 +80,11 @@ namespace Elementary
                 // Ensure the current window is active
                 Window.Current.Activate();
 
-                SetCaptionButtonColorsWindows10();
+                if (SystemInformation.Instance.OperatingSystemVersion.Build <= 20348)
+                {
+                    var currentTheme = Application.Current.RequestedTheme;
+                    WindowHelpers.SetCaptionButtonColors(currentTheme);
+                }
             }
         }
 
@@ -104,19 +110,6 @@ namespace Elementary
             var deferral = e.SuspendingOperation.GetDeferral();
             //TODO: Save application state and stop any background activity
             deferral.Complete();
-        }
-
-        private void SetCaptionButtonColorsWindows10()
-        {
-            OSVersion OperatingSystemVersion = SystemInformation.Instance.OperatingSystemVersion;
-            if (OperatingSystemVersion.Build < 22000)
-            {
-                var titleBar = ApplicationView.GetForCurrentView().TitleBar;
-
-                //set caption button colors
-                titleBar.BackgroundColor = Color.FromArgb(255, 32, 32, 32);
-                titleBar.ButtonBackgroundColor = Color.FromArgb(255, 32, 32, 32);
-            }
         }
     }
 }
