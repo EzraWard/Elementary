@@ -24,21 +24,21 @@
             </muxc:Expander>
 
             <TextBlock Text="General" FontWeight="Bold" Margin="0,48,0,0"/>
-            <muxc:Expander Width="500" >
+            <muxc:Expander Width="500" HorizontalContentAlignment="Left">
                 <muxc:Expander.Header>
                     <Grid>
-                        <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,12,12,12">
-                            <Image Height="50" Source="ms-appx:///Assets/logo.png" />
+                        <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,12,12,12">
+                            <Image Height="18" Source="ms-appx:///Assets/logo.png" />
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="About Elementary" />
-                                <TextBlock Text="© Grant Street Design" />
+                                <TextBlock Text="© Grant Street Design" FontSize="12"/>
                             </StackPanel>
                         </StackPanel>
                         <TextBlock x:Name="VersionTextBlock" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                     </Grid>
                 </muxc:Expander.Header>
                 <muxc:Expander.Content>
-                    <TextBlock>👨🏻‍👩🏻‍👧🏻‍👦🏻 Hello from Marietta</TextBlock>
+                    <TextBlock Margin="24,0,0,0">👨🏻‍👩🏻‍👧🏻‍👦🏻 Hello from Marietta</TextBlock>
                 </muxc:Expander.Content>
             </muxc:Expander>
         </StackPanel>
