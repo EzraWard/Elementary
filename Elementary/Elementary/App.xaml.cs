@@ -1,5 +1,4 @@
 ﻿using Elementary.Helpers;
-using Microsoft.Toolkit.Uwp.Helpers;
 using System;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
@@ -67,7 +66,7 @@ namespace Elementary
                 // Ensure the current window is active
                 Window.Current.Activate();
 
-                if (SystemInformation.Instance.OperatingSystemVersion.Build <= 20348)
+                if (SystemInformationHelper.Instance.OperatingSystemVersion.Build <= 20348)
                 {
                     var currentTheme = Application.Current.RequestedTheme;
                     WindowHelpers.SetCaptionButtonColors(currentTheme);

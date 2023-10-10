@@ -6,7 +6,6 @@ using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml;
 using Windows.UI.ViewManagement;
 using Windows.UI.Core;
-using Microsoft.Toolkit.Uwp.Helpers;
 using CommunityToolkit.WinUI.Helpers;
 
 namespace Elementary
@@ -94,7 +93,7 @@ namespace Elementary
         }
         private void OnThemeChanged(ThemeListener sender)
         {
-            if (SystemInformation.Instance.OperatingSystemVersion.Build <= 20348)
+            if (SystemInformationHelper.Instance.OperatingSystemVersion.Build <= 20348)
             {
                 WindowHelpers.SetCaptionButtonColors(sender.CurrentTheme);
             }

@@ -130,6 +130,8 @@
     <Compile Include="BiblePage.xaml.cs">
       <DependentUpon>BiblePage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Helpers\OSVersion.cs" />
+    <Compile Include="Helpers\SystemInformationHelper.cs" />
     <Compile Include="Helpers\WindowHelpers.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
@@ -231,9 +233,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.14</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Toolkit.Uwp">
-      <Version>7.1.3</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.UI.Xaml">
       <Version>2.8.5</Version>
