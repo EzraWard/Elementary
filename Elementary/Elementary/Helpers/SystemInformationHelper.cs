@@ -1,4 +1,4 @@
-﻿/*Copied from Windows Community Toolkit source on 10/10/2023.
+﻿/*Copied from Windows Community Toolkit source (SystemInformation.cs) on 10/10/2023.
  * As of WCT 8.0, this class is no longer a component of the
  * toolkit. All changes made for this project are in block quotes.*/
 // Licensed to the .NET Foundation under one or more agreements.
