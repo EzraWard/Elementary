@@ -226,7 +226,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm">
-      <Version>8.2.1</Version>
+      <Version>8.2.2</Version>
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Uwp.Helpers">
       <Version>8.0.230907</Version>
@@ -235,7 +235,7 @@
       <Version>6.2.14</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.UI.Xaml">
-      <Version>2.8.5</Version>
+      <Version>2.8.6</Version>
     </PackageReference>
     <PackageReference Include="VersOne.Epub">
       <Version>3.3.1</Version>
