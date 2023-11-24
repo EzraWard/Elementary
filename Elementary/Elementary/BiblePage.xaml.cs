@@ -41,26 +41,26 @@ namespace Elementary
             //VM intialization
             _viewModel.Initialize();
 
-            ChapterView.NavigateToString(_viewModel.CurrentChapterContent);
+            //ChapterView.NavigateToString(_viewModel.CurrentChapterContent);
 
-            ChapterView.NavigationCompleted += ConfigureWebview;
+            //ChapterView.NavigationCompleted += ConfigureWebview;
 
             _isLoaded = true;
         }
 
         private async void ConfigureWebview(WebView sender, WebViewNavigationCompletedEventArgs e)
         {
-            await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.font=\"18px Segoe UI, sans-serif\"" });
+            //await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.font=\"18px Segoe UI, sans-serif\"" });
             
-            //get theme and only change color if dark theme
-            var theme = App.Current.RequestedTheme.ToString();
-            if (theme == "Dark")
-            {
-                await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.color=\"#FFFFFF\"" });
-            }
-            await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.overflow = \"hidden\"" });
+            ////get theme and only change color if dark theme
+            //var theme = App.Current.RequestedTheme.ToString();
+            //if (theme == "Dark")
+            //{
+            //    await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.color=\"#FFFFFF\"" });
+            //}
+            //await ChapterView.InvokeScriptAsync("eval", new string[] { "document.body.style.overflow = \"hidden\"" });
 
-            await ResizeWebViewToContent(ChapterView);
+            //await ResizeWebViewToContent(ChapterView);
         }
 
         private async void WebViewGrid_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -80,7 +80,7 @@ namespace Elementary
 
             ChapterView.Width = gridWidth - 50;
 
-            await ResizeWebViewToContent(ChapterView);
+            //await ResizeWebViewToContent(ChapterView);
         }
 
         private async Task ResizeWebViewToContent(WebView webView)
@@ -125,7 +125,7 @@ namespace Elementary
 
             BookChapterComboBox.ItemsSource = _viewModel.Book.Chapters;
             BookChapterComboBox.SelectedItem = _viewModel.Chapter;
-            ChapterView.NavigateToString(_viewModel.CurrentBible.ReadingOrder[_viewModel.Book.ReadingOrderIndex + 1].Content);
+            //ChapterView.NavigateToString(_viewModel.CurrentBible.ReadingOrder[_viewModel.Book.ReadingOrderIndex + 1].Content);
         }
 
         private void BookChapterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -136,8 +136,7 @@ namespace Elementary
             if (selectedItem is null) return;
 
             _viewModel.SetCurrentChapterContent(selectedItem.ReadingOrderIndex);
-            ChapterView.NavigateToString(_viewModel.CurrentChapterContent);
-
+            //ChapterView.NavigateToString(_viewModel.CurrentChapterContent);
         }
     }
 }

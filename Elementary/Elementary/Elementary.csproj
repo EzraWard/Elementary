@@ -244,6 +244,12 @@
   <ItemGroup>
     <Content Include="Content\NET21NOTELESS.epub" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Html2Xaml\RichTextBlock.Html2Xaml.csproj">
+      <Project>{d3408113-4ef7-4056-9ec9-d383306514b8}</Project>
+      <Name>RichTextBlock.Html2Xaml</Name>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>

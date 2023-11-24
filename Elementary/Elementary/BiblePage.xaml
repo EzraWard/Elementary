@@ -4,7 +4,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Elementary"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:viewmodels="using:Elementary.ViewModels"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+    xmlns:viewmodels="using:Elementary.ViewModels"
+    xmlns:common="using:html2xaml"
     mc:Ignorable="d"
     d:DataContext="{d:DesignInstance viewmodels:BiblePageViewModel, IsDesignTimeCreatable=True}"
     Background="Transparent"
@@ -20,8 +22,8 @@
             <ComboBox x:Name="BookChapterComboBox" ItemsSource="{x:Bind _viewModel.Book.Chapters}" SelectedItem="{x:Bind _viewModel.Chapter}" DisplayMemberPath="Index" SelectionChanged="BookChapterComboBox_SelectionChanged" PlaceholderText="Chapter"/>
         </StackPanel>
         <ScrollViewer Grid.Row="1" >
-            <Grid x:Name="WebViewGrid" SizeChanged="WebViewGrid_SizeChanged">
-                <WebView x:Name="ChapterView" ScrollViewer.VerticalScrollMode="Disabled" DefaultBackgroundColor="Transparent"/>
+            <Grid x:Name="RichTextGrid" SizeChanged="WebViewGrid_SizeChanged">
+                <RichTextBlock x:Name="ChapterView" common:Properties.Html="{Binding CurrentChapterContent}" FontFamily="SegoeUI" FontSize="18" />
             </Grid>
         </ScrollViewer>
     </Grid>
