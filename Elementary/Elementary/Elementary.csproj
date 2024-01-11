@@ -229,10 +229,10 @@
       <Version>8.2.2</Version>
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Uwp.Helpers">
-      <Version>8.0.230907</Version>
+      <Version>8.0.240109</Version>
     </PackageReference>
     <PackageReference Include="HtmlAgilityPack">
-      <Version>1.11.55</Version>
+      <Version>1.11.57</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.14</Version>
