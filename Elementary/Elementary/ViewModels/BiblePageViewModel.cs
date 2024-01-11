@@ -1,14 +1,17 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Elementary.Objects;
+using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using VersOne.Epub;
@@ -138,12 +141,26 @@ namespace Elementary.ViewModels
             Chapter = Book.Chapters[0];
 
             //First chapter in Genesis
-            CurrentChapterContent = _currentBible.ReadingOrder[Chapter.ReadingOrderIndex].Content;
+
+            //var content = _currentBible.ReadingOrder[Chapter.ReadingOrderIndex].Content;
+            //var match = Regex.Match(content, "(.*<\\s* body[^>]*>)| (<\\s */\\s* body\\s *\\>.+)");
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.OptionWriteEmptyNodes = true;
+            htmlDoc.LoadHtml(_currentBible.ReadingOrder[Chapter.ReadingOrderIndex].Content);
+            //foreach (var brTag in htmlDoc.DocumentNode.SelectNodes("//br"))
+            //    brTag.Remove();
+            CurrentChapterContent = htmlDoc.DocumentNode.SelectSingleNode("//body").InnerHtml;
         }
 
         public void SetCurrentChapterContent(int readingOrderIndex)
         {
-            CurrentChapterContent = _currentBible.ReadingOrder[readingOrderIndex].Content;
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.OptionWriteEmptyNodes = true;
+            htmlDoc.LoadHtml(_currentBible.ReadingOrder[readingOrderIndex].Content);
+            //foreach (var brTag in htmlDoc.DocumentNode.SelectNodes("//br"))
+            //    brTag.Remove();
+            var test = htmlDoc.DocumentNode.SelectSingleNode("//body").InnerHtml;
+            CurrentChapterContent = test;
         }
 
         private int GetStartingPointofBook(Book book)

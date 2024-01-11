@@ -21,7 +21,7 @@
                 <TextBlock Style="{StaticResource CaptionTextBlockStyle}" VerticalAlignment="Center">Elementary</TextBlock>
             </StackPanel>
         </Grid>
-        <muxc:NavigationView Name="NavigationView" ItemInvoked="NavigationView_ItemInvoked" Grid.Row="1" IsTitleBarAutoPaddingEnabled="false" IsBackButtonVisible="Collapsed" IsPaneOpen="False">
+        <muxc:NavigationView Name="MainNavigationView" ItemInvoked="NavigationView_ItemInvoked" Grid.Row="1" IsTitleBarAutoPaddingEnabled="false" IsBackButtonVisible="Collapsed" IsPaneOpen="False">
             <muxc:NavigationView.MenuItems>
                 <muxc:NavigationViewItem x:Name="BiblePageNavigationViewItem" Content="Bible" Tag="BiblePage">
                     <muxc:NavigationViewItem.Icon>

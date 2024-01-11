@@ -1,12 +1,4 @@
 ﻿using Elementary.Helpers;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Microsoft.UI.Xaml;
 using MUXC = Microsoft.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls;
 using System.Reflection;
@@ -14,9 +6,7 @@ using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml;
 using Windows.UI.ViewManagement;
 using Windows.UI.Core;
-using Windows.UI;
-using Microsoft.Toolkit.Uwp.Helpers;
-using Microsoft.Toolkit.Uwp.UI.Helpers;
+using CommunityToolkit.WinUI.Helpers;
 
 namespace Elementary
 {
@@ -38,7 +28,7 @@ namespace Elementary
             listener.ThemeChanged += OnThemeChanged;
 
             //By default, navigate to the Bible Page
-            NavigationView.SelectedItem = BiblePageNavigationViewItem;
+            MainNavigationView.SelectedItem = BiblePageNavigationViewItem;
             NavigateToView("BiblePage");
         }
 
@@ -103,7 +93,7 @@ namespace Elementary
         }
         private void OnThemeChanged(ThemeListener sender)
         {
-            if (SystemInformation.Instance.OperatingSystemVersion.Build <= 20348)
+            if (SystemInformationHelper.Instance.OperatingSystemVersion.Build <= 20348)
             {
                 WindowHelpers.SetCaptionButtonColors(sender.CurrentTheme);
             }
