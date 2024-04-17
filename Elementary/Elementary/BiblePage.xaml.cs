@@ -70,6 +70,16 @@ namespace Elementary
 
             _viewModel.SetCurrentChapterContent(selectedItem.ReadingOrderIndex);
         }
+
+        private void BackButton_Click(object sender, RoutedEventArgs e)
+        {
+            _viewModel.SetCurrentChapterContent()
+        }
+
+        private void ForwardButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }
 

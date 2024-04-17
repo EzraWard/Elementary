@@ -17,14 +17,21 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8" Margin="8,8,8,8">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="15*"/>
+            <ColumnDefinition Width="70*"/>
+            <ColumnDefinition Width="15*"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8" Margin="8,8,8,8">
             <ComboBox x:Name="BibleBookComboBox" ItemsSource="{x:Bind _viewModel.Bible.Books}" SelectedItem="{x:Bind _viewModel.Book}" DisplayMemberPath="Title" SelectionChanged="BibleBookComboBox_SelectionChanged" PlaceholderText="Book"/>
             <ComboBox x:Name="BookChapterComboBox" ItemsSource="{x:Bind _viewModel.Book.Chapters}" SelectedItem="{x:Bind _viewModel.Chapter}" DisplayMemberPath="Index" SelectionChanged="BookChapterComboBox_SelectionChanged" PlaceholderText="Chapter"/>
         </StackPanel>
-        <ScrollViewer Grid.Row="1" >
+        <Button Grid.Row="1" Grid.Column="0" Content="&lt;" HorizontalAlignment="Center" VerticalAlignment="Center" Height="50" Click="BackButton_Click"/>
+        <ScrollViewer Grid.Row="1" Grid.Column="1" VerticalScrollBarVisibility="Auto">
             <Grid x:Name="RichTextGrid" SizeChanged="WebViewGrid_SizeChanged">
                 <RichTextBlock x:Name="ChapterView" common:Properties.Html="{Binding CurrentChapterContent}" FontFamily="SegoeUI" FontSize="18" />
             </Grid>
         </ScrollViewer>
+        <Button Grid.Row="1" Grid.Column="2" Content="&gt;" HorizontalAlignment="Center" VerticalAlignment="Center" Height="50" Click="ForwardButton_Click"/>
     </Grid>
 </Page>
