@@ -73,7 +73,7 @@ namespace Elementary
 
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
-            _viewModel.SetCurrentChapterContent()
+            _viewModel.SetCurrentChapterContent();
         }
 
         private void ForwardButton_Click(object sender, RoutedEventArgs e)
