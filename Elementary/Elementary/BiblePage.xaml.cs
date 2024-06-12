@@ -1,8 +1,6 @@
 ﻿using Elementary.ViewModels;
 using Elementary.Objects;
-using System;
 using System.Linq;
-using System.Threading.Tasks;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 
