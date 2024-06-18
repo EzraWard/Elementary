@@ -4,13 +4,8 @@ using System.Linq;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 
-// The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
-
 namespace Elementary
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
     public sealed partial class BiblePage : Page
     {
         public BiblePageViewModel _viewModel;
@@ -67,16 +62,6 @@ namespace Elementary
             if (selectedItem is null) return;
 
             _viewModel.SetCurrentChapterContent(selectedItem.ReadingOrderIndex);
-        }
-
-        private void BackButton_Click(object sender, RoutedEventArgs e)
-        {
-            //_viewModel.SetCurrentChapterContent();
-        }
-
-        private void ForwardButton_Click(object sender, RoutedEventArgs e)
-        {
-
         }
     }
 }
