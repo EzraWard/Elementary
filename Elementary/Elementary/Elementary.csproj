@@ -233,7 +233,7 @@
       <Version>8.0.240109</Version>
     </PackageReference>
     <PackageReference Include="HtmlAgilityPack">
-      <Version>1.11.60</Version>
+      <Version>1.11.61</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.14</Version>
@@ -242,7 +242,7 @@
       <Version>2.8.6</Version>
     </PackageReference>
     <PackageReference Include="VersOne.Epub">
-      <Version>3.3.1</Version>
+      <Version>3.3.2</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
