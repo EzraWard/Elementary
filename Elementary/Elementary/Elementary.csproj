@@ -128,18 +128,18 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
-    <Compile Include="BiblePage.xaml.cs">
+    <Compile Include="Pages\BiblePage.xaml.cs">
       <DependentUpon>BiblePage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Helpers\OSVersion.cs" />
     <Compile Include="Helpers\SystemInformationHelper.cs" />
     <Compile Include="Helpers\WindowHelpers.cs" />
-    <Compile Include="MainPage.xaml.cs">
+    <Compile Include="Pages\MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Objects\Bible.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SettingsPage.xaml.cs">
+    <Compile Include="Pages\SettingsPage.xaml.cs">
       <DependentUpon>SettingsPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\BiblePageViewModel.cs" />
@@ -212,15 +212,15 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Page Include="BiblePage.xaml">
+    <Page Include="Pages\BiblePage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="MainPage.xaml">
+    <Page Include="Pages\MainPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="SettingsPage.xaml">
+    <Page Include="Pages\SettingsPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
