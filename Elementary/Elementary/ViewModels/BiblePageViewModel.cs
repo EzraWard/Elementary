@@ -98,8 +98,31 @@ namespace Elementary.ViewModels
 
         public void Initialize()
         {
-            //default to NET
-            var biblePath = BibleDictionary["NET"];
+            var Settings = ApplicationData.Current.LocalSettings;
+
+            //Get current location in Bible, if settings are blank, set them
+            var currentTranslation = Settings.Values["Translation"];
+            var currentBook = Settings.Values["Book"];
+            var currentChapter = Settings.Values["Chapter"];
+
+            if (currentTranslation is null)
+            {
+                Settings.Values["Translation"] = "NET";
+                currentTranslation = "NET";
+            }
+            if (currentBook is null)
+            {
+                Settings.Values["Book"] = "Genesis";
+                currentBook = "Genesis";
+            }
+            if (currentChapter is null)
+            {
+                Settings.Values["Chapter"] = "1";
+                currentChapter = "1";
+            }
+
+            //var biblePath = BibleDictionary[currentTranslation.ToString()];
+            var biblePath = BibleDictionary["KJV"];
             var bibleFilePath = StorageFile.GetFileFromApplicationUriAsync(new Uri(biblePath)).AsTask().Result.Path;
             
             _currentBible = EpubReader.ReadBook(bibleFilePath);
@@ -182,15 +205,15 @@ namespace Elementary.ViewModels
                 case "Judges":
                     return 219;
                 case "Ruth":
-                    return 234 + 7;
+                    return 241;
                 case "1 Samuel":
-                    return 238 + 8;
+                    return 246;
                 case "2 Samuel":
-                    return 269 + 9;
+                    return 278;
                 case "1 Kings":
-                    return 293 + 10;
+                    return 303;
                 case "2 Kings":
-                    return 315 + 11;
+                    return 326;
                 case "1 Chronicles":
                     return 340 + 12;
                 case "2 Chronicles":
