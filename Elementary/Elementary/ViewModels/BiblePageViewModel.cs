@@ -122,7 +122,7 @@ namespace Elementary.ViewModels
             }
 
             //var biblePath = BibleDictionary[currentTranslation.ToString()];
-            var biblePath = BibleDictionary["KJV"];
+            var biblePath = BibleDictionary["NET"];
             var bibleFilePath = StorageFile.GetFileFromApplicationUriAsync(new Uri(biblePath)).AsTask().Result.Path;
             
             _currentBible = EpubReader.ReadBook(bibleFilePath);
