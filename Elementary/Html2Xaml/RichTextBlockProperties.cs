@@ -110,7 +110,7 @@ namespace html2xaml
                     xaml = await ConvertHtmlToXamlRichTextBlock(xhtml);
                     newRichText = (RichTextBlock)XamlReader.Load(xaml);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     string errorxaml = string.Format(@"
                         <RichTextBlock 
