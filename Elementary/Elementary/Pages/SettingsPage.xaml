@@ -72,11 +72,11 @@
                     </controls:SettingsCard>
 
                     <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}" Text="Acknowledgements" />
-                    <controls:SettingsExpander Description="Acknowledgements for the NET Bible"
+                    <controls:SettingsExpander Description="Acknowledgement for the NET Bible"
                                                Header="NET Bible"
                                                HeaderIcon="{ui:FontIcon Glyph=&#xE716;}">
                         <controls:SettingsExpander.Items>
-                            <controls:SettingsCard Description="Scripture quoted by permission. Quotations designated (NET) are from the NET Bible® copyright ©1996, 2019 by Biblical Studies Press, L.L.C. http://netbible.com All rights reserved."/>
+                            <controls:SettingsCard Header="Scripture quoted by permission. Quotations designated (NET) are from the NET Bible® copyright ©1996, 2019 by Biblical Studies Press, L.L.C. http://netbible.com All rights reserved."/>
                         </controls:SettingsExpander.Items>
                     </controls:SettingsExpander>
 
@@ -91,7 +91,11 @@
                                    win:IsTextSelectionEnabled="True"
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                         <controls:SettingsExpander.Items>
-                            <controls:SettingsCard ContentAlignment="Left" Description="👨🏻‍👩🏻‍👧🏻‍👦🏻 Hello from Marietta" />
+                            <controls:SettingsCard ContentAlignment="Left">
+                                <controls:SettingsCard.Header>
+                                    <TextBlock Text="👨🏻‍👩🏻‍👧🏻‍👦🏻 Hello from Marietta" />
+                                </controls:SettingsCard.Header>
+                            </controls:SettingsCard>
                         </controls:SettingsExpander.Items>
                     </controls:SettingsExpander>
                     <HyperlinkButton Margin="0,0,0,0"
