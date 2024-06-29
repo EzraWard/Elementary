@@ -53,7 +53,7 @@
                         </ComboBox>
                     </controls:SettingsCard>
 
-                    <controls:SettingsCard Description="Display verse numbers"
+                    <controls:SettingsCard Description="Choose whether to show verse numbers inline"
                                            Header="Show verse numbers"
                                            HeaderIcon="{ui:FontIcon Glyph=&#xE8A4;}"
                                            IsEnabled="False">
@@ -77,7 +77,12 @@
                                                HeaderIcon="{ui:FontIcon Glyph=&#xE716;}">
                         <controls:SettingsExpander.Items>
                             <controls:SettingsCard>
-                                <TextBlock>Scripture quoted by permission. Quotations designated (NET) are from the NET Bible® copyright ©1996, 2019 by Biblical Studies Press, L.L.C. http://netbible.com All rights reserved.</TextBlock>
+                                <controls:SettingsCard.Resources>
+                                    <x:Double x:Key="SettingsCardWrapThreshold">300</x:Double>
+                                    <x:Double x:Key="SettingsCardWrapNoIconThreshold">300</x:Double>
+                                </controls:SettingsCard.Resources>
+
+                                <TextBlock TextWrapping="WrapWholeWords">Scripture quoted by permission. Quotations designated (NET) are from the NET Bible® copyright ©1996, 2019 by Biblical Studies Press, L.L.C. http://netbible.com All rights reserved.</TextBlock>
                             </controls:SettingsCard>
                         </controls:SettingsExpander.Items>
                     </controls:SettingsExpander>
