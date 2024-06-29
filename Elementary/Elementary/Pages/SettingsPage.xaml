@@ -76,33 +76,25 @@
                                                Header="NET Bible"
                                                HeaderIcon="{ui:FontIcon Glyph=&#xE716;}">
                         <controls:SettingsExpander.Items>
-                            <controls:SettingsCard>
-                                <controls:SettingsCard.Resources>
-                                    <x:Double x:Key="SettingsCardWrapThreshold">300</x:Double>
-                                    <x:Double x:Key="SettingsCardWrapNoIconThreshold">300</x:Double>
-                                </controls:SettingsCard.Resources>
-
-                                <TextBlock TextWrapping="WrapWholeWords">Scripture quoted by permission. Quotations designated (NET) are from the NET Bible® copyright ©1996, 2019 by Biblical Studies Press, L.L.C. http://netbible.com All rights reserved.</TextBlock>
-                            </controls:SettingsCard>
+                            <controls:SettingsCard Description="Scripture quoted by permission. Quotations designated (NET) are from the NET Bible® copyright ©1996, 2019 by Biblical Studies Press, L.L.C. http://netbible.com All rights reserved."/>
                         </controls:SettingsExpander.Items>
                     </controls:SettingsExpander>
 
+                    <!--About-->
                     <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
                            Text="About" />
 
                     <controls:SettingsExpander Description="© 2024. All rights reserved."
-                                           Header="About Elementary"
+                                           Header="Elementary"
                                            HeaderIcon="{ui:BitmapIcon Source=ms-appx:///Assets/logo.png}">
                         <TextBlock x:Name="VersionTextBlock"
                                    win:IsTextSelectionEnabled="True"
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                         <controls:SettingsExpander.Items>
-                            <controls:SettingsCard ContentAlignment="Left">
-                                <TextBlock>👨🏻‍👩🏻‍👧🏻‍👦🏻 Hello from Marietta</TextBlock>
-                            </controls:SettingsCard>
+                            <controls:SettingsCard ContentAlignment="Left" Description="👨🏻‍👩🏻‍👧🏻‍👦🏻 Hello from Marietta" />
                         </controls:SettingsExpander.Items>
                     </controls:SettingsExpander>
-                    <HyperlinkButton Margin="0,8,0,0"
+                    <HyperlinkButton Margin="0,0,0,0"
                                  Content="Send feedback" NavigateUri="mailto:ezra.ward@outlook.com"/>
                 </StackPanel>
             </Grid>
