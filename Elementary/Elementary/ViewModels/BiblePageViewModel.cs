@@ -54,7 +54,7 @@ namespace Elementary.ViewModels
         public List<string> CurrentBibleBooks
         {
             get => _currentBibleBooks;
-            set => SetProperty( ref _currentBibleBooks, value);
+            set => SetProperty(ref _currentBibleBooks, value);
         }
 
         public List<int> CurrentBookChapters
@@ -160,8 +160,8 @@ namespace Elementary.ViewModels
                 }
             }
 
-            Book = Bible.Books[0];
-            Chapter = Book.Chapters[0];
+            Book = Bible.Books.SingleOrDefault(i => i.Title == (string) currentBook);
+            Chapter = Book.Chapters[int.Parse((string) currentChapter) - 1];
 
             //First chapter in Genesis
 

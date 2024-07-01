@@ -3,6 +3,8 @@ using Elementary.Objects;
 using System.Linq;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.Storage;
+using Windows.UI.Xaml.Controls.Primitives;
 
 namespace Elementary
 {
@@ -50,6 +52,10 @@ namespace Elementary
             _viewModel.Book = book;
             _viewModel.Chapter = book.Chapters.FirstOrDefault();
 
+            var Settings = ApplicationData.Current.LocalSettings;
+            Settings.Values["Book"] = _viewModel.Book.Title;
+            Settings.Values["Chapter"] = _viewModel.Chapter.Index;
+
             BookChapterComboBox.ItemsSource = _viewModel.Book.Chapters;
             BookChapterComboBox.SelectedItem = _viewModel.Chapter;
         }
@@ -60,6 +66,9 @@ namespace Elementary
             var comboBox = sender as ComboBox;
             var selectedItem = comboBox.SelectedItem as Chapter;
             if (selectedItem is null) return;
+
+            var Settings = ApplicationData.Current.LocalSettings;
+            Settings.Values["Chapter"] = selectedItem.Index.ToString();
 
             _viewModel.SetCurrentChapterContent(selectedItem.ReadingOrderIndex);
         }
