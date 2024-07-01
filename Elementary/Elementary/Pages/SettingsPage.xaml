@@ -116,7 +116,7 @@
                                    win:IsTextSelectionEnabled="True"
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                         <controls:SettingsExpander.Items>
-                            <controls:SettingsCard ContentAlignment="Left">
+                            <controls:SettingsCard>
                                 <controls:SettingsCard.Header>
                                     <TextBlock Text="👨🏻‍👩🏻‍👧🏻‍👦🏻 Hello from Marietta" />
                                 </controls:SettingsCard.Header>
