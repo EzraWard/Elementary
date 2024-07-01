@@ -60,9 +60,34 @@
                         <ToggleSwitch IsOn="True" />
                     </controls:SettingsCard>
 
+                    <controls:SettingsCard Description="Select the font for text"
+                                           Header="Font"
+                                           HeaderIcon="{ui:FontIcon Glyph=&#xE8D2;}"
+                                           IsEnabled="False">
+                        <ComboBox SelectedIndex="0">
+                            <ComboBoxItem>Segoe UI</ComboBoxItem>
+                            <ComboBoxItem>Liberata</ComboBoxItem>
+                            <ComboBoxItem>Other</ComboBoxItem>
+                        </ComboBox>
+                    </controls:SettingsCard>
+
+                    <controls:SettingsCard Description="Select the font size for text"
+                                           Header="Font size"
+                                           HeaderIcon="{ui:FontIcon Glyph=&#xE8E9;}"
+                                           IsEnabled="False">
+                        <ComboBox SelectedIndex="1">
+                            <ComboBoxItem>Small</ComboBoxItem>
+                            <ComboBoxItem>Medium</ComboBoxItem>
+                            <ComboBoxItem>Large</ComboBoxItem>
+                        </ComboBox>
+                    </controls:SettingsCard>
+
+                    <!--General-->
+                    <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
+                           Text="General" />
                     <controls:SettingsCard Description="Set the color scheme you prefer"
                                            Header="Theme"
-                                           HeaderIcon="{ui:FontIcon Glyph=&#xE771;}"
+                                           HeaderIcon="{ui:FontIcon Glyph=&#xE790;}"
                                            IsEnabled="False">
                         <ComboBox SelectedIndex="0">
                             <ComboBoxItem>System</ComboBoxItem>
