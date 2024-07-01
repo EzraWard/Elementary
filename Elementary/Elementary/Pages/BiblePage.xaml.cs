@@ -23,6 +23,11 @@ namespace Elementary
             //VM intialization
             _viewModel.Initialize();
 
+            Loaded += BiblePage_Loaded;
+        }
+
+        private void BiblePage_Loaded(object sender, RoutedEventArgs e)
+        {
             _isLoaded = true;
         }
 
