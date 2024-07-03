@@ -19,6 +19,7 @@ using Windows.ApplicationModel.Appointments.AppointmentsProvider;
 using Windows.Storage;
 using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
 
 namespace Elementary.ViewModels
 {
@@ -121,8 +122,7 @@ namespace Elementary.ViewModels
                 currentChapter = "1";
             }
 
-            //var biblePath = BibleDictionary[currentTranslation.ToString()];
-            var biblePath = BibleDictionary["NET"];
+            var biblePath = BibleDictionary[currentTranslation.ToString()];
             var bibleFilePath = StorageFile.GetFileFromApplicationUriAsync(new Uri(biblePath)).AsTask().Result.Path;
             
             _currentBible = EpubReader.ReadBook(bibleFilePath);

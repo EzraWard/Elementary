@@ -1,20 +1,25 @@
 ﻿using Windows.ApplicationModel;
+using Windows.Storage;
 using Windows.UI.Xaml.Controls;
-
-// The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
 
 namespace Elementary
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
     public sealed partial class SettingsPage : Page
     {
+        bool IsLoaded = false;
+
         public SettingsPage()
         {
             InitializeComponent();
 
             VersionTextBlock.Text = GetApplicationVersion();
+
+            Loaded += SettingsPage_Loaded;
+        }
+
+        private void SettingsPage_Loaded(object sender, Windows.UI.Xaml.RoutedEventArgs e)
+        {
+            IsLoaded = true;
         }
 
         public static string GetApplicationVersion()
@@ -24,6 +29,17 @@ namespace Elementary
             PackageVersion version = packageId.Version;
 
             return string.Format("{0}.{1}.{2}", version.Major, version.Minor, version.Build);
+        }
+
+        private void TranslationComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!IsLoaded) return;
+            var comboBox = (ComboBox) sender;
+
+            var Settings = ApplicationData.Current.LocalSettings;
+            Settings.Values["Translation"] = ((ComboBoxItem) comboBox.SelectedItem).Content;
+            Settings.Values["Book"] = "Genesis";
+            Settings.Values["Chapter"] = "1";
         }
     }
 }

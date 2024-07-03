@@ -46,7 +46,7 @@
                     <controls:SettingsCard Description="The translation of the Bible you would like to use"
                                        Header="Translation"
                                        HeaderIcon="{ui:FontIcon Glyph=&#xE736;}">
-                        <ComboBox SelectedIndex="0">
+                        <ComboBox SelectedIndex="0" SelectionChanged="TranslationComboBox_SelectionChanged">
                             <ComboBoxItem>NET</ComboBoxItem>
                             <ComboBoxItem>ASV</ComboBoxItem>
                             <ComboBoxItem>KJV</ComboBoxItem>
