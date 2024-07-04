@@ -44,8 +44,9 @@
                     <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
                            Text="Reading" />
                     <controls:SettingsCard Description="The translation of the Bible you would like to use"
-                                       Header="Translation"
-                                       HeaderIcon="{ui:FontIcon Glyph=&#xE736;}">
+                                       Header="Translation (Coming soon!)"
+                                       HeaderIcon="{ui:FontIcon Glyph=&#xE736;}"
+                                       IsEnabled="False">
                         <ComboBox SelectedIndex="0" SelectionChanged="TranslationComboBox_SelectionChanged">
                             <ComboBoxItem>NET</ComboBoxItem>
                             <ComboBoxItem>ASV</ComboBoxItem>
@@ -65,9 +66,9 @@
                                            HeaderIcon="{ui:FontIcon Glyph=&#xE8D2;}"
                                            IsEnabled="False">
                         <ComboBox SelectedIndex="0">
-                            <ComboBoxItem>Segoe UI</ComboBoxItem>
-                            <ComboBoxItem>Liberata</ComboBoxItem>
-                            <ComboBoxItem>Other</ComboBoxItem>
+                            <ComboBoxItem>Segoe UI Variable</ComboBoxItem>
+                            <ComboBoxItem>Georgia</ComboBoxItem>
+                            <ComboBoxItem>Source Sans Pro</ComboBoxItem>
                         </ComboBox>
                     </controls:SettingsCard>
 
