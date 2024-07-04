@@ -63,6 +63,9 @@ namespace Elementary
 
             BookChapterComboBox.ItemsSource = _viewModel.Book.Chapters;
             BookChapterComboBox.SelectedItem = _viewModel.Chapter;
+
+            //scroll to top
+            BibleScrollViewer.ChangeView(0, 0, 1);
         }
 
         private void BookChapterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -76,6 +79,9 @@ namespace Elementary
             Settings.Values["Chapter"] = selectedItem.Index.ToString();
 
             _viewModel.SetCurrentChapterContent(selectedItem.ReadingOrderIndex);
+
+            //scroll to top
+            BibleScrollViewer.ChangeView(0, 0, 1);
         }
     }
 }
