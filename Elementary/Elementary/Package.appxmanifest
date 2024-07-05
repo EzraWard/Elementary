@@ -14,7 +14,7 @@
   <mp:PhoneIdentity PhoneProductId="2667bc56-bc11-4b7e-93bd-249407dd3231" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>Elementary Bible Dev</DisplayName>
+    <DisplayName>Elementary Bible Beta</DisplayName>
     <PublisherDisplayName>Grant Street Design</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
