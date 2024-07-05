@@ -3,6 +3,7 @@ using System;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.ApplicationModel.Core;
+using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
@@ -20,6 +21,17 @@ namespace Elementary
         /// </summary>
         public App()
         {
+            var settings = ApplicationData.Current.LocalSettings;
+            var theme = settings.Values["Theme"];
+            if (theme is null)
+            {
+                settings.Values["Theme"] = "System";
+                theme = "System";
+            }
+
+            if (theme.ToString() == "Dark") RequestedTheme = ApplicationTheme.Dark;
+            if (theme.ToString() == "Light") RequestedTheme = ApplicationTheme.Light;
+
             this.InitializeComponent();
             this.Suspending += OnSuspending;
         }

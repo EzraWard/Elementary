@@ -128,21 +128,23 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
-    <Compile Include="BiblePage.xaml.cs">
+    <Compile Include="Helpers\ThemeHelper.cs" />
+    <Compile Include="Pages\BiblePage.xaml.cs">
       <DependentUpon>BiblePage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Helpers\OSVersion.cs" />
     <Compile Include="Helpers\SystemInformationHelper.cs" />
     <Compile Include="Helpers\WindowHelpers.cs" />
-    <Compile Include="MainPage.xaml.cs">
+    <Compile Include="Pages\MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Objects\Bible.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SettingsPage.xaml.cs">
+    <Compile Include="Pages\SettingsPage.xaml.cs">
       <DependentUpon>SettingsPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\BiblePageViewModel.cs" />
+    <Compile Include="ViewModels\SettingsPageViewModek.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
@@ -212,15 +214,15 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Page Include="BiblePage.xaml">
+    <Page Include="Pages\BiblePage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="MainPage.xaml">
+    <Page Include="Pages\MainPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="SettingsPage.xaml">
+    <Page Include="Pages\SettingsPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -229,11 +231,14 @@
     <PackageReference Include="CommunityToolkit.Mvvm">
       <Version>8.2.2</Version>
     </PackageReference>
+    <PackageReference Include="CommunityToolkit.Uwp.Controls.SettingsControls">
+      <Version>8.0.240109</Version>
+    </PackageReference>
     <PackageReference Include="CommunityToolkit.Uwp.Helpers">
       <Version>8.0.240109</Version>
     </PackageReference>
     <PackageReference Include="HtmlAgilityPack">
-      <Version>1.11.57</Version>
+      <Version>1.11.61</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.14</Version>
@@ -242,7 +247,7 @@
       <Version>2.8.6</Version>
     </PackageReference>
     <PackageReference Include="VersOne.Epub">
-      <Version>3.3.1</Version>
+      <Version>3.3.2</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>

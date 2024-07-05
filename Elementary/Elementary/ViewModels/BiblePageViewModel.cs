@@ -5,20 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Net.NetworkInformation;
-using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 using VersOne.Epub;
-using Windows.ApplicationModel.Appointments.AppointmentsProvider;
 using Windows.Storage;
-using Windows.UI.ViewManagement;
-using Windows.UI.Xaml;
+using Windows.UI.Xaml.Media;
 
 namespace Elementary.ViewModels
 {
@@ -35,6 +24,8 @@ namespace Elementary.ViewModels
         private Bible _bible;
         private Book _book;
         private Chapter _chapter;
+        private FontFamily _font;
+        private Double _fontSize;
         private List<string> _currentBibleBooks;
         private List<int> _currentBookChapters;
         private string _currentChapterText;
@@ -54,7 +45,7 @@ namespace Elementary.ViewModels
         public List<string> CurrentBibleBooks
         {
             get => _currentBibleBooks;
-            set => SetProperty( ref _currentBibleBooks, value);
+            set => SetProperty(ref _currentBibleBooks, value);
         }
 
         public List<int> CurrentBookChapters
@@ -93,13 +84,76 @@ namespace Elementary.ViewModels
             set => SetProperty(ref _chapter, value);
         }
 
+        public FontFamily Font
+        {
+            get => _font;
+            set => SetProperty(ref _font, value);
+        }
+
+        public double FontSize
+        {
+            get => _fontSize;
+            set => SetProperty(ref _fontSize, value);
+        }
+
         public BiblePageViewModel()
         {}
 
         public void Initialize()
         {
-            //default to NET
-            var biblePath = BibleDictionary["NET"];
+            var settings = ApplicationData.Current.LocalSettings;
+
+            //Get current location in Bible, if settings are blank, set them
+            var currentTranslation = settings.Values["Translation"];
+            var currentBook = settings.Values["Book"];
+            var currentChapter = settings.Values["Chapter"];
+            var font = settings.Values["Font"];
+            var fontSize = settings.Values["FontSize"];
+
+            if (currentTranslation is null)
+            {
+                settings.Values["Translation"] = "NET";
+                currentTranslation = "NET";
+            }
+            if (currentBook is null)
+            {
+                settings.Values["Book"] = "Genesis";
+                currentBook = "Genesis";
+            }
+            if (currentChapter is null)
+            {
+                settings.Values["Chapter"] = "1";
+                currentChapter = "1";
+            }
+            if (font is null)
+            {
+                settings.Values["Font"] = "SegoeUI";
+                font = "SegoeUI";
+            }
+            if (fontSize is null)
+            {
+                settings.Values["FontSize"] = "Medium";
+                fontSize = "Medium";
+            }
+
+            Font = new FontFamily(font.ToString());
+
+            switch (fontSize.ToString())
+            {
+                case "Small":
+                    FontSize = 16;
+                    break;
+                case "Medium":
+                    FontSize = 18;
+                    break;
+                case "Large":
+                    FontSize = 20;
+                    break;
+                default: FontSize = 16; 
+                    break;
+            }
+
+            var biblePath = BibleDictionary[currentTranslation.ToString()];
             var bibleFilePath = StorageFile.GetFileFromApplicationUriAsync(new Uri(biblePath)).AsTask().Result.Path;
             
             _currentBible = EpubReader.ReadBook(bibleFilePath);
@@ -137,8 +191,8 @@ namespace Elementary.ViewModels
                 }
             }
 
-            Book = Bible.Books[0];
-            Chapter = Book.Chapters[0];
+            Book = Bible.Books.SingleOrDefault(i => i.Title == (string) currentBook);
+            Chapter = Book.Chapters[int.Parse((string) currentChapter) - 1];
 
             //First chapter in Genesis
 
@@ -182,15 +236,15 @@ namespace Elementary.ViewModels
                 case "Judges":
                     return 219;
                 case "Ruth":
-                    return 234 + 7;
+                    return 241;
                 case "1 Samuel":
-                    return 238 + 8;
+                    return 246;
                 case "2 Samuel":
-                    return 269 + 9;
+                    return 278;
                 case "1 Kings":
-                    return 293 + 10;
+                    return 303;
                 case "2 Kings":
-                    return 315 + 11;
+                    return 326;
                 case "1 Chronicles":
                     return 340 + 12;
                 case "2 Chronicles":

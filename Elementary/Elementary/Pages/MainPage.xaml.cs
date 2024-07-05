@@ -10,9 +10,6 @@ using CommunityToolkit.WinUI.Helpers;
 
 namespace Elementary
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
     public sealed partial class MainPage : Page
     {
         private Microsoft.UI.Xaml.Controls.NavigationViewItem _lastItem;
@@ -91,6 +88,7 @@ namespace Elementary
 
             }
         }
+
         private void OnThemeChanged(ThemeListener sender)
         {
             if (SystemInformationHelper.Instance.OperatingSystemVersion.Build <= 20348)
