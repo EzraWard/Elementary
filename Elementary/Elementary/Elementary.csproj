@@ -143,6 +143,7 @@
       <DependentUpon>SettingsPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\BiblePageViewModel.cs" />
+    <Compile Include="ViewModels\SettingsPageViewModek.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">

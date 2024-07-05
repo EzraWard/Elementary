@@ -55,7 +55,7 @@
                     </controls:SettingsCard>
 
                     <controls:SettingsCard Description="Choose whether to show verse numbers inline"
-                                           Header="Show verse numbers"
+                                           Header="Show verse numbers (Coming soon!)"
                                            HeaderIcon="{ui:FontIcon Glyph=&#xE8A4;}"
                                            IsEnabled="False">
                         <ToggleSwitch IsOn="True" />
@@ -63,10 +63,9 @@
 
                     <controls:SettingsCard Description="Select the font for text"
                                            Header="Font"
-                                           HeaderIcon="{ui:FontIcon Glyph=&#xE8D2;}"
-                                           IsEnabled="False">
-                        <ComboBox SelectedIndex="0">
-                            <ComboBoxItem>Segoe UI Variable</ComboBoxItem>
+                                           HeaderIcon="{ui:FontIcon Glyph=&#xE8D2;}">
+                        <ComboBox x:Name="FontComboBox" SelectionChanged="FontComboBox_SelectionChanged">
+                            <ComboBoxItem>Segoe UI</ComboBoxItem>
                             <ComboBoxItem>Georgia</ComboBoxItem>
                             <ComboBoxItem>Source Sans Pro</ComboBoxItem>
                         </ComboBox>
@@ -74,9 +73,8 @@
 
                     <controls:SettingsCard Description="Select the font size for text"
                                            Header="Font size"
-                                           HeaderIcon="{ui:FontIcon Glyph=&#xE8E9;}"
-                                           IsEnabled="False">
-                        <ComboBox SelectedIndex="1">
+                                           HeaderIcon="{ui:FontIcon Glyph=&#xE8E9;}">
+                        <ComboBox x:Name="FontSizeComboBox" SelectionChanged="FontSizeComboBox_SelectionChanged">
                             <ComboBoxItem>Small</ComboBoxItem>
                             <ComboBoxItem>Medium</ComboBoxItem>
                             <ComboBoxItem>Large</ComboBoxItem>
@@ -88,9 +86,8 @@
                            Text="General" />
                     <controls:SettingsCard Description="Set the color scheme you prefer"
                                            Header="Theme"
-                                           HeaderIcon="{ui:FontIcon Glyph=&#xE790;}"
-                                           IsEnabled="False">
-                        <ComboBox SelectedIndex="0">
+                                           HeaderIcon="{ui:FontIcon Glyph=&#xE790;}">
+                        <ComboBox x:Name="ThemeComboBox" SelectionChanged="ThemeComboBox_SelectionChanged">
                             <ComboBoxItem>System</ComboBoxItem>
                             <ComboBoxItem>Light</ComboBoxItem>
                             <ComboBoxItem>Dark</ComboBoxItem>

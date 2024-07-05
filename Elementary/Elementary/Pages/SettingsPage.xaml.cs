@@ -1,4 +1,5 @@
-﻿using Windows.ApplicationModel;
+﻿using System.Linq;
+using Windows.ApplicationModel;
 using Windows.Storage;
 using Windows.UI.Xaml.Controls;
 
@@ -6,20 +7,20 @@ namespace Elementary
 {
     public sealed partial class SettingsPage : Page
     {
-        bool IsLoaded = false;
-
         public SettingsPage()
         {
             InitializeComponent();
 
             VersionTextBlock.Text = GetApplicationVersion();
 
-            Loaded += SettingsPage_Loaded;
-        }
+            var settings = ApplicationData.Current.LocalSettings;
+            var font = settings.Values["Font"];
+            var fontSize = settings.Values["FontSize"];
+            var theme = settings.Values["Theme"];
 
-        private void SettingsPage_Loaded(object sender, Windows.UI.Xaml.RoutedEventArgs e)
-        {
-            IsLoaded = true;
+            FontComboBox.SelectedItem = FontComboBox.Items.Where(i => i.ToString() == font.ToString()).FirstOrDefault();
+            FontSizeComboBox.SelectedItem = FontSizeComboBox.Items.Where(i => i.ToString() == fontSize.ToString()).FirstOrDefault();
+            ThemeComboBox.SelectedItem = ThemeComboBox.Items.Where(i => i.ToString() == theme.ToString()).FirstOrDefault();
         }
 
         public static string GetApplicationVersion()
@@ -40,6 +41,32 @@ namespace Elementary
             Settings.Values["Translation"] = ((ComboBoxItem) comboBox.SelectedItem).Content;
             Settings.Values["Book"] = "Genesis";
             Settings.Values["Chapter"] = "1";
+        }
+
+        private void FontComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!IsLoaded) return;
+            var comboBox = (ComboBox)sender;
+        }
+
+        private void FontSizeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!IsLoaded) return;
+            var comboBox = (ComboBox)sender;
+
+            var fontSize = ((ComboBoxItem)comboBox.SelectedItem).Content;
+            var settings = ApplicationData.Current.LocalSettings;
+            settings.Values["FontSize"] = fontSize;
+        }
+
+        private void ThemeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!IsLoaded) return;
+            var comboBox = (ComboBox)sender;
+
+            var theme = ((ComboBoxItem)comboBox.SelectedItem).Content;
+            var settings = ApplicationData.Current.LocalSettings;
+            settings.Values["Theme"] = theme;
         }
     }
 }

@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using VersOne.Epub;
 using Windows.Storage;
+using Windows.UI.Xaml.Media;
 
 namespace Elementary.ViewModels
 {
@@ -23,6 +24,8 @@ namespace Elementary.ViewModels
         private Bible _bible;
         private Book _book;
         private Chapter _chapter;
+        private FontFamily _font;
+        private Double _fontSize;
         private List<string> _currentBibleBooks;
         private List<int> _currentBookChapters;
         private string _currentChapterText;
@@ -81,32 +84,73 @@ namespace Elementary.ViewModels
             set => SetProperty(ref _chapter, value);
         }
 
+        public FontFamily Font
+        {
+            get => _font;
+            set => SetProperty(ref _font, value);
+        }
+
+        public double FontSize
+        {
+            get => _fontSize;
+            set => SetProperty(ref _fontSize, value);
+        }
+
         public BiblePageViewModel()
         {}
 
         public void Initialize()
         {
-            var Settings = ApplicationData.Current.LocalSettings;
+            var settings = ApplicationData.Current.LocalSettings;
 
             //Get current location in Bible, if settings are blank, set them
-            var currentTranslation = Settings.Values["Translation"];
-            var currentBook = Settings.Values["Book"];
-            var currentChapter = Settings.Values["Chapter"];
+            var currentTranslation = settings.Values["Translation"];
+            var currentBook = settings.Values["Book"];
+            var currentChapter = settings.Values["Chapter"];
+            var font = settings.Values["Font"];
+            var fontSize = settings.Values["FontSize"];
 
             if (currentTranslation is null)
             {
-                Settings.Values["Translation"] = "NET";
+                settings.Values["Translation"] = "NET";
                 currentTranslation = "NET";
             }
             if (currentBook is null)
             {
-                Settings.Values["Book"] = "Genesis";
+                settings.Values["Book"] = "Genesis";
                 currentBook = "Genesis";
             }
             if (currentChapter is null)
             {
-                Settings.Values["Chapter"] = "1";
+                settings.Values["Chapter"] = "1";
                 currentChapter = "1";
+            }
+            if (font is null)
+            {
+                settings.Values["Font"] = "SegoeUI";
+                font = "SegoeUI";
+            }
+            if (fontSize is null)
+            {
+                settings.Values["FontSize"] = "Medium";
+                fontSize = "Medium";
+            }
+
+            Font = new FontFamily(font.ToString());
+
+            switch (fontSize.ToString())
+            {
+                case "Small":
+                    FontSize = 16;
+                    break;
+                case "Medium":
+                    FontSize = 18;
+                    break;
+                case "Large":
+                    FontSize = 20;
+                    break;
+                default: FontSize = 16; 
+                    break;
             }
 
             var biblePath = BibleDictionary[currentTranslation.ToString()];

@@ -23,7 +23,7 @@
         </StackPanel>
         <ScrollViewer x:Name="BibleScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <Grid x:Name="RichTextGrid" SizeChanged="WebViewGrid_SizeChanged">
-                <RichTextBlock x:Name="ChapterView" common:Properties.Html="{Binding CurrentChapterContent}" FontFamily="SegoeUI" FontSize="18" />
+                <RichTextBlock x:Name="ChapterView" common:Properties.Html="{Binding CurrentChapterContent}" FontFamily="{Binding Font}" FontSize="{Binding FontSize}" />
             </Grid>
         </ScrollViewer>
     </Grid>
