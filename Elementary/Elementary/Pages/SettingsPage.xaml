@@ -67,7 +67,7 @@
                         <ComboBox x:Name="FontComboBox" SelectionChanged="FontComboBox_SelectionChanged">
                             <ComboBoxItem>Segoe UI</ComboBoxItem>
                             <ComboBoxItem>Georgia</ComboBoxItem>
-                            <ComboBoxItem>Source Sans Pro</ComboBoxItem>
+                            <!--<ComboBoxItem>Source Sans Pro</ComboBoxItem>-->
                         </ComboBox>
                     </controls:SettingsCard>
 
