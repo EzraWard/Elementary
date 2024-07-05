@@ -1,6 +1,8 @@
-﻿using System.Linq;
+﻿using Elementary.Helpers;
+using System.Linq;
 using Windows.ApplicationModel;
 using Windows.Storage;
+using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 
 namespace Elementary
@@ -18,9 +20,9 @@ namespace Elementary
             var fontSize = settings.Values["FontSize"];
             var theme = settings.Values["Theme"];
 
-            FontComboBox.SelectedItem = FontComboBox.Items.Where(i => i.ToString() == font.ToString()).FirstOrDefault();
-            FontSizeComboBox.SelectedItem = FontSizeComboBox.Items.Where(i => i.ToString() == fontSize.ToString()).FirstOrDefault();
-            ThemeComboBox.SelectedItem = ThemeComboBox.Items.Where(i => i.ToString() == theme.ToString()).FirstOrDefault();
+            FontComboBox.SelectedItem = FontComboBox.Items.Where(i => ((ComboBoxItem) i).Content.ToString().Replace(" ", "") == font.ToString()).FirstOrDefault();
+            FontSizeComboBox.SelectedItem = FontSizeComboBox.Items.Where(i => ((ComboBoxItem) i).Content.ToString() == fontSize.ToString()).FirstOrDefault();
+            ThemeComboBox.SelectedItem = ThemeComboBox.Items.Where(i => ((ComboBoxItem) i).Content.ToString() == theme.ToString()).FirstOrDefault();
         }
 
         public static string GetApplicationVersion()
@@ -47,6 +49,10 @@ namespace Elementary
         {
             if (!IsLoaded) return;
             var comboBox = (ComboBox)sender;
+
+            var font = ((ComboBoxItem)comboBox.SelectedItem).Content;
+            var settings = ApplicationData.Current.LocalSettings;
+            settings.Values["Font"] = font;
         }
 
         private void FontSizeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -67,6 +73,30 @@ namespace Elementary
             var theme = ((ComboBoxItem)comboBox.SelectedItem).Content;
             var settings = ApplicationData.Current.LocalSettings;
             settings.Values["Theme"] = theme;
+            ApplicationTheme applicationTheme = ApplicationTheme.Light;
+
+            if (Window.Current.Content is FrameworkElement frameworkElement)
+            {
+                switch(theme.ToString())
+                {
+                    case "Dark":
+                        frameworkElement.RequestedTheme = ElementTheme.Dark;
+                        applicationTheme = ApplicationTheme.Dark;
+                        break;
+                    case "Light":
+                        frameworkElement.RequestedTheme = ElementTheme.Light;
+                        applicationTheme = ApplicationTheme.Light;
+                        break;
+                    case "System":
+                        frameworkElement.RequestedTheme = ElementTheme.Default;
+                        var currentAppTheme = ThemeHelpers.GetCurrentApplicationTheme();
+                        applicationTheme = currentAppTheme == "Dark" ? ApplicationTheme.Dark : ApplicationTheme.Light; 
+                        break;
+                    default: break;
+                }
+            }
+
+            WindowHelpers.SetCaptionButtonColors(applicationTheme);
         }
     }
 }
