@@ -7,6 +7,9 @@ using Windows.UI.Xaml;
 using Windows.UI.ViewManagement;
 using Windows.UI.Core;
 using CommunityToolkit.WinUI.Helpers;
+using System;
+using Windows.UI.Xaml.Media.Imaging;
+using System.ComponentModel.DataAnnotations;
 
 namespace Elementary
 {
@@ -37,7 +40,32 @@ namespace Elementary
             var clickedView = item.Tag.ToString();
             if (clickedView == null || clickedView == "Settings") clickedView = "SettingsPage";
 
-            if(!NavigateToView(clickedView)) return;
+            if (clickedView == "VerseOfTheDay")
+            {
+                ContentDialog dialog = new ContentDialog();
+                dialog.Title = "Verse of the Day for " + DateTime.Now.ToShortDateString();
+                dialog.CloseButtonText = "Close";
+                dialog.DefaultButton = ContentDialogButton.Primary;
+
+                var image = new Image
+                {
+                    Height = 500,
+                    Width = 500,
+                };
+
+                var todayMonth = DateTime.Now.ToString("MM");
+                var todayDay = DateTime.Now.ToString("dd");
+
+                BitmapImage bitmapImage = new BitmapImage();
+                bitmapImage.UriSource = new Uri(@"https://votd.olivetree.com/" + todayMonth + "_" + todayDay + "_NKJV.jpg");
+                image.Source = bitmapImage;
+
+                dialog.Content = image;
+
+                var result = dialog.ShowAsync();
+            }
+
+            if (!NavigateToView(clickedView)) return;
             _lastItem = item;
         }
 

@@ -28,6 +28,11 @@
                         <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE736;"/>
                     </muxc:NavigationViewItem.Icon>
                 </muxc:NavigationViewItem>
+                <muxc:NavigationViewItem x:Name="VerseOfTheDayNavigationViewItem" Content="Verse of the Day" Tag="VerseOfTheDay">
+                    <muxc:NavigationViewItem.Icon>
+                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE787;"/>
+                    </muxc:NavigationViewItem.Icon>
+                </muxc:NavigationViewItem>
             </muxc:NavigationView.MenuItems>
             <Frame Name="ContentFrame" NavigationFailed="ContentFrame_NavigationFailed" />
         </muxc:NavigationView>
