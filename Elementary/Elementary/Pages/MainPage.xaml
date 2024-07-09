@@ -25,12 +25,14 @@
             <muxc:NavigationView.MenuItems>
                 <muxc:NavigationViewItem x:Name="BiblePageNavigationViewItem" Content="Bible" Tag="BiblePage">
                     <muxc:NavigationViewItem.Icon>
-                        <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE736;"/>
+                        <!--Including the font file for Segoe Fluent Icons in project ensures that the font properly displays on Windows 10-->
+                        <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE736;"/>
                     </muxc:NavigationViewItem.Icon>
                 </muxc:NavigationViewItem>
                 <muxc:NavigationViewItem x:Name="VerseOfTheDayNavigationViewItem" Content="Verse of the Day" Tag="VerseOfTheDay">
                     <muxc:NavigationViewItem.Icon>
-                        <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE787;"/>
+                        <!--Including the font file for Segoe Fluent Icons in project ensures that the font properly displays on Windows 10-->
+                        <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE787;"/>
                     </muxc:NavigationViewItem.Icon>
                 </muxc:NavigationViewItem>
             </muxc:NavigationView.MenuItems>
