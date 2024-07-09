@@ -45,8 +45,10 @@
                            Text="Reading" />
                     <controls:SettingsCard Description="The translation of the Bible you would like to use"
                                        Header="Translation (Coming soon!)"
-                                       HeaderIcon="{ui:FontIcon Glyph=&#xE736;}"
                                        IsEnabled="False">
+                        <controls:SettingsCard.HeaderIcon>
+                            <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE736;"/>
+                        </controls:SettingsCard.HeaderIcon>
                         <ComboBox SelectedIndex="0" SelectionChanged="TranslationComboBox_SelectionChanged">
                             <ComboBoxItem>NET</ComboBoxItem>
                             <ComboBoxItem>ASV</ComboBoxItem>
@@ -56,14 +58,18 @@
 
                     <controls:SettingsCard Description="Choose whether to show verse numbers inline"
                                            Header="Show verse numbers (Coming soon!)"
-                                           HeaderIcon="{ui:FontIcon Glyph=&#xE8A4;}"
                                            IsEnabled="False">
+                        <controls:SettingsCard.HeaderIcon>
+                            <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE8A4;"/>
+                        </controls:SettingsCard.HeaderIcon>
                         <ToggleSwitch IsOn="True" />
                     </controls:SettingsCard>
 
                     <controls:SettingsCard Description="Select the font for text"
-                                           Header="Font"
-                                           HeaderIcon="{ui:FontIcon Glyph=&#xE8D2;}">
+                                           Header="Font">
+                        <controls:SettingsCard.HeaderIcon>
+                            <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE8D2;"/>
+                        </controls:SettingsCard.HeaderIcon>
                         <ComboBox x:Name="FontComboBox" SelectionChanged="FontComboBox_SelectionChanged">
                             <ComboBoxItem>Segoe UI</ComboBoxItem>
                             <ComboBoxItem>Georgia</ComboBoxItem>
@@ -72,8 +78,10 @@
                     </controls:SettingsCard>
 
                     <controls:SettingsCard Description="Select the font size for text"
-                                           Header="Font size"
-                                           HeaderIcon="{ui:FontIcon Glyph=&#xE8E9;}">
+                                           Header="Font size">
+                        <controls:SettingsCard.HeaderIcon>
+                            <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE8E9;"/>
+                        </controls:SettingsCard.HeaderIcon>
                         <ComboBox x:Name="FontSizeComboBox" SelectionChanged="FontSizeComboBox_SelectionChanged">
                             <ComboBoxItem>Small</ComboBoxItem>
                             <ComboBoxItem>Medium</ComboBoxItem>
@@ -85,8 +93,10 @@
                     <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
                            Text="General" />
                     <controls:SettingsCard Description="Set the color scheme you prefer"
-                                           Header="Theme"
-                                           HeaderIcon="{ui:FontIcon Glyph=&#xE790;}">
+                                           Header="Theme">
+                        <controls:SettingsCard.HeaderIcon>
+                            <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE790;"/>
+                        </controls:SettingsCard.HeaderIcon>
                         <ComboBox x:Name="ThemeComboBox" SelectionChanged="ThemeComboBox_SelectionChanged">
                             <ComboBoxItem>System</ComboBoxItem>
                             <ComboBoxItem>Light</ComboBoxItem>
@@ -96,8 +106,10 @@
 
                     <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}" Text="Acknowledgements" />
                     <controls:SettingsExpander Description="Acknowledgement for the NET Bible"
-                                               Header="NET Bible"
-                                               HeaderIcon="{ui:FontIcon Glyph=&#xE716;}">
+                                               Header="NET Bible">
+                        <controls:SettingsExpander.HeaderIcon>
+                            <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE716;"/>
+                        </controls:SettingsExpander.HeaderIcon>
                         <controls:SettingsExpander.Items>
                             <controls:SettingsCard Header="Scripture quoted by permission. Quotations designated (NET) are from the NET Bible® copyright ©1996, 2019 by Biblical Studies Press, L.L.C. http://netbible.com All rights reserved."/>
                         </controls:SettingsExpander.Items>
