@@ -5,14 +5,14 @@
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   IgnorableNamespaces="uap mp">
 
-  <Identity Name="5cb46e95-01c7-4683-bc9e-64457780570f"
+  <Identity Name="a8540881-e776-4a37-be4f-fd0ae1f02c76"
             Publisher="CN=EzraW"
             Version="1.0.0.0" />
 
-  <mp:PhoneIdentity PhoneProductId="5cb46e95-01c7-4683-bc9e-64457780570f" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+  <mp:PhoneIdentity PhoneProductId="a8540881-e776-4a37-be4f-fd0ae1f02c76" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>Elementary.UWP.Tests</DisplayName>
+    <DisplayName>Elementary.Tests.UWP</DisplayName>
     <PublisherDisplayName>EzraW</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -27,12 +27,12 @@
   <Applications>
     <Application Id="vstest.executionengine.universal.App"
         Executable="$targetnametoken$.exe"
-        EntryPoint="Elementary.UWP.Tests.App">
+        EntryPoint="Elementary.Tests.UWP.App">
       <uap:VisualElements
-        DisplayName="Elementary.UWP.Tests"
+        DisplayName="Elementary.Tests.UWP"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png"
-        Description="Elementary.UWP.Tests"
+        Description="Elementary.Tests.UWP"
         BackgroundColor="transparent">
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"/>
         <uap:SplashScreen Image="Assets\SplashScreen.png" />

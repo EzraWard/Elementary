@@ -2,7 +2,7 @@
 using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Elementary.UWP.Tests
+namespace Elementary.Tests.UWP
 {
     [TestClass]
     public class UnitTest1
