@@ -52,6 +52,11 @@ namespace Elementary
             // just ensure that the window is active
             if (rootFrame == null)
             {
+                if (_serviceProvider == null)
+                {
+                    _serviceProvider = ConfigureServices();
+                }
+
                 // Create a Frame to act as the navigation context and navigate to the first page
                 rootFrame = new Frame();
 
