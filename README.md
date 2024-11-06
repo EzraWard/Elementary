@@ -59,7 +59,7 @@ To build and/or contribute to Elementary, you'll need:
   
   
 
-To Run Elementary, you'll need:
+To run Elementary, you'll need:
 
 - Windows 10 v1809 or greater
 
