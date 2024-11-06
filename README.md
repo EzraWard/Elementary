@@ -31,7 +31,9 @@
 
 ## About The Project
 
-<img title="" src="images/screenshot.png" alt="Logo" width="700" data-align="center">
+<p align="center">
+  <img title="" src="images/screenshot.png" alt="Logo" width="700">
+</p>
 
 There is a lack of simple, well-designed, and easy-to-use Bible reading applications on Windows. This motivated me to begin building Elementary. The goal of this project is to continue to build out the application to include more features that improve the Bible reading experience.
 
@@ -154,3 +156,5 @@ Project Link: [https://github.com/EzraWard/Elementary](https://github.com/EzraWa
 [linkedin-url]: https://www.linkedin.com/in/ezra-ward-466a5038
 
 [product-screenshot]: images/screenshot.png
+
+
