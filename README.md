@@ -31,7 +31,7 @@
 
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+<img title="" src="images/screenshot.png" alt="Logo" width="80" height="80" data-align="center">
 
 Here's a blank template to get started: To avoid retyping too much info. Do a search and replace with your text editor for the following: `EzraWard`, `Elementary`, `twitter_handle`, `linkedin_username`, `email_client`, `email`, `Elementary`, `project_description`
 
@@ -39,14 +39,7 @@ Here's a blank template to get started: To avoid retyping too much info. Do a se
 
 ### Built With
 
-* [![Next][Next.js]][Next-url]
-* [![React][React.js]][React-url]
-* [![Vue][Vue.js]][Vue-url]
-* [![Angular][Angular.io]][Angular-url]
-* [![Svelte][Svelte.dev]][Svelte-url]
-* [![Laravel][Laravel.com]][Laravel-url]
-* [![Bootstrap][Bootstrap.com]][Bootstrap-url]
-* [![JQuery][JQuery.com]][JQuery-url]
+* [Universal Windows Platform (https://learn.microsoft.com/en-us/windows/uwp/get-started/universal-application-platform-guide)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -153,3 +146,5 @@ Project Link: [https://github.com/EzraWard/Elementary](https://github.com/EzraWa
 [linkedin-url]: https://linkedin.com/in/linkedin_username
 
 [product-screenshot]: images/screenshot.png
+
+
