@@ -39,7 +39,7 @@ There is a lack of simple, well-designed, and easy-to-use Bible reading applicat
 
 ### Built With
 
-* [Universal Windows Platform (https://learn.microsoft.com/en-us/windows/uwp/get-started/universal-application-platform-guide)
+* [Universal Windows Platform](https://learn.microsoft.com/en-us/windows/uwp/get-started/universal-application-platform-guide)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -54,8 +54,8 @@ To build and/or contribute to Elementary, you'll need:
 - Visual Studio 2022 
 
 - Windows 11 SDK version 10.0.26100.0.
-
-
+  
+  
 
 To Run Elementary, you'll need:
 
