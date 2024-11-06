@@ -20,8 +20,6 @@
 <p align="center">
     Elementary is a very simple and usable Bible app for Windows with reading as its focus.
     <br />
-    <a href="https://github.com/EzraWard/Elementary"><strong>Explore the docs »</strong></a>
-    <br />
     <br />
     <a href="https://github.com/EzraWard/Elementary/issues/new?labels=bug">Report Bug</a>
     ·
@@ -182,5 +180,3 @@ Project Link: [https://github.com/EzraWard/Elementary](https://github.com/EzraWa
 [linkedin-url]: https://linkedin.com/in/linkedin_username
 
 [product-screenshot]: images/screenshot.png
-
-
