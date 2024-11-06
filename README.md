@@ -31,9 +31,9 @@
 
 ## About The Project
 
-<img title="" src="images/screenshot.png" alt="Logo" width="80" height="80" data-align="center">
+<img title="" src="images/screenshot.png" alt="Logo" width="700" data-align="center">
 
-Here's a blank template to get started: To avoid retyping too much info. Do a search and replace with your text editor for the following: `EzraWard`, `Elementary`, `twitter_handle`, `linkedin_username`, `email_client`, `email`, `Elementary`, `project_description`
+There is a lack of simple, well-designed, and easy-to-use Bible reading applications on Windows. This motivated me to begin building Elementary. The goal of this project is to continue to build out the application to include more features that improve the Bible reading experience.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -47,19 +47,27 @@ Here's a blank template to get started: To avoid retyping too much info. Do a se
 
 ## Getting Started
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
+To build and/or contribute to Elementary, you'll need:
 
-### Prerequisites
+- Windows 10 v1809 or greater
 
-This is an example of how to list things you need to use the software and how to install them.
+- Visual Studio 2022 
+
+- Windows 11 SDK version 10.0.26100.0.
+
+
+
+To Run Elementary, you'll need:
+
+- Windows 10 v1809 or greater
 
 ## Roadmap
 
-- [ ] Feature 1
-- [ ] Feature 2
-- [ ] Feature 3
-  - [ ] Nested Feature
+- [ ] Infinite scrolling
+- [ ] Bible reading history
+- [ ] Integrated Bible reading plans
+- [ ] KJV, ASV translations
+- [ ] ...and more!
 
 See the [open issues](https://github.com/EzraWard/Elementary/issues) for a full list of proposed features (and known issues).
 
@@ -101,7 +109,7 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 ## Contact
 
-Ezra Ward - [@twitter_handle](https://twitter.com/twitter_handle) - ezra.ward@outlook.com
+Ezra Ward - ezra.ward@outlook.com
 
 Project Link: [https://github.com/EzraWard/Elementary](https://github.com/EzraWard/Elementary)
 
@@ -143,8 +151,6 @@ Project Link: [https://github.com/EzraWard/Elementary](https://github.com/EzraWa
 
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 
-[linkedin-url]: https://linkedin.com/in/linkedin_username
+[linkedin-url]: https://www.linkedin.com/in/ezra-ward-466a5038
 
 [product-screenshot]: images/screenshot.png
-
-
