@@ -155,6 +155,4 @@ Project Link: [https://github.com/EzraWard/Elementary](https://github.com/EzraWa
 
 [linkedin-url]: https://www.linkedin.com/in/ezra-ward-466a5038
 
-[product-screenshot]: images/screenshot.png
-
 
