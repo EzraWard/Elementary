@@ -1,6 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using Elementary.Objects;
+using Elementary.Core.Interfaces;
+using Elementary.Core.Models;
+using Elementary.UWP.Dictionaries;
 using HtmlAgilityPack;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -13,13 +16,6 @@ namespace Elementary.ViewModels
 {
     public partial class BiblePageViewModel : ObservableObject
     {
-        private static readonly Dictionary<string, string> BibleDictionary = new Dictionary<string, string>
-        {
-            { "NET", "ms-appx:///Content/NET21NOTELESS.epub" },
-            { "KJV", "ms-appx:///Content/KJVNoImages.epub"  },
-            { "ASV", "ms-appx:///Content/eng-asv.epub"  }
-        };
-
         private EpubBook _currentBible;
         private Bible _bible;
         private Book _book;
@@ -30,6 +26,7 @@ namespace Elementary.ViewModels
         private List<int> _currentBookChapters;
         private string _currentChapterText;
         private string _currentChapterContent;
+        private ISettings _elementarySettings;
 
         public EpubBook CurrentBible { 
             get 
@@ -96,64 +93,21 @@ namespace Elementary.ViewModels
             set => SetProperty(ref _fontSize, value);
         }
 
+        public ISettings AppSettings
+        {
+            get => _elementarySettings;
+            set => SetProperty(ref _elementarySettings, value);
+        }
+
         public BiblePageViewModel()
         {}
 
         public void Initialize()
         {
-            var settings = ApplicationData.Current.LocalSettings;
+            var settingsService = App.Services.GetRequiredService<ISettingsService>();
+            AppSettings = settingsService.LoadSettings();
 
-            //Get current location in Bible, if settings are blank, set them
-            var currentTranslation = settings.Values["Translation"];
-            var currentBook = settings.Values["Book"];
-            var currentChapter = settings.Values["Chapter"];
-            var font = settings.Values["Font"];
-            var fontSize = settings.Values["FontSize"];
-
-            if (currentTranslation is null)
-            {
-                settings.Values["Translation"] = "NET";
-                currentTranslation = "NET";
-            }
-            if (currentBook is null)
-            {
-                settings.Values["Book"] = "Genesis";
-                currentBook = "Genesis";
-            }
-            if (currentChapter is null)
-            {
-                settings.Values["Chapter"] = "1";
-                currentChapter = "1";
-            }
-            if (font is null)
-            {
-                settings.Values["Font"] = "SegoeUI";
-                font = "SegoeUI";
-            }
-            if (fontSize is null)
-            {
-                settings.Values["FontSize"] = "Medium";
-                fontSize = "Medium";
-            }
-
-            Font = new FontFamily(font.ToString());
-
-            switch (fontSize.ToString())
-            {
-                case "Small":
-                    FontSize = 16;
-                    break;
-                case "Medium":
-                    FontSize = 18;
-                    break;
-                case "Large":
-                    FontSize = 20;
-                    break;
-                default: FontSize = 16; 
-                    break;
-            }
-
-            var biblePath = BibleDictionary[currentTranslation.ToString()];
+            var biblePath = BiblePathDictionary.BibleDictionary[AppSettings.Translation.ToString()];
             var bibleFilePath = StorageFile.GetFileFromApplicationUriAsync(new Uri(biblePath)).AsTask().Result.Path;
             
             _currentBible = EpubReader.ReadBook(bibleFilePath);
@@ -191,7 +145,7 @@ namespace Elementary.ViewModels
                 }
             }
 
-            Book = Bible.Books.SingleOrDefault(i => i.Title == (string) currentBook);
+            Book = Bible.Books.SingleOrDefault(i => i.Title == (string) AppSettings.Book);
             Chapter = Book.Chapters[int.Parse((string) currentChapter) - 1];
 
             //First chapter in Genesis

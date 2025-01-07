@@ -1,5 +1,5 @@
 ﻿using Elementary.ViewModels;
-using Elementary.Objects;
+using Elementary.Core.Models;
 using System.Linq;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
