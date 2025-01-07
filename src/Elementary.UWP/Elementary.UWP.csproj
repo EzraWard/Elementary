@@ -106,6 +106,8 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Dictionaries\BiblePathDictionary.cs" />
+    <Compile Include="Dictionaries\EBookToEPubLocationNET.cs" />
     <Compile Include="Helpers\ThemeHelper.cs" />
     <Compile Include="Pages\BiblePage.xaml.cs">
       <DependentUpon>BiblePage.xaml</DependentUpon>
@@ -250,6 +252,9 @@
       <Project>{d3408113-4ef7-4056-9ec9-d383306514b8}</Project>
       <Name>RichTextBlock.Html2Xaml</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Models\" />
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
