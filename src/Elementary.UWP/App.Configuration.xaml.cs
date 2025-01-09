@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Elementary.Core.Interfaces;
+using Elementary.Core.Services;
+using Elementary.Services;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 
 namespace Elementary
@@ -19,13 +22,15 @@ namespace Elementary
 
         private static IServiceProvider ConfigureServices()
         {
-            var provider = new ServiceCollection()
-                //.AddSingleton<IPrefixMaker, EnglishPrefixMaker>()
-                //.AddSingleton<IPrefixMaker, FrenchPrefixMaker>()
-                //.AddSingleton<ClassWithDI>()
-                .BuildServiceProvider(true);
+            var provider = new ServiceCollection();
+            
+            // Register the file path provider
+            provider.AddSingleton<IFilePathProvider, WindowsFilePathProvider>();
 
-            return provider;
+            // Register the file service
+            provider.AddSingleton<IFileService, FileService>();
+
+            return provider.BuildServiceProvider(true);
         }
     }
 }

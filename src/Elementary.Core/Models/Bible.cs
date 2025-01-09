@@ -26,6 +26,7 @@ namespace Elementary.Core.Models
     {
         public int Index { get; set; }
         public int ReadingOrderIndex { get; set; }
+        public string ChapterText { get; set; }
 
         public Chapter() { }
     }
