@@ -4,13 +4,16 @@ namespace Elementary.Core.Enums
 {
     public enum ETranslation
     {
-        [Description("NET")]
-        NET = 0,
-
-        [Description("KJV")]
-        KJV = 1,
+        [Description("Not Set")]
+        NotSet,
 
         [Description("ASV")]
-        ASV = 2
+        ASV,
+
+        [Description("KJV")]
+        KJV,
+
+        [Description("NET")]
+        NET
     }
 }

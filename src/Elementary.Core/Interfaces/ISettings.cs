@@ -41,7 +41,7 @@ namespace Elementary.Core.Interfaces
         /// Display verse numbers inline.
         /// Default true.
         /// </summary>
-        bool ShowVerseNumbers {  get; set; }
+        bool? ShowVerseNumbers {  get; set; }
 
         /// <summary>
         /// The theme of the application.

@@ -26,7 +26,7 @@ namespace Elementary.ViewModels
         private List<int> _currentBookChapters;
         private string _currentChapterText;
         private string _currentChapterContent;
-        private ISettings _elementarySettings;
+        private ISettings _appSettings;
 
         public EpubBook CurrentBible { 
             get 
@@ -95,8 +95,8 @@ namespace Elementary.ViewModels
 
         public ISettings AppSettings
         {
-            get => _elementarySettings;
-            set => SetProperty(ref _elementarySettings, value);
+            get => _appSettings;
+            set => SetProperty(ref _appSettings, value);
         }
 
         public BiblePageViewModel()
@@ -105,7 +105,7 @@ namespace Elementary.ViewModels
         public void Initialize()
         {
             var settingsService = App.Services.GetRequiredService<ISettingsService>();
-            AppSettings = settingsService.LoadSettings();
+            AppSettings = settingsService.GetSettings();
 
             var biblePath = BiblePathDictionary.BibleDictionary[AppSettings.Translation.ToString()];
             var bibleFilePath = StorageFile.GetFileFromApplicationUriAsync(new Uri(biblePath)).AsTask().Result.Path;

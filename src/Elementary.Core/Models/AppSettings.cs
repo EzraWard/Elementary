@@ -3,7 +3,7 @@ using Elementary.Core.Interfaces;
 
 namespace Elementary.Core.Models
 {
-    public class ElementarySettings : ISettings
+    public class AppSettings : ISettings
     {
         public ETranslation Translation { get; set; }
 
@@ -15,10 +15,8 @@ namespace Elementary.Core.Models
 
         public EFontSize FontSize { get; set; }
 
-        public bool ShowVerseNumbers { get; set; }
+        public bool? ShowVerseNumbers { get; set; }
 
         public ETheme Theme { get; set; }
-
-
     }
 }

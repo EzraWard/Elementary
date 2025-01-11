@@ -30,6 +30,12 @@ namespace Elementary
             // Register the file service
             provider.AddSingleton<IFileService, FileService>();
 
+            // Register the settings service
+            provider.AddSingleton<ISettingsService, SettingsService>();
+
+            // Register the settings provider
+            provider.AddSingleton<ISettingsProvider, WindowsSettingsProvider>();
+
             return provider.BuildServiceProvider(true);
         }
     }

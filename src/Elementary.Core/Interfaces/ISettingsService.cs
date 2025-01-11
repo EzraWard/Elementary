@@ -2,12 +2,8 @@
 {
     public interface ISettingsService
     {
-        ISettings LoadSettings();
+        ISettings GetSettings();
 
-        void AddOrSetSetting(string key, string value);
-
-        string GetSetting(string key);
-
-        void DeleteSetting(string key);
+        void SaveSettings(ISettings settings);
     }
 }

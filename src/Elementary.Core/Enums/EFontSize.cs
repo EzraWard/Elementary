@@ -1,19 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Text;
+﻿using System.ComponentModel;
 
 namespace Elementary.Core.Enums
 {
     public enum EFontSize
     {
+        [Description("Not Set")]
+        NotSet,
+
         [Description("Small")]
-        Small = 0,
+        Small,
 
         [Description("Medium")]
-        Medium = 1,
+        Medium,
 
         [Description("Large")]
-        Large = 2
+        Large
     }
 }

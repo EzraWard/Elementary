@@ -7,10 +7,13 @@ namespace Elementary.Core.Enums
 {
     public enum EFont
     {
+        [Description("Not Set")]
+        NotSet,
+
         [Description("Segoe UI")]
-        SegoeUIVariable = 0,
+        SegoeUIVariable,
 
         [Description("Georgia")]
-        Georgia = 1
+        Georgia
     }
 }

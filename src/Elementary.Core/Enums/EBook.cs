@@ -4,6 +4,9 @@ namespace Elementary.Core.Enums
 {
     public enum EBook
     {
+        [Description("Not Set")]
+        NotSet,
+
         [Description("Genesis")]
         Genesis,
 

@@ -123,7 +123,7 @@
       <DependentUpon>SettingsPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Services\WindowsFilePathProvider.cs" />
-    <Compile Include="Services\WindowsSettingsService.cs" />
+    <Compile Include="Services\WindowsSettingsProvider.cs" />
     <Compile Include="ViewModels\BiblePageViewModel.cs" />
     <Compile Include="ViewModels\SettingsPageViewModek.cs" />
   </ItemGroup>
