@@ -7,7 +7,12 @@ namespace Elementary.Services
 {
     public class SettingsService : ISettingsService
     {
-        private readonly ISettingsProvider _settingsProvider;
+        private ISettingsProvider _settingsProvider;
+
+        public void SetSettingsProvider(ISettingsProvider settingsProvider)
+        {
+            _settingsProvider = settingsProvider;
+        }
 
         public ISettings GetSettings()
         {

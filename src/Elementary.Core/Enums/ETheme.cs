@@ -4,13 +4,16 @@ namespace Elementary.Core.Enums
 {
     public enum ETheme
     {
+        [Description("Not Set")]
+        NotSet,
+
         [Description("Light")]
-        Light = 0,
+        Light,
 
         [Description("Dark")]
-        Dark = 1,
+        Dark,
 
         [Description("System")]
-        System = 2
+        System
     }
 }
