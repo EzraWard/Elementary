@@ -10,13 +10,12 @@ namespace Elementary.Tests.Services
     [TestClass]
     public class SettingsServiceTests
     {
-        private Mock<ISettingsProvider> _mockSettingsProvider;
-        private SettingsService _settingsService = new SettingsService();
+        private readonly Mock<ISettingsProvider> _mockSettingsProvider = new Mock<ISettingsProvider>();
+        private readonly SettingsService _settingsService = new SettingsService();
 
         [TestInitialize]
         public void Setup()
         {
-            _mockSettingsProvider = new Mock<ISettingsProvider>();
             _settingsService.SetSettingsProvider(_mockSettingsProvider.Object);
         }
 
