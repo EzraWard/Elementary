@@ -3,15 +3,15 @@ using Moq;
 using Elementary.Core.Enums;
 using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
-using Elementary.Services;
+using Elementary.Core.Services;
 
-namespace Elementary.Tests.Services
+namespace Elementary.Tests
 {
     [TestClass]
     public class SettingsServiceTests
     {
-        private readonly Mock<ISettingsProvider> _mockSettingsProvider = new Mock<ISettingsProvider>();
-        private readonly SettingsService _settingsService = new SettingsService();
+        private readonly Mock<ISettingsProvider> _mockSettingsProvider = new();
+        private readonly SettingsService _settingsService = new();
 
         [TestInitialize]
         public void Setup()
@@ -48,7 +48,7 @@ namespace Elementary.Tests.Services
         public void GetSettings_ShouldApplyDefaultValues_WhenSettingsAreNotPresent()
         {
             // Arrange
-            _mockSettingsProvider.Setup(p => p.GetSetting(It.IsAny<string>())).Returns((string)null);
+            _mockSettingsProvider.Setup(p => p.GetSetting(It.IsAny<string>())).Returns("");
 
             // Act
             var settings = _settingsService.GetSettings();

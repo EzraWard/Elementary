@@ -3,7 +3,7 @@ using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
 using System;
 
-namespace Elementary.Services
+namespace Elementary.Core.Services
 {
     public class SettingsService : ISettingsService
     {
@@ -82,6 +82,7 @@ namespace Elementary.Services
             _settingsProvider.SaveSetting(key, value);
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "<Pending>")]
         private void DeleteSetting(string key)
         {
             _settingsProvider.DeleteSetting(key);
