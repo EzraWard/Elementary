@@ -147,6 +147,9 @@
     <PackageReference Include="MSTest.TestFramework">
       <Version>3.8.2</Version>
     </PackageReference>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>13.0.3</Version>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Elementary.Core\Elementary.Core.csproj">
