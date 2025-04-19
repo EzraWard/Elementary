@@ -9,7 +9,7 @@ namespace Elementary.Core.Services
     {
         private ISettingsProvider _settingsProvider;
 
-        public void SetSettingsProvider(ISettingsProvider settingsProvider)
+        public SettingsService(ISettingsProvider settingsProvider)
         {
             _settingsProvider = settingsProvider;
         }
@@ -18,13 +18,16 @@ namespace Elementary.Core.Services
         {
             var appSettings = new AppSettings();
 
-            Enum.TryParse(GetSetting("translation"), out ETranslation translation);
+            var translationS = GetSetting("translation");
+
+            Enum.TryParse(translationS, out ETranslation translation);
             appSettings.Translation = translation;
 
             Enum.TryParse(GetSetting("book"), out EBook book);
             appSettings.Book = book;
 
-            appSettings.Chapter = int.Parse(GetSetting("chapter"));
+            int.TryParse(GetSetting("chapter"), out int chapter);
+            appSettings.Chapter = chapter;
 
             Enum.TryParse(GetSetting("font"), out EFont font);
             appSettings.Font = font;
