@@ -2,14 +2,11 @@
 using Elementary.Core.Enums;
 using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
-using Elementary.UWP.Dictionaries;
 using HtmlAgilityPack;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using VersOne.Epub;
-using Windows.Storage;
 using Windows.UI.Xaml.Media;
 
 namespace Elementary.ViewModels
