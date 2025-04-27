@@ -5,4 +5,8 @@
     <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="VersOne.Epub" Version="3.3.3" />
+  </ItemGroup>
+
 </Project>
