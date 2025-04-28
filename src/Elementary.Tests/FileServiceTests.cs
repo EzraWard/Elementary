@@ -4,99 +4,100 @@ using System.Text;
 namespace Elementary.Tests.Services
 {
     [TestClass]
-    public class FileServiceTests
+    public class FileServiceTests : IDisposable
     {
-        private FileService _fileService = new FileService();
+        private FileService _fileService;
+        private string _testDirectory;
+
+        public FileServiceTests()
+        {
+            _fileService = new FileService();
+            _testDirectory = Path.Combine(Path.GetTempPath(), "FileServiceTests");
+
+            if (!Directory.Exists(_testDirectory))
+            {
+                Directory.CreateDirectory(_testDirectory);
+            }
+        }
 
         [TestMethod]
-        public void ReadFile_ShouldReturnStream_WhenFileExists()
+        public async Task WriteFileAsync_ShouldCreateFileWithCorrectContent()
         {
             // Arrange
-            var path = "test.txt";
-            var content = "File content";
-            File.WriteAllText(path, content);
+            var filePath = Path.Combine(_testDirectory, "testfile.txt");
+            var content = "Hello, world!";
+            var contentStream = new MemoryStream(Encoding.UTF8.GetBytes(content));
 
-            try
-            {
-                // Act
-                using var result = _fileService.ReadFile(path);
+            // Act
+            await _fileService.WriteFileAsync(filePath, contentStream);
 
-                // Assert
-                using var reader = new StreamReader(result);
-                Assert.AreEqual(content, reader.ReadToEnd());
-            }
-            finally
-            {
-                File.Delete(path); // Cleanup
-            }
+            // Assert
+            Assert.IsTrue(File.Exists(filePath));
+            var fileContent = await File.ReadAllTextAsync(filePath);
+            Assert.AreEqual(content, fileContent);
+        }
+
+        [TestMethod]
+        public async Task ReadFileAsync_ShouldReturnCorrectContent()
+        {
+            // Arrange
+            var filePath = Path.Combine(_testDirectory, "readfile.txt");
+            var expectedContent = "Read this content.";
+            await File.WriteAllTextAsync(filePath, expectedContent);
+
+            // Act
+            var stream = await _fileService.ReadFileAsync(filePath);
+            using var reader = new StreamReader(stream);
+            var actualContent = await reader.ReadToEndAsync();
+
+            // Assert
+            Assert.AreEqual(expectedContent, actualContent);
         }
 
         [TestMethod]
         [ExpectedException(typeof(FileNotFoundException))]
-        public void ReadFile_ShouldThrowFileNotFoundException_WhenFileDoesNotExist()
+        public async Task ReadFileAsync_ShouldThrowIfFileDoesNotExist()
         {
             // Arrange
-            var invalidPath = "nonexistent.txt";
+            var nonExistentPath = Path.Combine(_testDirectory, "nonexistent.txt");
 
             // Act
-            _fileService.ReadFile(invalidPath);
+            await _fileService.ReadFileAsync(nonExistentPath);
         }
 
         [TestMethod]
-        public async Task WriteFileAsync_ShouldWriteContentToFile()
+        public async Task FileExistsAsync_ShouldReturnTrueIfFileExists()
         {
             // Arrange
-            var path = "output.txt";
-            var content = "Hello, world!";
-            var contentStream = new MemoryStream(Encoding.UTF8.GetBytes(content));
-
-            try
-            {
-                // Act
-                await _fileService.WriteFileAsync(path, contentStream);
-
-                // Assert
-                Assert.IsTrue(File.Exists(path));
-                Assert.AreEqual(content, File.ReadAllText(path));
-            }
-            finally
-            {
-                File.Delete(path); // Cleanup
-            }
-        }
-
-        [TestMethod]
-        public async Task FileExistsAsync_ShouldReturnTrue_WhenFileExists()
-        {
-            // Arrange
-            var path = "exists.txt";
-            File.WriteAllText(path, "Test content");
-
-            try
-            {
-                // Act
-                var exists = await _fileService.FileExistsAsync(path);
-
-                // Assert
-                Assert.IsTrue(exists);
-            }
-            finally
-            {
-                File.Delete(path); // Cleanup
-            }
-        }
-
-        [TestMethod]
-        public async Task FileExistsAsync_ShouldReturnFalse_WhenFileDoesNotExist()
-        {
-            // Arrange
-            var path = "nonexistent.txt";
+            var filePath = Path.Combine(_testDirectory, "exists.txt");
+            await File.WriteAllTextAsync(filePath, "Some content");
 
             // Act
-            var exists = await _fileService.FileExistsAsync(path);
+            var exists = await _fileService.FileExistsAsync(filePath);
+
+            // Assert
+            Assert.IsTrue(exists);
+        }
+
+        [TestMethod]
+        public async Task FileExistsAsync_ShouldReturnFalseIfFileDoesNotExist()
+        {
+            // Arrange
+            var filePath = Path.Combine(_testDirectory, "doesnotexist.txt");
+
+            // Act
+            var exists = await _fileService.FileExistsAsync(filePath);
 
             // Assert
             Assert.IsFalse(exists);
+        }
+
+        public void Dispose()
+        {
+            if (Directory.Exists(_testDirectory))
+            {
+                Directory.Delete(_testDirectory, true);
+            }
         }
     }
 }
