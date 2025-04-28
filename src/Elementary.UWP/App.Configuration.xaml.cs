@@ -28,7 +28,7 @@ namespace Elementary
             provider.AddSingleton<IFilePathProvider, WindowsFilePathProvider>();
 
             // Register the file service
-            provider.AddSingleton<IFileService, FileService>();
+            provider.AddSingleton<IFileService, UWPFileService>();
 
             // Register the settings provider
             provider.AddSingleton<ISettingsProvider, WindowsSettingsProvider>();

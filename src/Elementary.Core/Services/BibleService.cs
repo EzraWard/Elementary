@@ -3,6 +3,7 @@ using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using VersOne.Epub;
 
 namespace Elementary.Core.Services
@@ -52,9 +53,14 @@ namespace Elementary.Core.Services
         private Bible GetBibleNET()
         {
             var bible = new Bible();
+            EpubBook epubBible;
 
             var bibleFilePath = _filePathProvider.GetPathForTranslation(ETranslation.NET);
-            var epubBible = EpubReader.ReadBook(bibleFilePath);
+
+            using (var stream = _fileService.ReadFile(bibleFilePath))
+            {
+                epubBible = EpubReader.ReadBook(stream);
+            }
 
             //Enumerate Books
             foreach (var book in epubBible.Navigation)

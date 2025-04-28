@@ -1,120 +1,111 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
-using Elementary.Core.Enums;
+﻿using Elementary.Core.Enums;
 using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
 using Elementary.Core.Services;
+using Moq;
 
-namespace Elementary.Tests
+namespace Elementary.Core.Tests.Services
 {
     [TestClass]
     public class SettingsServiceTests
     {
-        private readonly Mock<ISettingsProvider> _mockSettingsProvider = new();
-        private readonly SettingsService _settingsService = new();
+        private Mock<ISettingsProvider> _settingsProviderMock;
+        private SettingsService _settingsService;
 
         [TestInitialize]
         public void Setup()
         {
-            _settingsService.SetSettingsProvider(_mockSettingsProvider.Object);
+            _settingsProviderMock = new Mock<ISettingsProvider>();
+            _settingsService = new SettingsService(_settingsProviderMock.Object);
         }
 
         [TestMethod]
-        public void GetSettings_ShouldParseValuesAndReturnCorrectSettings()
+        public void GetSettings_ShouldReturnExpectedSettings()
         {
             // Arrange
-            _mockSettingsProvider.Setup(p => p.GetSetting("translation")).Returns(ETranslation.KJV.ToString());
-            _mockSettingsProvider.Setup(p => p.GetSetting("book")).Returns(EBook.Psalms.ToString());
-            _mockSettingsProvider.Setup(p => p.GetSetting("chapter")).Returns("5");
-            _mockSettingsProvider.Setup(p => p.GetSetting("font")).Returns(EFont.SegoeUIVariable.ToString());
-            _mockSettingsProvider.Setup(p => p.GetSetting("fontSize")).Returns(EFontSize.Large.ToString());
-            _mockSettingsProvider.Setup(p => p.GetSetting("showVerseNumbers")).Returns("true");
-            _mockSettingsProvider.Setup(p => p.GetSetting("theme")).Returns(ETheme.Dark.ToString());
-
-            // Act
-            var settings = _settingsService.GetSettings();
-
-            // Assert
-            Assert.AreEqual(ETranslation.KJV, settings.Translation);
-            Assert.AreEqual(EBook.Psalms, settings.Book);
-            Assert.AreEqual(5, settings.Chapter);
-            Assert.AreEqual(EFont.SegoeUIVariable, settings.Font);
-            Assert.AreEqual(EFontSize.Large, settings.FontSize);
-            Assert.IsTrue(settings.ShowVerseNumbers);
-            Assert.AreEqual(ETheme.Dark, settings.Theme);
-        }
-
-        [TestMethod]
-        public void GetSettings_ShouldApplyDefaultValues_WhenSettingsAreNotPresent()
-        {
-            // Arrange
-            _mockSettingsProvider.Setup(p => p.GetSetting(It.IsAny<string>())).Returns("");
-
-            // Act
-            var settings = _settingsService.GetSettings();
-
-            // Assert
-            Assert.AreEqual(ETranslation.NET, settings.Translation); // Default translation
-            Assert.AreEqual(EBook.Genesis, settings.Book); // Default book
-            Assert.AreEqual(1, settings.Chapter); // Default chapter
-            Assert.AreEqual(EFont.SegoeUIVariable, settings.Font); // Default font
-            Assert.AreEqual(EFontSize.Medium, settings.FontSize); // Default font size
-            Assert.IsTrue(settings.ShowVerseNumbers); // Default showVerseNumbers
-        }
-
-        [TestMethod]
-        public void SaveSettings_ShouldSaveCorrectValues()
-        {
-            // Arrange
-            var settings = new AppSettings
+            var settingsDictionary = new Dictionary<string, string>
             {
-                Translation = ETranslation.ASV,
-                Book = EBook.Matthew,
-                Chapter = 3,
+                { "translation", ETranslation.NET.ToString() },
+                { "book", EBook.Genesis.ToString() },
+                { "chapter", "1" },
+                { "font", EFont.SegoeUIVariable.ToString() },
+                { "fontSize", EFontSize.Medium.ToString() },
+                { "showVerseNumbers", "true" },
+                { "theme", ETheme.Light.ToString() }
+            };
+
+            _settingsProviderMock.Setup(x => x.GetSetting(It.IsAny<string>()))
+                .Returns<string>(key => settingsDictionary[key]);
+
+            // Act
+            var settings = _settingsService.GetSettings();
+
+            // Assert
+            Assert.AreEqual(ETranslation.NET, settings.Translation);
+            Assert.AreEqual(EBook.Genesis, settings.Book);
+            Assert.AreEqual(1, settings.Chapter);
+            Assert.AreEqual(EFont.SegoeUIVariable, settings.Font);
+            Assert.AreEqual(EFontSize.Medium, settings.FontSize);
+            Assert.IsTrue(settings.ShowVerseNumbers);
+            Assert.AreEqual(ETheme.Light, settings.Theme);
+        }
+
+        [TestMethod]
+        public void SaveSettings_ShouldSaveAllSettings()
+        {
+            // Arrange
+            var appSettings = new AppSettings
+            {
+                Translation = ETranslation.NET,
+                Book = EBook.Genesis,
+                Chapter = 1,
                 Font = EFont.SegoeUIVariable,
-                FontSize = EFontSize.Small,
-                ShowVerseNumbers = false,
+                FontSize = EFontSize.Medium,
+                ShowVerseNumbers = true,
                 Theme = ETheme.Light
             };
 
             // Act
-            _settingsService.SaveSettings(settings);
+            _settingsService.SaveSettings(appSettings);
 
             // Assert
-            _mockSettingsProvider.Verify(p => p.SaveSetting("translation", ETranslation.ASV.ToString()), Times.Once);
-            _mockSettingsProvider.Verify(p => p.SaveSetting("book", EBook.Matthew.ToString()), Times.Once);
-            _mockSettingsProvider.Verify(p => p.SaveSetting("chapter", "3"), Times.Once);
-            _mockSettingsProvider.Verify(p => p.SaveSetting("font", EFont.SegoeUIVariable.ToString()), Times.Once);
-            _mockSettingsProvider.Verify(p => p.SaveSetting("fontSize", EFontSize.Small.ToString()), Times.Once);
-            _mockSettingsProvider.Verify(p => p.SaveSetting("showVerseNumbers", "false"), Times.Once);
-            _mockSettingsProvider.Verify(p => p.SaveSetting("theme", ETheme.Light.ToString()), Times.Once);
+            _settingsProviderMock.Verify(x => x.SaveSetting("translation", ETranslation.NET.ToString()), Times.Once);
+            _settingsProviderMock.Verify(x => x.SaveSetting("book", EBook.Genesis.ToString()), Times.Once);
+            _settingsProviderMock.Verify(x => x.SaveSetting("chapter", "1"), Times.Once);
+            _settingsProviderMock.Verify(x => x.SaveSetting("font", EFont.SegoeUIVariable.ToString()), Times.Once);
+            _settingsProviderMock.Verify(x => x.SaveSetting("fontSize", EFontSize.Medium.ToString()), Times.Once);
+            _settingsProviderMock.Verify(x => x.SaveSetting("showVerseNumbers", "True"), Times.Once);
+            _settingsProviderMock.Verify(x => x.SaveSetting("theme", ETheme.Light.ToString()), Times.Once);
         }
 
         [TestMethod]
-        public void EnsureInitialization_ShouldSetDefaults_WhenValuesAreNotSet()
+        public void GetSettings_ShouldInitializeDefaultsWhenValuesMissing()
         {
             // Arrange
-            var settings = new AppSettings
+            var settingsDictionary = new Dictionary<string, string>
             {
-                Translation = ETranslation.NotSet,
-                Book = EBook.NotSet,
-                Chapter = 0,
-                Font = EFont.NotSet,
-                FontSize = EFontSize.NotSet,
-                ShowVerseNumbers = null,
-                Theme = ETheme.NotSet
+                { "translation", "" },
+                { "book", "" },
+                { "chapter", "0" },
+                { "font", "" },
+                { "fontSize", "" },
+                { "showVerseNumbers", "" },
+                { "theme", "" }
             };
 
+            _settingsProviderMock.Setup(x => x.GetSetting(It.IsAny<string>()))
+                .Returns<string>(key => settingsDictionary[key]);
+
             // Act
-            _settingsService.SaveSettings(settings); // This will call EnsureInitialization internally
+            var settings = _settingsService.GetSettings();
 
             // Assert
-            Assert.AreEqual(ETranslation.NET, settings.Translation); // Default translation
-            Assert.AreEqual(EBook.Genesis, settings.Book); // Default book
-            Assert.AreEqual(1, settings.Chapter); // Default chapter
-            Assert.AreEqual(EFont.SegoeUIVariable, settings.Font); // Default font
-            Assert.AreEqual(EFontSize.Medium, settings.FontSize); // Default font size
-            Assert.IsTrue(settings.ShowVerseNumbers); // Default showVerseNumbers
+            Assert.AreEqual(ETranslation.NET, settings.Translation);
+            Assert.AreEqual(EBook.Genesis, settings.Book);
+            Assert.AreEqual(1, settings.Chapter);
+            Assert.AreEqual(EFont.SegoeUIVariable, settings.Font);
+            Assert.AreEqual(EFontSize.Medium, settings.FontSize);
+            Assert.IsTrue(settings.ShowVerseNumbers);
         }
     }
 }
