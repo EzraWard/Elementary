@@ -4,6 +4,7 @@ using Elementary.Core.Models;
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Threading.Tasks;
 using VersOne.Epub;
 
 namespace Elementary.Core.Services
@@ -25,7 +26,7 @@ namespace Elementary.Core.Services
             _filePathProvider = filePathProvider;
         }
 
-        public Bible GetBible(ETranslation translation)
+        public async Task<Bible> GetBible(ETranslation translation)
         {
             switch (translation)
             {
@@ -34,7 +35,7 @@ namespace Elementary.Core.Services
                 case ETranslation.KJV:
                     return GetBibleKJV();
                 case ETranslation.NET:
-                    return GetBibleNET();
+                    return await GetBibleNET();
                 default:
                     return null;
             }
@@ -50,14 +51,14 @@ namespace Elementary.Core.Services
             throw new NotImplementedException();
         }
 
-        private Bible GetBibleNET()
+        private async Task<Bible> GetBibleNET()
         {
             var bible = new Bible();
             EpubBook epubBible;
 
             var bibleFilePath = _filePathProvider.GetPathForTranslation(ETranslation.NET);
 
-            using (var stream = _fileService.ReadFile(bibleFilePath))
+            using (var stream = await _fileService.ReadFileAsync(bibleFilePath))
             {
                 epubBible = EpubReader.ReadBook(stream);
             }

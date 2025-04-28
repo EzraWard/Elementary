@@ -8,7 +8,7 @@ namespace Elementary.Core.Interfaces
 {
     public interface IFileService
     {
-        Stream ReadFile(string path);
+        Task<Stream> ReadFileAsync(string path);
 
         Task WriteFileAsync(string path, Stream content);
 

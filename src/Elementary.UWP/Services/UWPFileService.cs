@@ -8,14 +8,7 @@ namespace Elementary.Services
 {
     internal class UWPFileService : IFileService
     {
-        public Stream ReadFile(string path)
-        {
-            // StorageFile APIs are async, so we can't do truly sync read.
-            // We'll block here for compatibility, but you should prefer async loading elsewhere!
-            return ReadFileAsync(path).GetAwaiter().GetResult();
-        }
-
-        private async Task<Stream> ReadFileAsync(string path)
+        public async Task<Stream> ReadFileAsync(string path)
         {
             StorageFile file;
 

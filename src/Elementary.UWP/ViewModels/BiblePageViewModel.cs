@@ -99,13 +99,13 @@ namespace Elementary.ViewModels
         public BiblePageViewModel()
         {}
 
-        public void Initialize()
+        public async void Initialize()
         {
             var settingsService = App.Services.GetRequiredService<ISettingsService>();
             AppSettings = settingsService.GetSettings();
 
             var _bibleService = App.Services.GetRequiredService<IBibleService>();
-            _bible = _bibleService.GetBible(ETranslation.NET);
+            _bible = await _bibleService.GetBible(ETranslation.NET);
         }
 
         public void SetCurrentChapterContent(int readingOrderIndex)

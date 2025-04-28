@@ -6,12 +6,21 @@ namespace Elementary.Core.Services
 {
     public class FileService: IFileService
     {
-        public Stream ReadFile(string path)
+        public async Task<Stream> ReadFileAsync(string path)
         {
             if (!File.Exists(path))
-                throw new FileNotFoundException($"File not found: {path}");
+            {
+                throw new FileNotFoundException($"File not found at path: {path}");
+            }
 
-            return new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var memoryStream = new MemoryStream();
+            using (var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                await fileStream.CopyToAsync(memoryStream);
+            }
+
+            memoryStream.Position = 0; // Reset stream position to the beginning
+            return memoryStream;
         }
 
         public async Task WriteFileAsync(string path, Stream content)
