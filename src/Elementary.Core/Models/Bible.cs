@@ -4,7 +4,6 @@ namespace Elementary.Core.Models
 {
     public class Bible
     {
-        public string Title { get; set; }
         public ObservableCollection<Book> Books;
 
         public Bible()
@@ -25,7 +24,6 @@ namespace Elementary.Core.Models
     public class Chapter
     {
         public int Index { get; set; }
-        public int ReadingOrderIndex { get; set; }
         public string ChapterText { get; set; }
 
         public Chapter() { }

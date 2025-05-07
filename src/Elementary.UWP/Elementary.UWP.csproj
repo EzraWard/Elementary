@@ -107,7 +107,6 @@
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
     <Compile Include="Dictionaries\BiblePathDictionary.cs" />
-    <Compile Include="Dictionaries\EBookToEPubLocationNET.cs" />
     <Compile Include="Helpers\ThemeHelper.cs" />
     <Compile Include="Pages\BiblePage.xaml.cs">
       <DependentUpon>BiblePage.xaml</DependentUpon>

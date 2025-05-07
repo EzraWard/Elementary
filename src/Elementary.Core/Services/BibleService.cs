@@ -1,8 +1,10 @@
-﻿using Elementary.Core.Enums;
+﻿using Elementary.Core.Dictionaries;
+using Elementary.Core.Enums;
 using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
 using System;
 using System.Collections.ObjectModel;
+using System.Drawing;
 using System.IO;
 using System.Threading.Tasks;
 using VersOne.Epub;
@@ -19,11 +21,10 @@ namespace Elementary.Core.Services
         public BibleService(ISettingsService settingsService, IFileService fileService, IFilePathProvider filePathProvider)
         {
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+            _fileService = fileService ?? throw new ArgumentNullException(nameof(settingsService)); ;
+            _filePathProvider = filePathProvider ?? throw new ArgumentNullException(nameof(settingsService));
+
             _settings = _settingsService.GetSettings();
-
-            _fileService = fileService;
-
-            _filePathProvider = filePathProvider;
         }
 
         public async Task<Bible> GetBible(ETranslation translation)
@@ -71,10 +72,15 @@ namespace Elementary.Core.Services
                     Title = book.Title
                 });
             }
+
+            //Set reading order index for each book
             foreach (var book in bible.Books)
             {
-                book.ReadingOrderIndex = 1;
+                var bookEnum = EBookToLocation.EBookTitleToEBook[book.Title];
+                book.ReadingOrderIndex = EBookToLocation.EBookToEPubLocationNET[bookEnum];
             }
+
+            //intialize chapters
             for (int i = 0; i < bible.Books.Count; i++)
             {
                 int numberOfChapters;
@@ -87,10 +93,12 @@ namespace Elementary.Core.Services
                     numberOfChapters = 22;
                 }
 
+                //Set
                 bible.Books[i].Chapters = new ObservableCollection<Chapter>();
                 for (int j = 1; j < numberOfChapters; j++)
                 {
-                    bible.Books[i].Chapters.Add(new Chapter { Index = j, ReadingOrderIndex = bible.Books[i].ReadingOrderIndex + j });
+                    var readingOrderIndex = bible.Books[i].ReadingOrderIndex + j;
+                    bible.Books[i].Chapters.Add(new Chapter { Index = j, ChapterText = epubBible.ReadingOrder[readingOrderIndex].Content });
                 }
             }
 

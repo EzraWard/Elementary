@@ -77,7 +77,7 @@ namespace Elementary
             var Settings = ApplicationData.Current.LocalSettings;
             Settings.Values["Chapter"] = selectedItem.Index.ToString();
 
-            _viewModel.SetCurrentChapterContent(selectedItem.ReadingOrderIndex);
+            //_viewModel.SetCurrentChapterContent(selectedItem.ReadingOrderIndex);
 
             //scroll to top
             BibleScrollViewer.ChangeView(0, 0, 1);
