@@ -15,12 +15,13 @@ namespace Elementary
         public BiblePage()
         {
             _viewModel = new BiblePageViewModel();
-            DataContext = _viewModel;
 
             InitializeComponent();
 
             //VM intialization
             _viewModel.Initialize();
+
+            DataContext = _viewModel;
 
             Loaded += BiblePage_Loaded;
         }
@@ -53,15 +54,8 @@ namespace Elementary
             if (!_isLoaded) return;
             var comboBox = sender as ComboBox;
             var book = (Book) comboBox.SelectedItem;
-            _viewModel.Book = book;
-            _viewModel.Chapter = book.Chapters.FirstOrDefault();
-
-            var Settings = ApplicationData.Current.LocalSettings;
-            Settings.Values["Book"] = _viewModel.Book.Title;
-            Settings.Values["Chapter"] = _viewModel.Chapter.Index;
-
-            BookChapterComboBox.ItemsSource = _viewModel.Book.Chapters;
-            BookChapterComboBox.SelectedItem = _viewModel.Chapter;
+            _viewModel.CurrentBook = book;
+            _viewModel.CurrentChapter = book.Chapters.FirstOrDefault();
 
             //scroll to top
             BibleScrollViewer.ChangeView(0, 0, 1);
@@ -71,13 +65,7 @@ namespace Elementary
         {
             if (!_isLoaded) return;
             var comboBox = sender as ComboBox;
-            var selectedItem = comboBox.SelectedItem as Chapter;
-            if (selectedItem is null) return;
-
-            var Settings = ApplicationData.Current.LocalSettings;
-            Settings.Values["Chapter"] = selectedItem.Index.ToString();
-
-            //_viewModel.SetCurrentChapterContent(selectedItem.ReadingOrderIndex);
+            var selectedItem = comboBox.SelectedItem;
 
             //scroll to top
             BibleScrollViewer.ChangeView(0, 0, 1);
