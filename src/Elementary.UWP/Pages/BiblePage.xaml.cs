@@ -21,9 +21,9 @@ namespace Elementary
             //VM intialization
             _viewModel.Initialize();
 
-            DataContext = _viewModel;
-
             Loaded += BiblePage_Loaded;
+
+            DataContext = _viewModel;
         }
 
         private void BiblePage_Loaded(object sender, RoutedEventArgs e)

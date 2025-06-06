@@ -62,7 +62,7 @@ namespace Elementary.ViewModels
             var _bibleService = App.Services.GetRequiredService<IBibleService>();
             _bible = await _bibleService.GetBible(ETranslation.NET);
 
-            CurrentBook = _bible.Books.FirstOrDefault(b => b.Title == AppSettings.Book.ToString()) ?? _bible.Books.FirstOrDefault();
+            CurrentBook = Bible.Books.FirstOrDefault(b => b.Title == AppSettings.Book.ToString()) ?? _bible.Books.FirstOrDefault();
             CurrentChapter = CurrentBook?.Chapters.FirstOrDefault(c => c.Index == AppSettings.Chapter) ?? CurrentBook?.Chapters.FirstOrDefault() ?? new Chapter();
             SelectedChapterIndex = CurrentChapter.Index;
         }
