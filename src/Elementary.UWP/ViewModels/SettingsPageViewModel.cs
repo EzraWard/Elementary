@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Elementary.ViewModels
 {
-    internal class SettingsPageViewModek
+    internal class SettingsPageViewModel
     {
     }
 }

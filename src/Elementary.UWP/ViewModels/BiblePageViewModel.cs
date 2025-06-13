@@ -5,6 +5,7 @@ using Elementary.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Elementary.ViewModels
 {
@@ -13,6 +14,7 @@ namespace Elementary.ViewModels
         private Bible _bible;
         private Book _currentBook;
         private Chapter _currentChapter;
+        private int _selectedChapterIndex;
         private ISettings _appSettings;
 
         public Bible Bible
@@ -43,7 +45,11 @@ namespace Elementary.ViewModels
                 ? Enumerable.Range(1, _currentBook.Chapters.Count).ToList()
                 : new List<int>();
 
-        public int SelectedChapterIndex { get; set; }
+        public int SelectedChapterIndex
+        {
+            get => _selectedChapterIndex;
+            set => SetProperty(ref _selectedChapterIndex, value);
+        }
 
         public ISettings AppSettings
         {
@@ -54,15 +60,15 @@ namespace Elementary.ViewModels
         public BiblePageViewModel()
         {}
 
-        public async void Initialize()
+        public async Task Initialize()
         {
             var settingsService = App.Services.GetRequiredService<ISettingsService>();
             AppSettings = settingsService.GetSettings();
 
             var _bibleService = App.Services.GetRequiredService<IBibleService>();
-            _bible = await _bibleService.GetBible(ETranslation.NET);
+            Bible = await _bibleService.GetBible(ETranslation.NET);
 
-            CurrentBook = Bible.Books.FirstOrDefault(b => b.Title == AppSettings.Book.ToString()) ?? _bible.Books.FirstOrDefault();
+            CurrentBook = Bible.Books.FirstOrDefault(b => b.Title == AppSettings.Book.ToString()) ?? Bible.Books.FirstOrDefault();
             CurrentChapter = CurrentBook?.Chapters.FirstOrDefault(c => c.Index == AppSettings.Chapter) ?? CurrentBook?.Chapters.FirstOrDefault() ?? new Chapter();
             SelectedChapterIndex = CurrentChapter.Index;
         }

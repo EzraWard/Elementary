@@ -18,8 +18,19 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8" Margin="8,8,8,8">
-            <ComboBox x:Name="BibleBookComboBox" ItemsSource="{x:Bind _viewModel.Bible.Books}" DisplayMemberPath="Title" SelectedItem="{x:Bind _viewModel.CurrentBook}" SelectionChanged="BibleBookComboBox_SelectionChanged" PlaceholderText="Book"/>
-            <ComboBox x:Name="BookChapterComboBox" ItemsSource="{x:Bind _viewModel.ChapterIndices}" SelectedItem="{x:Bind _viewModel.SelectedChapterIndex}" SelectionChanged="BookChapterComboBox_SelectionChanged" PlaceholderText="Chapter"/>
+            <ComboBox x:Name="BibleBookComboBox" 
+          ItemsSource="{Binding Bible.Books}" 
+          DisplayMemberPath="Title" 
+          SelectedItem="{Binding CurrentBook, Mode=TwoWay}" 
+          SelectionChanged="BibleBookComboBox_SelectionChanged" 
+          PlaceholderText="Book"/>
+
+            <ComboBox x:Name="BookChapterComboBox" 
+          ItemsSource="{Binding ChapterIndices}" 
+          SelectedItem="{Binding SelectedChapterIndex, Mode=TwoWay}" 
+          SelectionChanged="BookChapterComboBox_SelectionChanged" 
+          PlaceholderText="Chapter"/>
+
         </StackPanel>
         <ScrollViewer x:Name="BibleScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <Grid x:Name="RichTextGrid" SizeChanged="WebViewGrid_SizeChanged">

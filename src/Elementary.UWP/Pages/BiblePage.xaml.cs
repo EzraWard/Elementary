@@ -10,25 +10,24 @@ namespace Elementary
     public sealed partial class BiblePage : Page
     {
         public BiblePageViewModel _viewModel;
-        public bool _isLoaded = false;
+        public bool _isLoaded;
 
         public BiblePage()
         {
-            _viewModel = new BiblePageViewModel();
-
             InitializeComponent();
-
-            //VM intialization
-            _viewModel.Initialize();
-
             Loaded += BiblePage_Loaded;
 
-            DataContext = _viewModel;
+            _viewModel = new BiblePageViewModel();
         }
 
-        private void BiblePage_Loaded(object sender, RoutedEventArgs e)
+        private async void BiblePage_Loaded(object sender, RoutedEventArgs e)
         {
+            DataContext = _viewModel;
+            await _viewModel.Initialize();
+
             _isLoaded = true;
+
+            
         }
 
         private void WebViewGrid_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -53,21 +52,29 @@ namespace Elementary
         {
             if (!_isLoaded) return;
             var comboBox = sender as ComboBox;
-            var book = (Book) comboBox.SelectedItem;
-            _viewModel.CurrentBook = book;
-            _viewModel.CurrentChapter = book.Chapters.FirstOrDefault();
+            var book = (Book)comboBox.SelectedItem;
 
-            //scroll to top
-            BibleScrollViewer.ChangeView(0, 0, 1);
+            if (book != null)
+            {
+                _viewModel.CurrentBook = book;
+                _viewModel.CurrentChapter = book.Chapters.FirstOrDefault();
+                _viewModel.SelectedChapterIndex = _viewModel.CurrentChapter?.Index ?? 1;
+
+                //scroll to top
+                BibleScrollViewer.ChangeView(0, 0, 1);
+            }
         }
 
         private void BookChapterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!_isLoaded) return;
             var comboBox = sender as ComboBox;
-            var selectedItem = comboBox.SelectedItem;
+            var selectedIndex = (int)comboBox.SelectedItem;
 
-            //scroll to top
+            // Update the view model
+            _viewModel.SelectedChapterIndex = selectedIndex;
+            _viewModel.CurrentChapter = _viewModel.CurrentBook.Chapters.FirstOrDefault(c => c.Index == selectedIndex);
+
             BibleScrollViewer.ChangeView(0, 0, 1);
         }
     }
