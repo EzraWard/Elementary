@@ -4,7 +4,7 @@ namespace Elementary.Core.Models
 {
     public class Bible
     {
-        public ObservableCollection<Book> Books;
+        public ObservableCollection<Book> Books { get; set; }
 
         public Bible()
         {

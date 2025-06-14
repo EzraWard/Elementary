@@ -26,14 +26,19 @@ namespace Elementary.ViewModels
         public Book CurrentBook
         {
             get => _currentBook;
-            set 
+            set
             {
-                if(SetProperty(ref _currentBook, value))
+                if (SetProperty(ref _currentBook, value))
                 {
                     OnPropertyChanged(nameof(ChapterIndices));
+
+                    // Automatically update chapter when book changes
+                    CurrentChapter = _currentBook?.Chapters.FirstOrDefault();
+                    SelectedChapterIndex = CurrentChapter?.Index ?? 1;
                 }
             }
         }
+
         public Chapter CurrentChapter
         {
             get => _currentChapter;
@@ -48,7 +53,16 @@ namespace Elementary.ViewModels
         public int SelectedChapterIndex
         {
             get => _selectedChapterIndex;
-            set => SetProperty(ref _selectedChapterIndex, value);
+            set
+            {
+                if (SetProperty(ref _selectedChapterIndex, value))
+                {
+                    if (CurrentBook != null)
+                    {
+                        CurrentChapter = CurrentBook.Chapters.FirstOrDefault(c => c.Index == value);
+                    }
+                }
+            }
         }
 
         public ISettings AppSettings

@@ -25,9 +25,7 @@ namespace Elementary
             DataContext = _viewModel;
             await _viewModel.Initialize();
 
-            _isLoaded = true;
-
-            
+            _isLoaded = true;            
         }
 
         private void WebViewGrid_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -46,36 +44,6 @@ namespace Elementary
             }
 
             ChapterView.Width = gridWidth - 50;
-        }
-
-        private void BibleBookComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (!_isLoaded) return;
-            var comboBox = sender as ComboBox;
-            var book = (Book)comboBox.SelectedItem;
-
-            if (book != null)
-            {
-                _viewModel.CurrentBook = book;
-                _viewModel.CurrentChapter = book.Chapters.FirstOrDefault();
-                _viewModel.SelectedChapterIndex = _viewModel.CurrentChapter?.Index ?? 1;
-
-                //scroll to top
-                BibleScrollViewer.ChangeView(0, 0, 1);
-            }
-        }
-
-        private void BookChapterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (!_isLoaded) return;
-            var comboBox = sender as ComboBox;
-            var selectedIndex = (int)comboBox.SelectedItem;
-
-            // Update the view model
-            _viewModel.SelectedChapterIndex = selectedIndex;
-            _viewModel.CurrentChapter = _viewModel.CurrentBook.Chapters.FirstOrDefault(c => c.Index == selectedIndex);
-
-            BibleScrollViewer.ChangeView(0, 0, 1);
         }
     }
 }
