@@ -33,16 +33,20 @@ namespace Elementary.ViewModels
                     OnPropertyChanged(nameof(ChapterIndices));
 
                     // Automatically update chapter when book changes
-                    CurrentChapter = _currentBook?.Chapters.FirstOrDefault();
-                    //SelectedChapterIndex = CurrentChapter?.Index ?? 1;
-                }
+                    CurrentChapter = _currentBook?.Chapters.FirstOrDefault();                }
             }
         }
 
         public Chapter CurrentChapter
         {
             get => _currentChapter;
-            set => SetProperty(ref _currentChapter, value);
+            set
+            {
+                if (SetProperty(ref _currentChapter, value))
+                {
+                    OnPropertyChanged(nameof(SelectedChapterIndex));
+                }
+            }
         }
 
         public List<int> ChapterIndices =>
