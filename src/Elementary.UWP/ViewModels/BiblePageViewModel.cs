@@ -34,7 +34,7 @@ namespace Elementary.ViewModels
 
                     // Automatically update chapter when book changes
                     CurrentChapter = _currentBook?.Chapters.FirstOrDefault();
-                    SelectedChapterIndex = CurrentChapter?.Index ?? 1;
+                    //SelectedChapterIndex = CurrentChapter?.Index ?? 1;
                 }
             }
         }
@@ -46,20 +46,23 @@ namespace Elementary.ViewModels
         }
 
         public List<int> ChapterIndices =>
-            _currentBook?.Chapters != null
+            CurrentBook?.Chapters != null
                 ? Enumerable.Range(1, _currentBook.Chapters.Count).ToList()
                 : new List<int>();
 
         public int SelectedChapterIndex
         {
             get => _selectedChapterIndex;
-            set
+            set 
             {
                 if (SetProperty(ref _selectedChapterIndex, value))
                 {
-                    if (CurrentBook != null)
+                    // Update CurrentChapter when SelectedChapterIndex changes
+                    if (CurrentBook?.Chapters != null)
                     {
-                        CurrentChapter = CurrentBook.Chapters.FirstOrDefault(c => c.Index == value);
+                        // Find chapter by index (assuming 1-based indexing)
+                        CurrentChapter = CurrentBook.Chapters.FirstOrDefault(c => c.Index == value) 
+                                      ?? CurrentBook.Chapters.ElementAtOrDefault(value - 1);
                     }
                 }
             }

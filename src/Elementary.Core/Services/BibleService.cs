@@ -2,6 +2,7 @@
 using Elementary.Core.Enums;
 using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
+using HtmlAgilityPack;
 using System;
 using System.Collections.ObjectModel;
 using System.Drawing;
@@ -90,7 +91,7 @@ namespace Elementary.Core.Services
                 }
                 else
                 {
-                    numberOfChapters = 22;
+                    numberOfChapters = 23; //this is wrong, but it works for now...
                 }
 
                 //Set
@@ -98,11 +99,22 @@ namespace Elementary.Core.Services
                 for (int j = 1; j < numberOfChapters; j++)
                 {
                     var readingOrderIndex = bible.Books[i].ReadingOrderIndex + j;
-                    bible.Books[i].Chapters.Add(new Chapter { Index = j, ChapterText = epubBible.ReadingOrder[readingOrderIndex].Content });
+                    var text = epubBible.ReadingOrder[readingOrderIndex].Content;
+                    bible.Books[i].Chapters.Add(new Chapter { Index = j, ChapterText = CleanChapterHtml(epubBible.ReadingOrder[readingOrderIndex].Content) });
                 }
             }
 
             return bible;
+        }
+
+        private string CleanChapterHtml(string chapterText)
+        {
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.OptionWriteEmptyNodes = true;
+            htmlDoc.LoadHtml(chapterText);
+            //foreach (var brTag in htmlDoc.DocumentNode.SelectNodes("//br"))
+            //    brTag.Remove();
+            return htmlDoc.DocumentNode.SelectSingleNode("//body").InnerHtml;
         }
     }
 }
