@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Windows.Devices.PointOfService;
 
 namespace Elementary.ViewModels
 {
@@ -18,6 +19,7 @@ namespace Elementary.ViewModels
         private Chapter _currentChapter;
         private int _selectedChapterIndex;
         private ISettings _appSettings;
+        private bool _isLoaded;
 
         public Bible Bible
         {
@@ -90,6 +92,12 @@ namespace Elementary.ViewModels
 
         public string Font => AppSettings.Font.GetDisplayName();
 
+        public bool IsLoaded
+        {
+            get => _isLoaded;
+            set => SetProperty(ref _isLoaded, value);
+        }
+
         public BiblePageViewModel()
         {}
 
@@ -104,6 +112,8 @@ namespace Elementary.ViewModels
             CurrentBook = Bible.Books.FirstOrDefault(b => b.Title == AppSettings.Book.ToString()) ?? Bible.Books.FirstOrDefault();
             CurrentChapter = CurrentBook?.Chapters.FirstOrDefault(c => c.Index == AppSettings.Chapter) ?? CurrentBook?.Chapters.FirstOrDefault() ?? new Chapter();
             SelectedChapterIndex = CurrentChapter.Index;
+
+            IsLoaded = true;
         }
     }
 }
