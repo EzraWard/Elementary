@@ -5,6 +5,7 @@
     xmlns:local="using:Elementary"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+    xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     xmlns:viewmodels="using:Elementary.ViewModels"
     xmlns:common="using:html2xaml"
     mc:Ignorable="d"
@@ -31,8 +32,11 @@
         </StackPanel>
         <ScrollViewer x:Name="BibleScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <Grid x:Name="RichTextGrid" SizeChanged="WebViewGrid_SizeChanged">
-                <RichTextBlock x:Name="ChapterView" common:Properties.Html="{Binding CurrentChapter.ChapterText}" FontFamily="{Binding AppSettings.Font}" FontSize="{Binding AppSettings.FontSize}" />
+                <RichTextBlock x:Name="ChapterView" common:Properties.Html="{Binding CurrentChapter.ChapterText}" FontFamily="{Binding AppSettings.Font}" FontSize="{Binding FontSize}" />
             </Grid>
         </ScrollViewer>
+        <Grid Grid.RowSpan="2">
+            <muxc:ProgressRing IsActive="True" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Grid>
     </Grid>
 </Page>

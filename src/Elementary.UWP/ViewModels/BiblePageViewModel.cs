@@ -1,5 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using Elementary.Core.Dictionaries;
 using Elementary.Core.Enums;
+using Elementary.Core.Extensions;
 using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
@@ -77,6 +79,16 @@ namespace Elementary.ViewModels
             get => _appSettings;
             set => SetProperty(ref _appSettings, value);
         }
+
+        public int FontSize
+        {
+            get
+            {
+                return AppSettings != null ? FontSizeConverter.EFontSizeToSize[AppSettings.FontSize] : 16;
+            }
+        }
+
+        public string Font => AppSettings.Font.GetDisplayName();
 
         public BiblePageViewModel()
         {}

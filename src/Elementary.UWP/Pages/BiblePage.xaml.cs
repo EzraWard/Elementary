@@ -1,9 +1,6 @@
 ﻿using Elementary.ViewModels;
-using Elementary.Core.Models;
-using System.Linq;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.Storage;
 
 namespace Elementary
 {
