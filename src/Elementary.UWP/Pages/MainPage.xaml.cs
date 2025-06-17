@@ -1,15 +1,16 @@
-﻿using Elementary.Helpers;
-using MUXC = Microsoft.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls;
-using System.Reflection;
-using Windows.UI.Xaml.Media.Animation;
-using Windows.UI.Xaml;
-using Windows.UI.ViewManagement;
-using Windows.UI.Core;
-using CommunityToolkit.WinUI.Helpers;
+﻿using CommunityToolkit.WinUI.Helpers;
+using Elementary.Helpers;
 using System;
-using Windows.UI.Xaml.Media.Imaging;
 using System.ComponentModel.DataAnnotations;
+using System.Reflection;
+using System.Threading.Tasks;
+using Windows.UI.Core;
+using Windows.UI.ViewManagement;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Media.Animation;
+using Windows.UI.Xaml.Media.Imaging;
+using MUXC = Microsoft.UI.Xaml.Controls;
 
 namespace Elementary
 {
@@ -29,7 +30,15 @@ namespace Elementary
 
             //By default, navigate to the Bible Page
             MainNavigationView.SelectedItem = BiblePageNavigationViewItem;
-            NavigateToView("BiblePage");
+
+            Loaded += async (s, e) =>
+            {
+                // Wait for a short time to allow MainPage to render
+                //If we don't wait, then the titlebar icon doesn't render till
+                //BiblePage is navigated to and finishes intializing
+                await Task.Delay(100); // Adjust delay as needed (100ms is usually enough)
+                NavigateToView("BiblePage");
+            };
         }
 
         private void NavigationView_ItemInvoked(MUXC.NavigationView sender, MUXC.NavigationViewItemInvokedEventArgs args)
