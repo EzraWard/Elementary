@@ -1,5 +1,7 @@
 ﻿using CommunityToolkit.WinUI.Helpers;
 using Elementary.Helpers;
+using Elementary.Services;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -16,9 +18,12 @@ namespace Elementary
     public sealed partial class MainPage : Page
     {
         private Microsoft.UI.Xaml.Controls.NavigationViewItem _lastItem;
+        private IVerseOfTheDayService _verseOfTheDayService;
 
         public MainPage()
         {
+            _verseOfTheDayService = App.Services.GetRequiredService<IVerseOfTheDayService>();
+
             this.InitializeComponent();
 
             Window.Current.SizeChanged += WindowSizeChanged;
@@ -57,27 +62,7 @@ namespace Elementary
 
             if (clickedView == "VerseOfTheDay")
             {
-                ContentDialog dialog = new ContentDialog();
-                dialog.Title = "Verse of the Day for " + DateTime.Now.ToShortDateString();
-                dialog.CloseButtonText = "Close";
-                dialog.DefaultButton = ContentDialogButton.Primary;
-
-                var image = new Image
-                {
-                    Height = 500,
-                    Width = 500,
-                };
-
-                var todayMonth = DateTime.Now.ToString("MM");
-                var todayDay = DateTime.Now.ToString("dd");
-
-                BitmapImage bitmapImage = new BitmapImage();
-                bitmapImage.UriSource = new Uri(@"https://votd.olivetree.com/" + todayMonth + "_" + todayDay + "_NKJV.jpg");
-                image.Source = bitmapImage;
-
-                dialog.Content = image;
-
-                await dialog.ShowAsync();
+                await ShowVerseOfTheDayDialogAsync();
 
                 // Reset selection back to the currently displayed page
                 MainNavigationView.SelectedItem = _lastItem;
@@ -142,6 +127,28 @@ namespace Elementary
             {
                 WindowHelpers.SetCaptionButtonColors(sender.CurrentTheme);
             }
+        }
+
+        private async Task ShowVerseOfTheDayDialogAsync()
+        {
+            var verse = _verseOfTheDayService.GetVerseOfTheDay();
+
+            var dialog = new ContentDialog
+            {
+                Title = verse.Title,
+                CloseButtonText = "Close",
+                DefaultButton = ContentDialogButton.Primary
+            };
+
+            var image = new Image
+            {
+                Height = 500,
+                Width = 500,
+                Source = new BitmapImage(new Uri(verse.ImageUrl))
+            };
+
+            dialog.Content = image;
+            await dialog.ShowAsync();
         }
     }
 }
