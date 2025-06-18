@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.WinUI.Helpers;
 using Elementary.Helpers;
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Windows.UI.Core;
@@ -40,8 +41,15 @@ namespace Elementary
             };
         }
 
-        private void NavigationView_ItemInvoked(MUXC.NavigationView sender, MUXC.NavigationViewItemInvokedEventArgs args)
+        private async void NavigationView_ItemInvoked(MUXC.NavigationView sender, MUXC.NavigationViewItemInvokedEventArgs args)
         {
+            //if _lastItem is null, it means this is the first time the user has navigated away
+            //from the BiblePage, so we want to set it to the current page
+            if (_lastItem == null)
+            {
+                _lastItem = BiblePageNavigationViewItem;
+            }
+
             var item = args.InvokedItemContainer as Microsoft.UI.Xaml.Controls.NavigationViewItem;
             if (item == null || item == _lastItem) return;
 
@@ -70,7 +78,11 @@ namespace Elementary
 
                 dialog.Content = image;
 
-                var result = dialog.ShowAsync();
+                await dialog.ShowAsync();
+
+                // Reset selection back to the currently displayed page
+                MainNavigationView.SelectedItem = _lastItem;
+                return;
             }
 
             if (!NavigateToView(clickedView)) return;
