@@ -1,7 +1,6 @@
 ﻿using CommunityToolkit.WinUI.Helpers;
 using Elementary.Helpers;
 using System;
-using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Threading.Tasks;
 using Windows.UI.Core;
