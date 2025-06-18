@@ -15,7 +15,7 @@ namespace Elementary
 {
     public sealed partial class MainPage : Page
     {
-        private NavigationViewItem _lastItem;
+        private Microsoft.UI.Xaml.Controls.NavigationViewItem _lastItem;
 
         public MainPage()
         {
