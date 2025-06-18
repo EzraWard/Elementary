@@ -1,7 +1,6 @@
 ﻿using CommunityToolkit.WinUI.Helpers;
 using Elementary.Helpers;
 using System;
-using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Windows.UI.Core;
@@ -16,7 +15,7 @@ namespace Elementary
 {
     public sealed partial class MainPage : Page
     {
-        private Microsoft.UI.Xaml.Controls.NavigationViewItem _lastItem;
+        private NavigationViewItem _lastItem;
 
         public MainPage()
         {
