@@ -30,13 +30,15 @@
                       DisplayMemberPath="Title"
                       SelectedItem="{Binding CurrentBook, Mode=TwoWay}"
                       PlaceholderText="Bible" 
-                      Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                      Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
+                      SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged"/>
 
             <ComboBox x:Name="BookChapterComboBox" 
                       ItemsSource="{Binding ChapterIndices}" 
                       SelectedItem="{Binding SelectedChapterIndex, Mode=TwoWay}"
                       PlaceholderText="Chapter" 
-                      Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                      Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
+                      SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged"/>
         </StackPanel>
         <ScrollViewer x:Name="BibleScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <Grid x:Name="RichTextGrid" SizeChanged="WebViewGrid_SizeChanged">

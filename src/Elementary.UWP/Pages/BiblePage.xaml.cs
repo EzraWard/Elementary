@@ -42,5 +42,11 @@ namespace Elementary
 
             ChapterView.Width = gridWidth - 50;
         }
+
+        private void BibleBookChapterComboBoxes_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            //When changed, make sure to scroll to top
+            BibleScrollViewer.ChangeView(0, 0, 1);
+        }
     }
 }
