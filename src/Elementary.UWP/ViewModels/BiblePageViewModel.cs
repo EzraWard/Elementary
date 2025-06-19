@@ -18,6 +18,8 @@ namespace Elementary.ViewModels
         private Chapter _currentChapter;
         private int _selectedChapterIndex;
         private ISettings _appSettings;
+        private ISettingsService _settingsService;
+        private IBibleService _bibleService;
         private bool _isLoaded;
 
         public Bible Bible
@@ -34,9 +36,12 @@ namespace Elementary.ViewModels
                 if (SetProperty(ref _currentBook, value))
                 {
                     OnPropertyChanged(nameof(ChapterIndices));
-
                     // Automatically update chapter when book changes
-                    CurrentChapter = _currentBook?.Chapters.FirstOrDefault();                }
+                    CurrentChapter = _currentBook?.Chapters.FirstOrDefault();
+
+                    // Update app settings when book changes
+                    UpdateBookSetting();
+                }
             }
         }
 
@@ -48,6 +53,9 @@ namespace Elementary.ViewModels
                 if (SetProperty(ref _currentChapter, value))
                 {
                     OnPropertyChanged(nameof(SelectedChapterIndex));
+
+                    // Update app settings when chapter changes
+                    UpdateChapterSetting();
                 }
             }
         }
@@ -60,7 +68,7 @@ namespace Elementary.ViewModels
         public int SelectedChapterIndex
         {
             get => _selectedChapterIndex;
-            set 
+            set
             {
                 if (SetProperty(ref _selectedChapterIndex, value))
                 {
@@ -68,7 +76,7 @@ namespace Elementary.ViewModels
                     if (CurrentBook?.Chapters != null)
                     {
                         // Find chapter by index (assuming 1-based indexing)
-                        CurrentChapter = CurrentBook.Chapters.FirstOrDefault(c => c.Index == value) 
+                        CurrentChapter = CurrentBook.Chapters.FirstOrDefault(c => c.Index == value)
                                       ?? CurrentBook.Chapters.ElementAtOrDefault(value - 1);
                     }
                 }
@@ -89,7 +97,7 @@ namespace Elementary.ViewModels
             }
         }
 
-        public string Font => AppSettings.Font.GetDisplayName();
+        public string Font => AppSettings?.Font.GetDisplayName();
 
         public bool IsLoaded
         {
@@ -98,14 +106,14 @@ namespace Elementary.ViewModels
         }
 
         public BiblePageViewModel()
-        {}
+        { }
 
         public async Task Initialize()
         {
-            var settingsService = App.Services.GetRequiredService<ISettingsService>();
-            AppSettings = settingsService.GetSettings();
+            _settingsService = App.Services.GetRequiredService<ISettingsService>();
+            AppSettings = _settingsService.GetSettings();
 
-            var _bibleService = App.Services.GetRequiredService<IBibleService>();
+            _bibleService = App.Services.GetRequiredService<IBibleService>();
             Bible = await _bibleService.GetBible(ETranslation.NET);
 
             CurrentBook = Bible.Books.FirstOrDefault(b => b.Title == AppSettings.Book.ToString()) ?? Bible.Books.FirstOrDefault();
@@ -113,6 +121,47 @@ namespace Elementary.ViewModels
             SelectedChapterIndex = CurrentChapter.Index;
 
             IsLoaded = true;
+        }
+
+        private void UpdateBookSetting()
+        {
+            if (AppSettings != null && CurrentBook != null && _settingsService != null && IsLoaded)
+            {
+                // Parse the book title to the appropriate enum value
+                if (System.Enum.TryParse<EBook>(CurrentBook.Title, out var bookEnum))
+                {
+                    AppSettings.Book = bookEnum;
+                    _settingsService.SaveSettings(AppSettings);
+                }
+            }
+        }
+
+        private void UpdateChapterSetting()
+        {
+            if (AppSettings != null && CurrentChapter != null && _settingsService != null && IsLoaded)
+            {
+                AppSettings.Chapter = CurrentChapter.Index;
+                _settingsService.SaveSettings(AppSettings);
+            }
+        }
+
+        // Optional: Public method to manually update settings (useful for navigation scenarios)
+        public void UpdateNavigationSettings(string bookTitle, int chapterIndex)
+        {
+            if (Bible?.Books != null)
+            {
+                var book = Bible.Books.FirstOrDefault(b => b.Title == bookTitle);
+                if (book != null)
+                {
+                    CurrentBook = book;
+                    var chapter = book.Chapters.FirstOrDefault(c => c.Index == chapterIndex);
+                    if (chapter != null)
+                    {
+                        CurrentChapter = chapter;
+                        SelectedChapterIndex = chapterIndex;
+                    }
+                }
+            }
         }
     }
 }
