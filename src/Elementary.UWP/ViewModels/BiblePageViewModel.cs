@@ -87,7 +87,14 @@ namespace Elementary.ViewModels
         public ISettings AppSettings
         {
             get => _appSettings;
-            set => SetProperty(ref _appSettings, value);
+            set
+            {
+                if (SetProperty(ref _appSettings, value))
+                {
+                    OnPropertyChanged(nameof(Font));
+                    OnPropertyChanged(nameof(FontSize));
+                }
+            }
         }
 
         public int FontSize
