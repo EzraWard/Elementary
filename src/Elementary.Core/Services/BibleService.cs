@@ -100,21 +100,22 @@ namespace Elementary.Core.Services
                 {
                     var readingOrderIndex = bible.Books[i].ReadingOrderIndex + j;
                     var text = epubBible.ReadingOrder[readingOrderIndex].Content;
-                    bible.Books[i].Chapters.Add(new Chapter { Index = j, ChapterText = CleanChapterHtml(epubBible.ReadingOrder[readingOrderIndex].Content) });
+                    bible.Books[i].Chapters.Add(new Chapter { Index = j, ChapterText = CleanChapterHtml(epubBible.ReadingOrder[readingOrderIndex].Content, bible.Books[i].Title) });
                 }
             }
 
             return bible;
         }
 
-        private string CleanChapterHtml(string chapterText)
+        private string CleanChapterHtml(string chapterText, string BookName)
         {
             var htmlDoc = new HtmlDocument();
             htmlDoc.OptionWriteEmptyNodes = true;
             htmlDoc.LoadHtml(chapterText);
-            //foreach (var brTag in htmlDoc.DocumentNode.SelectNodes("//br"))
-            //    brTag.Remove();
-            return htmlDoc.DocumentNode.SelectSingleNode("//body").InnerHtml;
+
+            var html = htmlDoc.DocumentNode.SelectSingleNode("//body").InnerHtml;
+            var returnString = html.Replace(BookName + "<br />", "");
+            return returnString;
         }
     }
 }
