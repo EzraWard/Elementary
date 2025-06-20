@@ -7,6 +7,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Drawing;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using VersOne.Epub;
 
@@ -100,22 +101,40 @@ namespace Elementary.Core.Services
                 {
                     var readingOrderIndex = bible.Books[i].ReadingOrderIndex + j;
                     var text = epubBible.ReadingOrder[readingOrderIndex].Content;
-                    bible.Books[i].Chapters.Add(new Chapter { Index = j, ChapterText = CleanChapterHtml(epubBible.ReadingOrder[readingOrderIndex].Content, bible.Books[i].Title) });
+                    bible.Books[i].Chapters.Add(new Chapter { Index = j, ChapterText = CleanChapterHtml(epubBible.ReadingOrder[readingOrderIndex].Content, bible.Books[i].Title, j) });
                 }
             }
 
             return bible;
         }
 
-        private string CleanChapterHtml(string chapterText, string BookName)
+        private string CleanChapterHtml(string chapterText, string BookName, int chapterNum)
         {
             var htmlDoc = new HtmlDocument();
             htmlDoc.OptionWriteEmptyNodes = true;
             htmlDoc.LoadHtml(chapterText);
 
             var html = htmlDoc.DocumentNode.SelectSingleNode("//body").InnerHtml;
-            var returnString = html.Replace(BookName + "<br />", "");
-            return returnString;
+            
+            //remove book name at the beginning of the books
+            var booklessString = html.Replace(BookName + "<br />", "");
+
+            //remove the 1:, 2:, 3:... at the beginning of each verse
+            var chapterlessVerseMarkers = CleanVerseMarkers(booklessString);
+
+            return chapterlessVerseMarkers;
+        }
+
+        public static string CleanVerseMarkers(string html)
+        {
+            // Pattern to match verse markers like <span class="verse">1:1</span>, <span class="verse">2:15</span>, etc.
+            // This captures the chapter number, colon, and verse number
+            string pattern = @"<span class=""verse"">(\d+):(\d+)</span>";
+
+            // Replace with superscript version containing only the verse number
+            string replacement = "<sup>$2</sup>";
+
+            return Regex.Replace(html, pattern, replacement);
         }
     }
 }
