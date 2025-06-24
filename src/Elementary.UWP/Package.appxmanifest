@@ -7,14 +7,9 @@
   IgnorableNamespaces="uap mp">
 
   <Identity
-<<<<<<< Updated upstream
     Name="21366BowTieWorkshop.ElementaryBibleDev"
-    Publisher="CN=16499A74-7239-425D-8D4D-A75684AF24BE"
-=======
-    Name="21366BowTieWorkshop.ElementaryBibleBeta"
     Publisher="CN=EzraW"
->>>>>>> Stashed changes
-    Version="0.5.0.0" />
+    Version="0.6.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="2667bc56-bc11-4b7e-93bd-249407dd3231" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
