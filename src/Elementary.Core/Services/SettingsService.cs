@@ -35,7 +35,13 @@ namespace Elementary.Core.Services
             Enum.TryParse(GetSetting("fontSize"), out EFontSize fontSize);
             appSettings.FontSize = fontSize;
 
-            bool.TryParse(GetSetting("showVerseNumbers"), out bool showVerseNumbers);
+            bool? showVerseNumbers = null;
+            var showVerseNumbersStr = GetSetting("showVerseNumbers");
+            if (!string.IsNullOrWhiteSpace(showVerseNumbersStr))
+            {
+                if (bool.TryParse(showVerseNumbersStr, out bool parsed))
+                    showVerseNumbers = parsed;
+            }
             appSettings.ShowVerseNumbers = showVerseNumbers;
 
             Enum.TryParse(GetSetting("theme"), out ETheme theme);
@@ -70,7 +76,8 @@ namespace Elementary.Core.Services
             if (appSettings.Font == EFont.NotSet) appSettings.Font = EFont.SegoeUIVariable;
             if (appSettings.FontSize == EFontSize.NotSet) appSettings.FontSize = EFontSize.Medium;
 
-            if (appSettings.ShowVerseNumbers == null) appSettings.ShowVerseNumbers = true;
+            if (appSettings.ShowVerseNumbers == null)
+                appSettings.ShowVerseNumbers = true;
 
             SaveSettings(appSettings);
         }

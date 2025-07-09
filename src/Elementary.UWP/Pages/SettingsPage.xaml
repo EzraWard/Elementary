@@ -55,8 +55,7 @@
                     </controls:SettingsCard>
 
                     <controls:SettingsCard Description="Choose whether to show verse numbers inline"
-                                           Header="Show verse numbers (Coming soon!)"
-                                           IsEnabled="False">
+                                           Header="Show verse numbers">
                         <controls:SettingsCard.HeaderIcon>
                             <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE8A4;"/>
                         </controls:SettingsCard.HeaderIcon>

@@ -119,10 +119,10 @@ namespace Elementary.Core.Services
             //remove book name at the beginning of the books
             var booklessString = html.Replace(BookName + "<br />", "");
 
-            //remove the 1:, 2:, 3:... at the beginning of each verse
-            var chapterlessVerseMarkers = CleanVerseMarkers(booklessString);
-
-            return chapterlessVerseMarkers;
+            // Handle verse markers based on ShowVerseNumbers setting
+            return _settings.ShowVerseNumbers == true ? 
+                CleanVerseMarkers(booklessString) : 
+                RemoveVerseMarkers(booklessString);
         }
 
         public static string CleanVerseMarkers(string html)
@@ -133,6 +133,18 @@ namespace Elementary.Core.Services
 
             // Replace with superscript version containing only the verse number
             string replacement = "<sup>$2</sup>";
+
+            return Regex.Replace(html, pattern, replacement);
+        }
+
+        public static string RemoveVerseMarkers(string html)
+        {
+            // Pattern to match verse markers like <span class="verse">1:1</span>, <span class="verse">2:15</span>, etc.
+            // This captures the chapter number, colon, and verse number
+            string pattern = @"<span class=""verse"">(\d+):(\d+)</span>";
+
+            // Completeley remove the verse markers
+            string replacement = "";
 
             return Regex.Replace(html, pattern, replacement);
         }
