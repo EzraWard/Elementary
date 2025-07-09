@@ -18,15 +18,12 @@ namespace Elementary.Core.Services
         private readonly ISettingsService _settingsService;
         private readonly IFileService _fileService;
         private readonly IFilePathProvider _filePathProvider;
-        private readonly ISettings _settings;
 
         public BibleService(ISettingsService settingsService, IFileService fileService, IFilePathProvider filePathProvider)
         {
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
-            _fileService = fileService ?? throw new ArgumentNullException(nameof(settingsService)); ;
+            _fileService = fileService ?? throw new ArgumentNullException(nameof(settingsService));
             _filePathProvider = filePathProvider ?? throw new ArgumentNullException(nameof(settingsService));
-
-            _settings = _settingsService.GetSettings();
         }
 
         public async Task<Bible> GetBible(ETranslation translation)
@@ -119,8 +116,9 @@ namespace Elementary.Core.Services
             //remove book name at the beginning of the books
             var booklessString = html.Replace(BookName + "<br />", "");
 
-            // Handle verse markers based on ShowVerseNumbers setting
-            return _settings.ShowVerseNumbers == true ? 
+            // Always fetch the latest settings
+            var settings = _settingsService.GetSettings();
+            return settings.ShowVerseNumbers == true ? 
                 CleanVerseMarkers(booklessString) : 
                 RemoveVerseMarkers(booklessString);
         }
