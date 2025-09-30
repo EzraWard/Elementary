@@ -142,13 +142,13 @@
       <Version>6.2.14</Version>
     </PackageReference>
     <PackageReference Include="MSTest.TestAdapter">
-      <Version>3.10.2</Version>
+      <Version>3.10.5</Version>
     </PackageReference>
     <PackageReference Include="MSTest.TestFramework">
-      <Version>3.10.2</Version>
+      <Version>3.10.5</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
-      <Version>13.0.3</Version>
+      <Version>13.0.4</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>

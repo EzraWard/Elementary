@@ -224,10 +224,10 @@
       <Version>8.2.250402</Version>
     </PackageReference>
     <PackageReference Include="HtmlAgilityPack">
-      <Version>1.12.2</Version>
+      <Version>1.12.3</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection">
-      <Version>9.0.8</Version>
+      <Version>9.0.9</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.14</Version>
