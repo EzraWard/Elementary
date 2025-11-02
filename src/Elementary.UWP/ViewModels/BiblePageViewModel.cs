@@ -6,6 +6,7 @@ using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -21,6 +22,8 @@ namespace Elementary.ViewModels
         private ISettingsService _settingsService;
         private IBibleService _bibleService;
         private bool _isLoaded;
+        private ObservableCollection<Chapter> _chapters;
+        private bool _isLoadingMore;
 
         public Bible Bible
         {
@@ -113,8 +116,22 @@ namespace Elementary.ViewModels
             set => SetProperty(ref _isLoaded, value);
         }
 
+        public ObservableCollection<Chapter> Chapters
+        {
+            get => _chapters;
+            set => SetProperty(ref _chapters, value);
+        }
+
+        public bool IsLoadingMore
+        {
+            get => _isLoadingMore;
+            set => SetProperty(ref _isLoadingMore, value);
+        }
+
         public BiblePageViewModel()
-        { }
+        {
+            Chapters = new ObservableCollection<Chapter>();
+        }
 
         public async Task Initialize()
         {
@@ -128,7 +145,101 @@ namespace Elementary.ViewModels
             CurrentChapter = CurrentBook?.Chapters.FirstOrDefault(c => c.Index == AppSettings.Chapter) ?? CurrentBook?.Chapters.FirstOrDefault() ?? new Chapter();
             SelectedChapterIndex = CurrentChapter.Index;
 
+            // Initialize with current chapter and load adjacent chapters
+            LoadInitialChapters();
+
             IsLoaded = true;
+        }
+
+        public void LoadInitialChapters()
+        {
+            Chapters.Clear();
+            if (CurrentChapter != null)
+            {
+                Chapters.Add(CurrentChapter);
+                LoadNextChapter();
+                LoadNextChapter();
+            }
+        }
+
+        public void LoadNextChapter()
+        {
+            if (IsLoadingMore) return;
+
+            IsLoadingMore = true;
+
+            try
+            {
+                var lastChapter = Chapters.LastOrDefault();
+                if (lastChapter == null)
+                {
+                    return;
+                }
+
+                // Find the next chapter
+                var currentBook = Bible.Books.FirstOrDefault(b => b.Chapters.Contains(lastChapter));
+                if (currentBook != null)
+                {
+                    var nextChapter = currentBook.Chapters.FirstOrDefault(c => c.Index == lastChapter.Index + 1);
+                    if (nextChapter != null)
+                    {
+                        Chapters.Add(nextChapter);
+                    }
+                    else
+                    {
+                        // Move to next book
+                        var nextBook = Bible.Books.FirstOrDefault(b => b.ReadingOrderIndex == currentBook.ReadingOrderIndex + 1);
+                        if (nextBook?.Chapters.Count > 0)
+                        {
+                            Chapters.Add(nextBook.Chapters.First());
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                IsLoadingMore = false;
+            }
+        }
+
+        public void LoadPreviousChapter()
+        {
+            if (IsLoadingMore) return;
+
+            IsLoadingMore = true;
+
+            try
+            {
+                var firstChapter = Chapters.FirstOrDefault();
+                if (firstChapter == null)
+                {
+                    return;
+                }
+
+                // Find the previous chapter
+                var currentBook = Bible.Books.FirstOrDefault(b => b.Chapters.Contains(firstChapter));
+                if (currentBook != null)
+                {
+                    var prevChapter = currentBook.Chapters.FirstOrDefault(c => c.Index == firstChapter.Index - 1);
+                    if (prevChapter != null)
+                    {
+                        Chapters.Insert(0, prevChapter);
+                    }
+                    else
+                    {
+                        // Move to previous book
+                        var prevBook = Bible.Books.FirstOrDefault(b => b.ReadingOrderIndex == currentBook.ReadingOrderIndex - 1);
+                        if (prevBook?.Chapters.Count > 0)
+                        {
+                            Chapters.Insert(0, prevBook.Chapters.Last());
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                IsLoadingMore = false;
+            }
         }
 
         private void UpdateBookSetting()

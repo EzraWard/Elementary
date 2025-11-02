@@ -40,10 +40,27 @@
                       Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
                       SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged"/>
         </StackPanel>
-        <ScrollViewer x:Name="BibleScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <Grid x:Name="RichTextGrid" SizeChanged="WebViewGrid_SizeChanged">
-                <RichTextBlock x:Name="ChapterView" common:Properties.Html="{Binding CurrentChapter.ChapterText}" FontFamily="{Binding Font}" FontSize="{Binding FontSize}" />
-            </Grid>
+        <ScrollViewer x:Name="BibleScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto" ViewChanged="BibleScrollViewer_ViewChanged">
+            <StackPanel x:Name="ChaptersContainer">
+                <muxc:ItemsRepeater x:Name="ChaptersRepeater" ItemsSource="{Binding Chapters}">
+                    <muxc:ItemsRepeater.ItemTemplate>
+                        <DataTemplate>
+                            <Grid x:Name="ChapterItemGrid" Margin="0,0,0,32" SizeChanged="ChapterItemGrid_SizeChanged">
+                                <RichTextBlock common:Properties.Html="{Binding ChapterText}" 
+                                             FontFamily="{Binding DataContext.Font, ElementName=ChaptersRepeater}" 
+                                             FontSize="{Binding DataContext.FontSize, ElementName=ChaptersRepeater}" />
+                            </Grid>
+                        </DataTemplate>
+                    </muxc:ItemsRepeater.ItemTemplate>
+                </muxc:ItemsRepeater>
+                <muxc:ProgressRing x:Name="LoadingMoreProgressRing" 
+                                   IsActive="{Binding IsLoadingMore}" 
+                                   Visibility="{Binding IsLoadingMore, Converter={StaticResource BoolToVisibilityConverter}}"
+                                   HorizontalAlignment="Center" 
+                                   Margin="0,16,0,16" 
+                                   Height="40" 
+                                   Width="40"/>
+            </StackPanel>
         </ScrollViewer>
         <Grid Grid.RowSpan="2">
             <muxc:ProgressRing x:Name="BiblePageProgressRing"  IsActive="True" HorizontalAlignment="Center" VerticalAlignment="Center" Height="75" Width="75" Visibility="{Binding IsLoaded, Converter={StaticResource InvertedBoolToVisibilityConverter}}"/>
