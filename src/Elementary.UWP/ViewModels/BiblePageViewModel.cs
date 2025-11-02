@@ -242,6 +242,31 @@ namespace Elementary.ViewModels
             }
         }
 
+        public void UpdateCurrentChapterFromScroll(Chapter chapter)
+        {
+            if (chapter == null) return;
+
+            // Find which book this chapter belongs to
+            var book = Bible.Books.FirstOrDefault(b => b.Chapters.Contains(chapter));
+            if (book != null && book != CurrentBook)
+            {
+                // Book changed - update without triggering reload
+                SetProperty(ref _currentBook, book, nameof(CurrentBook));
+                OnPropertyChanged(nameof(ChapterIndices));
+            }
+
+            // Update the current chapter and selected index
+            SetProperty(ref _currentChapter, chapter, nameof(CurrentChapter));
+            SetProperty(ref _selectedChapterIndex, chapter.Index, nameof(SelectedChapterIndex));
+
+            // Update settings
+            if (IsLoaded)
+            {
+                UpdateBookSetting();
+                UpdateChapterSetting();
+            }
+        }
+
         private void UpdateBookSetting()
         {
             if (AppSettings != null && CurrentBook != null && _settingsService != null && IsLoaded)
