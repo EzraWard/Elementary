@@ -46,9 +46,8 @@
                     <muxc:ItemsRepeater.ItemTemplate>
                         <DataTemplate>
                             <Grid x:Name="ChapterItemGrid" Margin="0,0,0,32" SizeChanged="ChapterItemGrid_SizeChanged">
-                                <RichTextBlock common:Properties.Html="{Binding ChapterText}" 
-                                             FontFamily="{Binding DataContext.Font, ElementName=ChaptersRepeater}" 
-                                             FontSize="{Binding DataContext.FontSize, ElementName=ChaptersRepeater}" />
+                                <RichTextBlock x:Name="ChapterRichTextBlock" 
+                                             common:Properties.Html="{Binding ChapterText}" />
                             </Grid>
                         </DataTemplate>
                     </muxc:ItemsRepeater.ItemTemplate>

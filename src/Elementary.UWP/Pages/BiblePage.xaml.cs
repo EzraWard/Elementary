@@ -33,6 +33,10 @@ namespace Elementary
             var richTextBlock = grid.Children[0] as RichTextBlock;
             if (richTextBlock == null) return;
 
+            // Set font properties from ViewModel
+            richTextBlock.FontFamily = new Windows.UI.Xaml.Media.FontFamily(_viewModel.Font);
+            richTextBlock.FontSize = _viewModel.FontSize;
+
             var gridWidth = grid.ActualWidth;
 
             if (gridWidth > 750)
