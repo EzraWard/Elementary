@@ -154,12 +154,33 @@ namespace Elementary.ViewModels
         public void LoadInitialChapters()
         {
             Chapters.Clear();
-            if (CurrentChapter != null)
+            if (CurrentChapter == null) return;
+
+            // Add current chapter first
+            Chapters.Add(CurrentChapter);
+            
+            // Load previous chapter
+            var currentBook = Bible.Books.FirstOrDefault(b => b.Chapters.Contains(CurrentChapter));
+            if (currentBook != null)
             {
-                Chapters.Add(CurrentChapter);
-                LoadNextChapter();
-                LoadNextChapter();
+                var prevChapter = currentBook.Chapters.FirstOrDefault(c => c.Index == CurrentChapter.Index - 1);
+                if (prevChapter != null)
+                {
+                    Chapters.Insert(0, prevChapter);
+                }
+                else
+                {
+                    // Try previous book's last chapter
+                    var prevBook = Bible.Books.FirstOrDefault(b => b.ReadingOrderIndex == currentBook.ReadingOrderIndex - 1);
+                    if (prevBook?.Chapters.Count > 0)
+                    {
+                        Chapters.Insert(0, prevBook.Chapters.Last());
+                    }
+                }
             }
+            
+            // Load next chapter
+            LoadNextChapter();
         }
 
         public void LoadNextChapter()

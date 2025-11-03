@@ -1,4 +1,5 @@
-﻿using Elementary.ViewModels;
+﻿using Elementary.Core.Models;
+using Elementary.ViewModels;
 using System;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -25,7 +26,42 @@ namespace Elementary
             DataContext = _viewModel;
             await _viewModel.Initialize();
 
-            _isLoaded = true;            
+            _isLoaded = true;
+            
+            // Only scroll if current chapter is not the first in the list
+            var currentChapterIndex = _viewModel.Chapters.IndexOf(_viewModel.CurrentChapter);
+            if (currentChapterIndex > 0)
+            {
+                // Give UI time to layout
+                await System.Threading.Tasks.Task.Delay(100);
+                ScrollToCurrentChapter();
+            }
+        }
+
+        private void ScrollToCurrentChapter()
+        {
+            if (_viewModel?.Chapters == null || _viewModel.Chapters.Count == 0) return;
+
+            BibleScrollViewer.UpdateLayout();
+            
+            var currentChapterIndex = _viewModel.Chapters.IndexOf(_viewModel.CurrentChapter);
+            if (currentChapterIndex > 0)
+            {
+                double scrollPosition = 0;
+                for (int i = 0; i < currentChapterIndex; i++)
+                {
+                    var element = ChaptersRepeater.TryGetElement(i);
+                    if (element is Grid grid)
+                    {
+                        scrollPosition += grid.ActualHeight + 32;
+                    }
+                }
+                BibleScrollViewer.ChangeView(null, scrollPosition, null, true);
+            }
+            else
+            {
+                BibleScrollViewer.ChangeView(null, 0, null, true);
+            }
         }
 
         private void ChapterItemGrid_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -62,35 +98,41 @@ namespace Elementary
             try
             {
                 var scrollViewer = BibleScrollViewer;
-                var viewportTop = scrollViewer.VerticalOffset;
-                var viewportCenter = viewportTop + (scrollViewer.ViewportHeight / 2);
+                var viewportHeight = scrollViewer.ViewportHeight;
 
-                // Iterate through the visual tree to find which chapter grid is at viewport center
-                double cumulativeHeight = 0;
-                int visibleChapterIndex = 0;
+                Chapter mostVisibleChapter = null;
+                double maxVisibleArea = 0;
 
                 for (int i = 0; i < _viewModel.Chapters.Count; i++)
                 {
                     var element = ChaptersRepeater.TryGetElement(i);
-                    if (element is Grid grid)
+                    if (element is FrameworkElement frameworkElement)
                     {
-                        var nextHeight = cumulativeHeight + grid.ActualHeight + 32; // 32 is the margin
-                        if (viewportCenter >= cumulativeHeight && viewportCenter < nextHeight)
+                        // Get element position relative to scrollviewer viewport (not content)
+                        var transform = frameworkElement.TransformToVisual(scrollViewer);
+                        var elementPosition = transform.TransformPoint(new Windows.Foundation.Point(0, 0));
+                        var elementTop = elementPosition.Y;
+                        var elementBottom = elementTop + frameworkElement.ActualHeight;
+
+                        // Calculate how much of this element is visible in viewport (0 to viewportHeight)
+                        var visibleTop = Math.Max(elementTop, 0);
+                        var visibleBottom = Math.Min(elementBottom, viewportHeight);
+                        var visibleArea = Math.Max(0, visibleBottom - visibleTop);
+
+                        // Track which element has the most visible area
+                        if (visibleArea > maxVisibleArea)
                         {
-                            visibleChapterIndex = i;
-                            break;
+                            maxVisibleArea = visibleArea;
+                            mostVisibleChapter = _viewModel.Chapters[i];
                         }
-                        cumulativeHeight = nextHeight;
                     }
                 }
 
-                var visibleChapter = _viewModel.Chapters[visibleChapterIndex];
-                
-                // Update the ViewModel's current chapter if different
-                if (_viewModel.CurrentChapter != visibleChapter)
+                // Update the ViewModel's current chapter if different and we found a visible chapter
+                if (mostVisibleChapter != null && _viewModel.CurrentChapter != mostVisibleChapter && maxVisibleArea > 50)
                 {
                     _isUpdatingFromScroll = true;
-                    _viewModel.UpdateCurrentChapterFromScroll(visibleChapter);
+                    _viewModel.UpdateCurrentChapterFromScroll(mostVisibleChapter);
                     _isUpdatingFromScroll = false;
                 }
             }
@@ -102,6 +144,8 @@ namespace Elementary
 
         private void BibleScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
         {
+            if (!_isLoaded) return;
+
             var scrollViewer = (ScrollViewer)sender;
             var verticalOffset = scrollViewer.VerticalOffset;
             var maxVerticalOffset = scrollViewer.ScrollableHeight;
@@ -144,8 +188,8 @@ namespace Elementary
             // Reload chapters from the selected position
             _viewModel.LoadInitialChapters();
             
-            // Scroll to top
-            BibleScrollViewer.ChangeView(0, 0, 1);
+            // Scroll to the current chapter
+            ScrollToCurrentChapter();
         }
     }
 }
