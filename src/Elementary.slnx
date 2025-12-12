@@ -1,0 +1,26 @@
+<Solution>
+  <Configurations>
+    <Platform Name="ARM64" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="Elementary.Core/Elementary.Core.csproj" />
+  <Project Path="Elementary.Tests.UWP/Elementary.Tests.UWP.csproj" Id="752b2b04-6c6d-4aa2-ae81-e219442d243c">
+    <Platform Solution="*|ARM64" Project="ARM64" />
+    <Platform Solution="*|x64" Project="x64" />
+    <Platform Solution="*|x86" Project="x86" />
+    <Deploy />
+  </Project>
+  <Project Path="Elementary.Tests/Elementary.Tests.csproj" />
+  <Project Path="Elementary.UWP/Elementary.UWP.csproj" Id="0dfd8e50-61d0-4ff1-a1f2-c82423073e87">
+    <Platform Solution="*|ARM64" Project="ARM64" />
+    <Platform Solution="*|x64" Project="x64" />
+    <Platform Solution="*|x86" Project="x86" />
+    <Deploy />
+  </Project>
+  <Project Path="Html2Xaml/RichTextBlock.Html2Xaml.csproj" Id="d3408113-4ef7-4056-9ec9-d383306514b8">
+    <Platform Solution="*|ARM64" Project="ARM64" />
+    <Platform Solution="*|x64" Project="x64" />
+    <Platform Solution="*|x86" Project="x86" />
+  </Project>
+</Solution>
