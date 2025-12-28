@@ -50,9 +50,9 @@
       </Paragraph>
     </xsl:template>
 
-    <!-- Poetry: preserve line breaks -->
+    <!-- Poetry: preserve line breaks, indent first line, and reduce line spacing -->
     <xsl:template match="/div/P[@class='poetry'] | /div/p[@class='poetry']" priority="11">
-      <Paragraph xml:space="preserve" Margin="20,0,0,0">
+      <Paragraph xml:space="preserve" TextIndent="20" Margin="0,0,0,0" LineHeight="6" LineStackingStrategy="BlockLineHeight">
         <xsl:apply-templates/>
       </Paragraph>
     </xsl:template>
