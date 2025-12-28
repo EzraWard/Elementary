@@ -42,24 +42,17 @@
         </StackPanel>
         <ScrollViewer x:Name="BibleScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto" ViewChanged="BibleScrollViewer_ViewChanged">
             <StackPanel x:Name="ChaptersContainer">
-                <muxc:ItemsRepeater x:Name="ChaptersRepeater" ItemsSource="{Binding Chapters}">
-                    <muxc:ItemsRepeater.ItemTemplate>
-                        <DataTemplate>
-                            <Grid x:Name="ChapterItemGrid" Margin="0,0,0,32" SizeChanged="ChapterItemGrid_SizeChanged">
-                                <RichTextBlock x:Name="ChapterRichTextBlock" 
+				<muxc:ItemsRepeater x:Name="ChaptersRepeater" ItemsSource="{Binding Chapters}">
+					<muxc:ItemsRepeater.ItemTemplate>
+						<DataTemplate>
+							<Grid x:Name="ChapterItemGrid" SizeChanged="ChapterItemGrid_SizeChanged">
+								<RichTextBlock x:Name="ChapterRichTextBlock" 
                                              common:Properties.Html="{Binding ChapterText}" />
-                            </Grid>
-                        </DataTemplate>
-                    </muxc:ItemsRepeater.ItemTemplate>
-                </muxc:ItemsRepeater>
-                <muxc:ProgressRing x:Name="LoadingMoreProgressRing" 
-                                   IsActive="{Binding IsLoadingMore}" 
-                                   Visibility="{Binding IsLoadingMore, Converter={StaticResource BoolToVisibilityConverter}}"
-                                   HorizontalAlignment="Center" 
-                                   Margin="0,16,0,16" 
-                                   Height="40" 
-                                   Width="40"/>
-            </StackPanel>
+							</Grid>
+						</DataTemplate>
+					</muxc:ItemsRepeater.ItemTemplate>
+				</muxc:ItemsRepeater>
+			</StackPanel>
         </ScrollViewer>
         <Grid Grid.RowSpan="2">
             <muxc:ProgressRing x:Name="BiblePageProgressRing"  IsActive="True" HorizontalAlignment="Center" VerticalAlignment="Center" Height="75" Width="75" Visibility="{Binding IsLoaded, Converter={StaticResource InvertedBoolToVisibilityConverter}}"/>
