@@ -143,7 +143,8 @@ namespace Elementary.ViewModels
 
             CurrentBook = Bible.Books.FirstOrDefault(b => b.Title == AppSettings.Book.ToString()) ?? Bible.Books.FirstOrDefault();
             CurrentChapter = CurrentBook?.Chapters.FirstOrDefault(c => c.Index == AppSettings.Chapter) ?? CurrentBook?.Chapters.FirstOrDefault() ?? new Chapter();
-            SelectedChapterIndex = CurrentChapter.Index;
+            // Ensure the selected chapter index reflects the current chapter so the ComboBox shows correctly
+            SelectedChapterIndex = CurrentChapter?.Index ?? 1;
 
             // Initialize with current chapter and load adjacent chapters
             LoadInitialChapters();
