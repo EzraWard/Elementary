@@ -185,6 +185,12 @@ namespace Elementary
         {
             if (!_isLoaded || _isUpdatingFromScroll) return;
 
+            // If the book ComboBox triggered this, reset chapter selection to 1 so the chapter ComboBox reflects the new book
+            if (sender == BibleBookComboBox)
+            {
+                _viewModel.SelectedChapterIndex = 1;
+            }
+
             // Reload chapters from the selected position
             _viewModel.LoadInitialChapters();
             
