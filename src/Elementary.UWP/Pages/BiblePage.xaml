@@ -24,28 +24,6 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Grid Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="12" Padding="6" CornerRadius="6" Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}" >
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
-                <ComboBox x:Name="BibleBookComboBox"
-                          Width="200"
-                          FontSize="12"
-                          ItemsSource="{Binding Bible.Books}"
-                          DisplayMemberPath="Title"
-                          SelectedItem="{Binding CurrentBook, Mode=TwoWay}"
-                          PlaceholderText="Bible" 
-                          Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
-                          SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged"/>
-
-                <ComboBox x:Name="BookChapterComboBox" 
-                          Width="100"
-                          FontSize="12"
-                          ItemsSource="{Binding ChapterIndices}" 
-                          SelectedItem="{Binding SelectedChapterIndex, Mode=TwoWay}"
-                          PlaceholderText="Chapter" 
-                          Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
-                          SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged"/>
-            </StackPanel>
-        </Grid>
         <ScrollViewer x:Name="BibleScrollViewer" Grid.RowSpan="2" VerticalScrollBarVisibility="Auto" ViewChanged="BibleScrollViewer_ViewChanged">
             <StackPanel x:Name="ChaptersContainer">
 				<muxc:ItemsRepeater x:Name="ChaptersRepeater" ItemsSource="{Binding Chapters}">
@@ -60,7 +38,30 @@
 				</muxc:ItemsRepeater>
 			</StackPanel>
         </ScrollViewer>
-        <Grid Grid.RowSpan="2">
+		<Border Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="12" Padding="6" CornerRadius="6" Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
+			<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+				<ComboBox x:Name="BibleBookComboBox"
+                          Width="200"
+                          FontSize="12"
+                          ItemsSource="{Binding Bible.Books}"
+                          DisplayMemberPath="Title"
+                          SelectedItem="{Binding CurrentBook, Mode=TwoWay}"
+                          PlaceholderText="Bible" 
+                          Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
+                          SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged"/>
+
+				<ComboBox x:Name="BookChapterComboBox" 
+                          Width="100"
+                          FontSize="12"
+                          ItemsSource="{Binding ChapterIndices}" 
+                          SelectedItem="{Binding SelectedChapterIndex, Mode=TwoWay}"
+                          PlaceholderText="Chapter" 
+                          Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
+                          SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged"/>
+			</StackPanel>
+		</Border>
+
+		<Grid Grid.RowSpan="2">
             <muxc:ProgressRing x:Name="BiblePageProgressRing"  IsActive="True" HorizontalAlignment="Center" VerticalAlignment="Center" Height="75" Width="75" Visibility="{Binding IsLoaded, Converter={StaticResource InvertedBoolToVisibilityConverter}}"/>
         </Grid>
     </Grid>
