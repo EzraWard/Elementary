@@ -24,7 +24,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <ScrollViewer x:Name="BibleScrollViewer" Grid.RowSpan="2" VerticalScrollBarVisibility="Auto" ViewChanged="BibleScrollViewer_ViewChanged">
+        <ScrollViewer x:Name="BibleScrollViewer" Grid.RowSpan="2" VerticalScrollBarVisibility="Hidden" ViewChanged="BibleScrollViewer_ViewChanged">
             <StackPanel x:Name="ChaptersContainer">
 				<muxc:ItemsRepeater x:Name="ChaptersRepeater" ItemsSource="{Binding Chapters}">
 					<muxc:ItemsRepeater.ItemTemplate>
