@@ -24,23 +24,29 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8" Margin="8,8,8,8">
-            <ComboBox x:Name="BibleBookComboBox"
-                      ItemsSource="{Binding Bible.Books}"
-                      DisplayMemberPath="Title"
-                      SelectedItem="{Binding CurrentBook, Mode=TwoWay}"
-                      PlaceholderText="Bible" 
-                      Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
-                      SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged"/>
+        <Grid Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="12" Padding="6" CornerRadius="6" Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}" >
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                <ComboBox x:Name="BibleBookComboBox"
+                          Width="200"
+                          FontSize="12"
+                          ItemsSource="{Binding Bible.Books}"
+                          DisplayMemberPath="Title"
+                          SelectedItem="{Binding CurrentBook, Mode=TwoWay}"
+                          PlaceholderText="Bible" 
+                          Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
+                          SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged"/>
 
-            <ComboBox x:Name="BookChapterComboBox" 
-                      ItemsSource="{Binding ChapterIndices}" 
-                      SelectedItem="{Binding SelectedChapterIndex, Mode=TwoWay}"
-                      PlaceholderText="Chapter" 
-                      Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
-                      SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged"/>
-        </StackPanel>
-        <ScrollViewer x:Name="BibleScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto" ViewChanged="BibleScrollViewer_ViewChanged">
+                <ComboBox x:Name="BookChapterComboBox" 
+                          Width="100"
+                          FontSize="12"
+                          ItemsSource="{Binding ChapterIndices}" 
+                          SelectedItem="{Binding SelectedChapterIndex, Mode=TwoWay}"
+                          PlaceholderText="Chapter" 
+                          Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
+                          SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged"/>
+            </StackPanel>
+        </Grid>
+        <ScrollViewer x:Name="BibleScrollViewer" Grid.RowSpan="2" VerticalScrollBarVisibility="Auto" ViewChanged="BibleScrollViewer_ViewChanged">
             <StackPanel x:Name="ChaptersContainer">
 				<muxc:ItemsRepeater x:Name="ChaptersRepeater" ItemsSource="{Binding Chapters}">
 					<muxc:ItemsRepeater.ItemTemplate>
