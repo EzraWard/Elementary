@@ -11,6 +11,11 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Media.Imaging;
+using Microsoft.Extensions.DependencyInjection;
+using Elementary.Core.Interfaces;
+using Elementary.Core.Models;
+using System.Collections.Generic;
+using System.Linq;
 using MUXC = Microsoft.UI.Xaml.Controls;
 
 namespace Elementary
@@ -63,6 +68,20 @@ namespace Elementary
             if (clickedView == "VerseOfTheDay")
             {
                 await ShowVerseOfTheDayDialogAsync();
+
+                // Reset selection back to the currently displayed page
+                MainNavigationView.SelectedItem = _lastItem;
+                return;
+            }
+
+            if (clickedView == "History")
+            {
+                // Populate history flyout from settings service and show it anchored to the invoked item
+                var settingsService = App.Services.GetRequiredService<ISettingsService>();
+                var history = settingsService.GetNavigationHistory() ?? new List<NavigationHistoryItem>();
+                // Display newest items first (reverse chronological)
+                HistoryListView.ItemsSource = history.AsEnumerable().Reverse().ToList();
+                HistoryFlyout.ShowAt(item);
 
                 // Reset selection back to the currently displayed page
                 MainNavigationView.SelectedItem = _lastItem;
@@ -149,6 +168,21 @@ namespace Elementary
 
             dialog.Content = image;
             await dialog.ShowAsync();
+        }
+
+        private void HistoryListView_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            if (e?.ClickedItem is NavigationHistoryItem item)
+            {
+                // Navigate to BiblePage and instruct it to show the selected book/chapter
+                if (!NavigateToView("BiblePage")) return;
+                var biblePage = ContentFrame.Content as BiblePage;
+                biblePage?.NavigateToFromHistory(item.BookTitle, item.Chapter);
+                HistoryFlyout.Hide();
+                // Update last item to Bible Page navigation item
+                _lastItem = BiblePageNavigationViewItem;
+                MainNavigationView.SelectedItem = _lastItem;
+            }
         }
     }
 }

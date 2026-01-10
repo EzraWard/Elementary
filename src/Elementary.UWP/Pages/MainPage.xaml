@@ -9,6 +9,14 @@
     mc:Ignorable="d"
     muxc:BackdropMaterial.ApplyToRootOrPageBackground="True">
 
+    <Page.Resources>
+        <Flyout x:Name="HistoryFlyout" Placement="Right">
+            <Grid>
+                <ListView x:Name="HistoryListView" IsItemClickEnabled="True" ItemClick="HistoryListView_ItemClick" />
+            </Grid>
+        </Flyout>
+    </Page.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition x:Name="TitleBarRow" Height="32"/>
@@ -39,11 +47,15 @@
                 </muxc:NavigationViewItem>
                 <muxc:NavigationViewItem x:Name="VerseOfTheDayNavigationViewItem" Content="Verse of the Day" Tag="VerseOfTheDay">
                     <muxc:NavigationViewItem.Icon>
-                        <!--Including the font file for Segoe Fluent Icons in project ensures that the font properly displays on Windows 10-->
                         <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE787;"/>
                     </muxc:NavigationViewItem.Icon>
                 </muxc:NavigationViewItem>
-            </muxc:NavigationView.MenuItems>
+				<muxc:NavigationViewItem x:Name="HistoryNavigationViewItem" Content="History" Tag="History">
+					<muxc:NavigationViewItem.Icon>
+						<FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE81C;"/>
+					</muxc:NavigationViewItem.Icon>
+				</muxc:NavigationViewItem>
+			</muxc:NavigationView.MenuItems>
             <Frame Name="ContentFrame" NavigationFailed="ContentFrame_NavigationFailed" />
         </muxc:NavigationView>
     </Grid>

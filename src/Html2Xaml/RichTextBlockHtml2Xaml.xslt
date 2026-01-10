@@ -36,6 +36,27 @@
     </xsl:template>
 
   
+      <!-- Headings -->
+    <xsl:template match="/div/H1 | /div/h1" priority="11">
+      <Paragraph TextAlignment="Center" FontSize="22" FontWeight="Bold" Margin="0,8,0,8">
+        <Run><xsl:apply-templates/></Run>
+      </Paragraph>
+    </xsl:template>
+
+    <!-- Paragraph title -->
+    <xsl:template match="/div/P[@class='paragraphtitle'] | /div/p[@class='paragraphtitle']" priority="11">
+      <Paragraph TextAlignment="Center" FontWeight="Bold" Margin="0,6,0,6">
+        <Run><xsl:apply-templates/></Run>
+      </Paragraph>
+    </xsl:template>
+
+    <!-- Poetry: preserve line breaks, indent first line, and reduce line spacing -->
+    <xsl:template match="/div/P[@class='poetry'] | /div/p[@class='poetry']" priority="11">
+      <Paragraph xml:space="preserve" TextIndent="20" Margin="0,0,0,0" LineHeight="6" LineStackingStrategy="BlockLineHeight">
+        <xsl:apply-templates/>
+      </Paragraph>
+    </xsl:template>
+
     <!-- XAML Paragraphs cannot contain paragraphs, so we convert top-level html paragraphs to xaml paragraphs and convert nested html paragraphs to xaml spans with linebreaks -->
     <xsl:template match="/div/P | /div/p" priority="9">
       <Paragraph>
