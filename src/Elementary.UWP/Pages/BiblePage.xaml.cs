@@ -2,6 +2,7 @@
 using Elementary.ViewModels;
 using System;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 
@@ -232,10 +233,50 @@ namespace Elementary
                 _viewModel.SelectedChapterIndex = 1;
             }
 
+            // Save manual selection to navigation history (only on explicit combobox selection)
+            try
+            {
+                var settingsService = App.Services.GetRequiredService<Core.Interfaces.ISettingsService>();
+                var history = settingsService.GetNavigationHistory() ?? new System.Collections.Generic.List<Core.Models.NavigationHistoryItem>();
+                var currentBookTitle = _viewModel.CurrentBook?.Title ?? _viewModel.Bible?.Books?.FirstOrDefault()?.Title ?? string.Empty;
+                var currentChapter = _viewModel.SelectedChapterIndex;
+                // Avoid duplicate consecutive entries
+                if (history.Count == 0 || history[history.Count - 1].BookTitle != currentBookTitle || history[history.Count - 1].Chapter != currentChapter)
+                {
+                    history.Add(new Core.Models.NavigationHistoryItem { BookTitle = currentBookTitle, Chapter = currentChapter });
+                    // keep max 10, remove oldest if necessary
+                    if (history.Count > 10) history.RemoveAt(0);
+                    settingsService.SaveNavigationHistory(history);
+                }
+            }
+            catch
+            {
+                // ignore errors saving history
+            }
+
             // Reload chapters from the selected position
             _viewModel.LoadInitialChapters();
             
             // Scroll to the current chapter
+            ScrollToCurrentChapter();
+        }
+
+        public void NavigateToFromHistory(string bookTitle, int chapter)
+        {
+            // If page isn't fully initialized yet, defer until Loaded finishes
+            if (!_isLoaded)
+            {
+                Loaded += (s, e) =>
+                {
+                    _viewModel.UpdateNavigationSettings(bookTitle, chapter);
+                    _viewModel.LoadInitialChapters();
+                    ScrollToCurrentChapter();
+                };
+                return;
+            }
+
+            _viewModel.UpdateNavigationSettings(bookTitle, chapter);
+            _viewModel.LoadInitialChapters();
             ScrollToCurrentChapter();
         }
     }
