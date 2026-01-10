@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
 using System.Collections.Generic;
+using System.Linq;
 using MUXC = Microsoft.UI.Xaml.Controls;
 
 namespace Elementary
@@ -77,8 +78,9 @@ namespace Elementary
             {
                 // Populate history flyout from settings service and show it anchored to the invoked item
                 var settingsService = App.Services.GetRequiredService<ISettingsService>();
-                var history = settingsService.GetNavigationHistory();
-                HistoryListView.ItemsSource = history;
+                var history = settingsService.GetNavigationHistory() ?? new List<NavigationHistoryItem>();
+                // Display newest items first (reverse chronological)
+                HistoryListView.ItemsSource = history.AsEnumerable().Reverse().ToList();
                 HistoryFlyout.ShowAt(item);
 
                 // Reset selection back to the currently displayed page
