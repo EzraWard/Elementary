@@ -35,7 +35,13 @@ namespace Elementary.Core.Services
             Enum.TryParse(GetSetting("fontSize"), out EFontSize fontSize);
             appSettings.FontSize = fontSize;
 
-            bool.TryParse(GetSetting("showVerseNumbers"), out bool showVerseNumbers);
+            bool? showVerseNumbers = null;
+            var showVerseNumbersStr = GetSetting("showVerseNumbers");
+            if (!string.IsNullOrWhiteSpace(showVerseNumbersStr))
+            {
+                if (bool.TryParse(showVerseNumbersStr, out bool parsed))
+                    showVerseNumbers = parsed;
+            }
             appSettings.ShowVerseNumbers = showVerseNumbers;
 
             Enum.TryParse(GetSetting("theme"), out ETheme theme);
@@ -70,7 +76,8 @@ namespace Elementary.Core.Services
             if (appSettings.Font == EFont.NotSet) appSettings.Font = EFont.SegoeUIVariable;
             if (appSettings.FontSize == EFontSize.NotSet) appSettings.FontSize = EFontSize.Medium;
 
-            if (appSettings.ShowVerseNumbers == null) appSettings.ShowVerseNumbers = true;
+            if (appSettings.ShowVerseNumbers == null)
+                appSettings.ShowVerseNumbers = true;
 
             SaveSettings(appSettings);
         }
@@ -89,6 +96,44 @@ namespace Elementary.Core.Services
         private void DeleteSetting(string key)
         {
             _settingsProvider.DeleteSetting(key);
+        }
+
+        // Navigation history handling (manual book/chapter selections only)
+        public System.Collections.Generic.List<NavigationHistoryItem> GetNavigationHistory()
+        {
+            var raw = GetSetting("navigationHistory");
+            var list = new System.Collections.Generic.List<NavigationHistoryItem>();
+            if (string.IsNullOrWhiteSpace(raw)) return list;
+
+            var parts = raw.Split(new char[] {';'}, System.StringSplitOptions.RemoveEmptyEntries);
+            foreach (var p in parts)
+            {
+                var pieces = p.Split(new char[] {'|'});
+                if (pieces.Length == 2)
+                {
+                    if (int.TryParse(pieces[1], out int chap))
+                    {
+                        list.Add(new NavigationHistoryItem { BookTitle = pieces[0], Chapter = chap });
+                    }
+                }
+            }
+            return list;
+        }
+
+        public void SaveNavigationHistory(System.Collections.Generic.List<NavigationHistoryItem> history)
+        {
+            if (history == null) history = new System.Collections.Generic.List<NavigationHistoryItem>();
+            // Trim to 10 (oldest first)
+            if (history.Count > 10)
+            {
+                history = history.GetRange(history.Count - 10, 10);
+            }
+            var parts = new System.Collections.Generic.List<string>();
+            foreach (var h in history)
+            {
+                parts.Add($"{h.BookTitle}|{h.Chapter}");
+            }
+            SaveSetting("navigationHistory", string.Join(";", parts));
         }
     }
 }
