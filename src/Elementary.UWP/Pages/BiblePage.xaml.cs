@@ -1,6 +1,7 @@
 ﻿using Elementary.Core.Models;
 using Elementary.ViewModels;
 using System;
+using System.Linq;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 
@@ -62,6 +63,39 @@ namespace Elementary
             {
                 BibleScrollViewer.ChangeView(null, 0, null, true);
             }
+
+            // Ensure first chapter has enough top offset when necessary
+            ApplyTopOffsetToFirstChapter();
+        }
+
+        private void ApplyTopOffsetToFirstChapter()
+        {
+            try
+            {
+                var firstElement = ChaptersRepeater.TryGetElement(0) as Grid;
+                if (firstElement == null) return;
+
+                var firstChapter = _viewModel?.Chapters?.Count > 0 ? _viewModel.Chapters[0] : null;
+                if (firstChapter != null)
+                {
+                    var book = _viewModel?.Bible?.Books?.FirstOrDefault(b => b.Chapters.Contains(firstChapter));
+                    if (book != null && firstChapter.Index == 1)
+                    {
+                        double offset = 0;
+                        if (ChooserBorder != null)
+                        {
+                            offset = ChooserBorder.ActualHeight + ChooserBorder.Margin.Top + ChooserBorder.Padding.Top + 8;
+                        }
+                        firstElement.Margin = new Thickness(0, offset, 0, 0);
+                        return;
+                    }
+                }
+                firstElement.Margin = new Thickness(0);
+            }
+            catch
+            {
+                // ignore errors
+            }
         }
 
         private void ChapterItemGrid_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -79,15 +113,22 @@ namespace Elementary
             if (gridWidth > 750)
             {
                 richTextBlock.Width = 700;
+                // If this is the first element, ensure offset is applied after size settles
+                var first = ChaptersRepeater.TryGetElement(0);
+                if (object.ReferenceEquals(grid, first)) ApplyTopOffsetToFirstChapter();
                 return;
             }
             if (gridWidth < 350)
             {
                 richTextBlock.Width = 300;
+                var first = ChaptersRepeater.TryGetElement(0);
+                if (object.ReferenceEquals(grid, first)) ApplyTopOffsetToFirstChapter();
                 return;
             }
 
             richTextBlock.Width = gridWidth - 50;
+            var firstElement = ChaptersRepeater.TryGetElement(0);
+            if (object.ReferenceEquals(grid, firstElement)) ApplyTopOffsetToFirstChapter();
         }
 
         private void UpdateCurrentChapterFromScroll()
