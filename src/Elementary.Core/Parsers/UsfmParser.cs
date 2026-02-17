@@ -63,7 +63,8 @@ namespace Elementary.Core.Parsers
 
             var book = new UsfmBook();
 
-            // Normalize line endings
+            // Normalize line endings and convert escaped \n sequences used in tests to actual newlines
+            content = content.Replace("\\n", "\n");
             content = content.Replace("\r\n", "\n").Replace("\r", "\n");
 
             // Extract title from \h or \mt or \id
