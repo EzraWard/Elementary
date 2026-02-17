@@ -67,14 +67,14 @@ namespace Elementary.Core.Parsers
             content = content.Replace("\r\n", "\n").Replace("\r", "\n");
 
             // Extract title from \h or \mt or \id
-            var titleMatch = Regex.Match(content, @"\\h\s+([^\n\r]+)", RegexOptions.IgnoreCase);
+            var titleMatch = Regex.Match(content, @"\\h\s+([^\\\n\r]+)", RegexOptions.IgnoreCase);
             if (!titleMatch.Success)
             {
-                titleMatch = Regex.Match(content, @"\\mt\s+([^\n\r]+)", RegexOptions.IgnoreCase);
+                titleMatch = Regex.Match(content, @"\\mt\s+([^\\\n\r]+)", RegexOptions.IgnoreCase);
             }
             if (!titleMatch.Success)
             {
-                titleMatch = Regex.Match(content, @"\\id\s+([^\n\r]+)", RegexOptions.IgnoreCase);
+                titleMatch = Regex.Match(content, @"\\id\s+([^\\\n\r]+)", RegexOptions.IgnoreCase);
             }
             if (titleMatch.Success)
             {
