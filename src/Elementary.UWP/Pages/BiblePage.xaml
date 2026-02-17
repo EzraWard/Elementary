@@ -8,7 +8,6 @@
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     xmlns:viewmodels="using:Elementary.ViewModels"
     xmlns:converters="using:Elementary.UWP.Converters"
-    xmlns:common="using:html2xaml"
     mc:Ignorable="d"
     d:DataContext="{d:DesignInstance viewmodels:BiblePageViewModel, IsDesignTimeCreatable=True}"
     Background="Transparent"
@@ -30,8 +29,7 @@
 					<muxc:ItemsRepeater.ItemTemplate>
 						<DataTemplate>
 							<Grid x:Name="ChapterItemGrid" SizeChanged="ChapterItemGrid_SizeChanged">
-								<RichTextBlock x:Name="ChapterRichTextBlock" 
-                                             common:Properties.Html="{Binding ChapterText}" />
+								<RichTextBlock x:Name="ChapterRichTextBlock" TextWrapping="Wrap" />
 							</Grid>
 						</DataTemplate>
 					</muxc:ItemsRepeater.ItemTemplate>

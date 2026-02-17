@@ -2,9 +2,13 @@
 using Elementary.ViewModels;
 using System;
 using System.Linq;
+using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Documents;
+using System.Text.RegularExpressions;
+using System.Net;
 
 namespace Elementary
 {
@@ -108,6 +112,20 @@ namespace Elementary
             // Set font properties from ViewModel
             richTextBlock.FontFamily = new Windows.UI.Xaml.Media.FontFamily(_viewModel.Font);
             richTextBlock.FontSize = _viewModel.FontSize;
+
+            // Populate content from bound Chapter
+            try
+            {
+                var chapter = grid.DataContext as Chapter;
+                if (chapter != null)
+                {
+                    PopulateRichTextBlock(richTextBlock, chapter.ChapterText);
+                }
+            }
+            catch
+            {
+                // ignore rendering errors
+            }
 
             var gridWidth = grid.ActualWidth;
 
@@ -223,6 +241,43 @@ namespace Elementary
             _previousVerticalOffset = verticalOffset;
         }
 
+        // Populate a RichTextBlock from simplified HTML created by the USFM parser.
+        private void PopulateRichTextBlock(RichTextBlock rtb, string html)
+        {
+            rtb.Blocks.Clear();
+            var paragraph = new Paragraph();
+            if (string.IsNullOrEmpty(html))
+            {
+                rtb.Blocks.Add(paragraph);
+                return;
+            }
+
+            var decoded = WebUtility.HtmlDecode(html);
+
+            // Match patterns like <sup>1</sup> verse text
+            var matches = Regex.Matches(decoded, @"<sup>(\\d+)</sup>\s*([^<]+)", RegexOptions.Singleline);
+            if (matches.Count > 0)
+            {
+                foreach (Match m in matches)
+                {
+                    var num = m.Groups[1].Value;
+                    var text = m.Groups[2].Value.Trim();
+
+                    var numRun = new Run { Text = num + " ", FontSize = rtb.FontSize * 0.75 };
+                    paragraph.Inlines.Add(numRun);
+
+                    var textRun = new Run { Text = text + " " };
+                    paragraph.Inlines.Add(textRun);
+                }
+            }
+            else
+            {
+                paragraph.Inlines.Add(new Run { Text = decoded });
+            }
+
+            rtb.Blocks.Add(paragraph);
+        }
+
         private void BibleBookChapterComboBoxes_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!_isLoaded || _isUpdatingFromScroll) return;
@@ -277,6 +332,28 @@ namespace Elementary
 
             _viewModel.UpdateNavigationSettings(bookTitle, chapter);
             _viewModel.LoadInitialChapters();
+            ScrollToCurrentChapter();
+        }
+
+        // Show only the provided chapters in the Bible view (used by Reading Plan)
+        public void ShowChapters(List<Chapter> chapters)
+        {
+            if (chapters == null || chapters.Count == 0) return;
+
+            // If page isn't initialized yet, wait until Loaded completes
+            if (!_isLoaded)
+            {
+                Loaded += (s, e) =>
+                {
+                    _viewModel.Chapters = new System.Collections.ObjectModel.ObservableCollection<Chapter>(chapters);
+                    _viewModel.CurrentChapter = chapters[0];
+                    ScrollToCurrentChapter();
+                };
+                return;
+            }
+
+            _viewModel.Chapters = new System.Collections.ObjectModel.ObservableCollection<Chapter>(chapters);
+            _viewModel.CurrentChapter = chapters[0];
             ScrollToCurrentChapter();
         }
     }

@@ -50,6 +50,11 @@
                         <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE787;"/>
                     </muxc:NavigationViewItem.Icon>
                 </muxc:NavigationViewItem>
+                <muxc:NavigationViewItem x:Name="ReadingPlanNavigationViewItem" Content="Reading Plan" Tag="ReadingPlanPage">
+                    <muxc:NavigationViewItem.Icon>
+                        <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE8C7;"/>
+                    </muxc:NavigationViewItem.Icon>
+                </muxc:NavigationViewItem>
 				<muxc:NavigationViewItem x:Name="HistoryNavigationViewItem" Content="History" Tag="History">
 					<muxc:NavigationViewItem.Icon>
 						<FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE81C;"/>

@@ -14,7 +14,8 @@ namespace Elementary.Services
                 case ETranslation.KJV:
                     return "ms-appx:///Content/KJVNoImages.epub";
                 case ETranslation.NET:
-                    return "ms-appx:///Content/NET21NOTELESS.epub";
+                    // Use the NET folder containing USFM files
+                    return "ms-appx:///Content/NET";
                 default:
                     return null;
             }

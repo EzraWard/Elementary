@@ -10,7 +10,7 @@ namespace Elementary.UWP.Dictionaries
     {
         public static readonly Dictionary<string, string> BibleDictionary = new Dictionary<string, string>
         {
-            { "NET", "ms-appx:///Content/NET21NOTELESS.epub" },
+            { "NET", "ms-appx:///Content/NET" },
             { "KJV", "ms-appx:///Content/KJVNoImages.epub"  },
             { "ASV", "ms-appx:///Content/eng-asv.epub"  }
         };

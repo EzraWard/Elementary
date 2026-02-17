@@ -4,6 +4,7 @@ using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
 using HtmlAgilityPack;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Drawing;
 using System.IO;
@@ -54,51 +55,129 @@ namespace Elementary.Core.Services
         private async Task<Bible> GetBibleNET()
         {
             var bible = new Bible();
-            EpubBook epubBible;
-
             var bibleFilePath = _filePathProvider.GetPathForTranslation(ETranslation.NET);
 
-            using (var stream = await _fileService.ReadFileAsync(bibleFilePath))
+            // If path ends with .epub keep existing behavior
+            if (!string.IsNullOrEmpty(bibleFilePath) && bibleFilePath.EndsWith(".epub", StringComparison.OrdinalIgnoreCase))
             {
-                epubBible = EpubReader.ReadBook(stream);
-            }
-
-            //Enumerate Books
-            foreach (var book in epubBible.Navigation)
-            {
-                bible.Books.Add(new Book
+                EpubBook epubBible;
+                using (var stream = await _fileService.ReadFileAsync(bibleFilePath))
                 {
-                    Title = book.Title
-                });
+                    epubBible = EpubReader.ReadBook(stream);
+                }
+
+                //Enumerate Books
+                foreach (var book in epubBible.Navigation)
+                {
+                    bible.Books.Add(new Book
+                    {
+                        Title = book.Title
+                    });
+                }
+
+                //Set reading order index for each book
+                foreach (var book in bible.Books)
+                {
+                    var bookEnum = EBookToLocation.EBookTitleToEBook[book.Title];
+                    book.ReadingOrderIndex = EBookToLocation.EBookToEPubLocationNET[bookEnum];
+                }
+
+                //intialize chapters
+                for (int i = 0; i < bible.Books.Count; i++)
+                {
+                    int numberOfChapters;
+                    if (bible.Books[i].Title != "Revelation")
+                    {
+                        numberOfChapters = bible.Books[i + 1].ReadingOrderIndex - bible.Books[i].ReadingOrderIndex;
+                    }
+                    else
+                    {
+                        numberOfChapters = 23; //this is wrong, but it works for now...
+                    }
+
+                    //Set
+                    bible.Books[i].Chapters = new ObservableCollection<Chapter>();
+                    for (int j = 1; j < numberOfChapters; j++)
+                    {
+                        var readingOrderIndex = bible.Books[i].ReadingOrderIndex + j;
+                        var text = epubBible.ReadingOrder[readingOrderIndex].Content;
+                        bible.Books[i].Chapters.Add(new Chapter { Index = j, ChapterText = CleanChapterHtml(epubBible.ReadingOrder[readingOrderIndex].Content, bible.Books[i].Title, j) });
+                    }
+                }
+
+                return bible;
             }
 
-            //Set reading order index for each book
+            // Otherwise, assume a folder path containing USFM files
+            var usfmFiles = await _fileService.ListFilesAsync(bibleFilePath, "*.usfm");
+            var fileList = new List<string>(usfmFiles ?? new string[0]);
+
+            // Sort files by name to get canonical order if filenames are numbered
+            fileList.Sort();
+
+            foreach (var filePath in fileList)
+            {
+                try
+                {
+                    using (var stream = await _fileService.ReadFileAsync(filePath))
+                    using (var reader = new StreamReader(stream))
+                    {
+                        var content = await reader.ReadToEndAsync();
+
+                        // Extract book title from \h or \mt fields if available
+                        var titleMatch = System.Text.RegularExpressions.Regex.Match(content, @"\\h\s+(.+)", System.Text.RegularExpressions.RegexOptions.Multiline);
+                        if (!titleMatch.Success)
+                        {
+                            titleMatch = System.Text.RegularExpressions.Regex.Match(content, @"\\mt\s+(.+)", System.Text.RegularExpressions.RegexOptions.Multiline);
+                        }
+
+                        var bookTitle = titleMatch.Success ? titleMatch.Groups[1].Value.Trim() : Path.GetFileNameWithoutExtension(filePath);
+
+                        var book = new Book { Title = bookTitle };
+                        book.Chapters = new ObservableCollection<Chapter>();
+
+                        // Split into chapter sections by \c markers
+                        var chapterSections = System.Text.RegularExpressions.Regex.Split(content, "(?=\\\\c\\s+\\d+)");
+
+                        foreach (var section in chapterSections)
+                        {
+                            var chapMatch = System.Text.RegularExpressions.Regex.Match(section, "\\\\c\\s+(\\d+)");
+                            if (!chapMatch.Success)
+                                continue;
+
+                            var chapNum = int.Parse(chapMatch.Groups[1].Value);
+
+                            // Find all verses in the chapter
+                            var verses = System.Text.RegularExpressions.Regex.Matches(section, "\\\\v\\s+(\\d+)\\s+([^\\\\]+|(?:\\\\(?!v|c)[^\\\\]+)*)", System.Text.RegularExpressions.RegexOptions.Singleline);
+
+                            var sb = new System.Text.StringBuilder();
+                            foreach (System.Text.RegularExpressions.Match v in verses)
+                            {
+                                var vnum = v.Groups[1].Value;
+                                var vtext = v.Groups[2].Value.Trim().Replace("\n", " ").Replace("\r", " ");
+
+                                // Simple HTML output for a verse
+                                sb.Append($"<sup>{vnum}</sup> {System.Net.WebUtility.HtmlEncode(vtext)} ");
+                            }
+
+                            book.Chapters.Add(new Chapter { Index = chapNum, ChapterText = sb.ToString() });
+                        }
+
+                        bible.Books.Add(book);
+                    }
+                }
+                catch
+                {
+                    // Ignore problematic files and continue
+                }
+            }
+
+            // Set reading order index using the mapping when possible
             foreach (var book in bible.Books)
             {
-                var bookEnum = EBookToLocation.EBookTitleToEBook[book.Title];
-                book.ReadingOrderIndex = EBookToLocation.EBookToEPubLocationNET[bookEnum];
-            }
-
-            //intialize chapters
-            for (int i = 0; i < bible.Books.Count; i++)
-            {
-                int numberOfChapters;
-                if (bible.Books[i].Title != "Revelation")
+                if (EBookToLocation.EBookTitleToEBook.TryGetValue(book.Title, out var bookEnum))
                 {
-                    numberOfChapters = bible.Books[i + 1].ReadingOrderIndex - bible.Books[i].ReadingOrderIndex;
-                }
-                else
-                {
-                    numberOfChapters = 23; //this is wrong, but it works for now...
-                }
-
-                //Set
-                bible.Books[i].Chapters = new ObservableCollection<Chapter>();
-                for (int j = 1; j < numberOfChapters; j++)
-                {
-                    var readingOrderIndex = bible.Books[i].ReadingOrderIndex + j;
-                    var text = epubBible.ReadingOrder[readingOrderIndex].Content;
-                    bible.Books[i].Chapters.Add(new Chapter { Index = j, ChapterText = CleanChapterHtml(epubBible.ReadingOrder[readingOrderIndex].Content, bible.Books[i].Title, j) });
+                    book.ReadingOrderIndex = EBookToLocation.EBookToEPubLocationNET[bookEnum];
                 }
             }
 
