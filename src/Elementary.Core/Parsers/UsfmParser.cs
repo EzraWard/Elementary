@@ -67,14 +67,14 @@ namespace Elementary.Core.Parsers
             content = content.Replace("\r\n", "\n").Replace("\r", "\n");
 
             // Extract title from \h or \mt or \id
-            var titleMatch = Regex.Match(content, "\\\\h\s+(.+)", RegexOptions.IgnoreCase);
+            var titleMatch = Regex.Match(content, @"\\h\s+([^\n\r]+)", RegexOptions.IgnoreCase);
             if (!titleMatch.Success)
             {
-                titleMatch = Regex.Match(content, "\\\\mt\s+(.+)", RegexOptions.IgnoreCase);
+                titleMatch = Regex.Match(content, @"\\mt\s+([^\n\r]+)", RegexOptions.IgnoreCase);
             }
             if (!titleMatch.Success)
             {
-                titleMatch = Regex.Match(content, "\\\\id\s+(.+)", RegexOptions.IgnoreCase);
+                titleMatch = Regex.Match(content, @"\\id\s+([^\n\r]+)", RegexOptions.IgnoreCase);
             }
             if (titleMatch.Success)
             {
@@ -82,13 +82,13 @@ namespace Elementary.Core.Parsers
             }
 
             // Process sequentially: find chapters by \c markers
-            var chapterSplits = Regex.Split(content, "(?=\\\\c\\s+\\d+)", RegexOptions.Multiline);
+            var chapterSplits = Regex.Split(content, @"(?=\\c\s+\d+)", RegexOptions.Multiline);
 
             foreach (var chunk in chapterSplits)
             {
                 if (string.IsNullOrWhiteSpace(chunk)) continue;
 
-                var cMatch = Regex.Match(chunk, "\\\\c\\s+(\\d+)", RegexOptions.IgnoreCase);
+                var cMatch = Regex.Match(chunk, @"\\c\s+(\d+)", RegexOptions.IgnoreCase);
                 if (!cMatch.Success)
                 {
                     // if no chapter marker, skip
@@ -100,7 +100,7 @@ namespace Elementary.Core.Parsers
 
                 // Extract footnotes first (\f ... \f*) non-greedy
                 var footnotes = new List<string>();
-                var footnotePattern = new Regex("\\\\f\\s+(.*?)\\\\f\\*", RegexOptions.Singleline);
+                var footnotePattern = new Regex(@"\\f\s+(.*?)\\f\*", RegexOptions.Singleline);
                 chapter.Footnotes = new List<string>();
                 var footnoteIndex = 0;
                 foreach (Match f in footnotePattern.Matches(chunk))
@@ -126,7 +126,7 @@ namespace Elementary.Core.Parsers
                     if (string.IsNullOrEmpty(trimmed)) continue;
 
                     // Verse line
-                    var vMatch = Regex.Match(trimmed, "\\\\v\\s+(\\d+)\s*(.*)", RegexOptions.Singleline);
+                    var vMatch = Regex.Match(trimmed, @"\\v\s+(\d+)\s*(.*)", RegexOptions.Singleline);
                     if (vMatch.Success)
                     {
                         var vnum = int.Parse(vMatch.Groups[1].Value);
@@ -151,7 +151,7 @@ namespace Elementary.Core.Parsers
                     }
 
                     // Section heading \s
-                    var sMatch = Regex.Match(trimmed, "\\\\s\s*(.*)", RegexOptions.Singleline);
+                    var sMatch = Regex.Match(trimmed, @"\\s\s*(.*)", RegexOptions.Singleline);
                     if (sMatch.Success)
                     {
                         var stext = ProcessInline(sMatch.Groups[1].Value.Trim());
@@ -161,7 +161,7 @@ namespace Elementary.Core.Parsers
                     }
 
                     // Paragraph marker \p - continue as paragraph separator (no specific verse)
-                    var pMatch = Regex.Match(trimmed, "^\\\\p$", RegexOptions.IgnoreCase);
+                    var pMatch = Regex.Match(trimmed, @"^\\p$", RegexOptions.IgnoreCase);
                     if (pMatch.Success)
                     {
                         chapter.Verses.Add(new UsfmVerse { Number = 0, Text = "<p></p>" });
@@ -169,7 +169,7 @@ namespace Elementary.Core.Parsers
                     }
 
                     // Poetic lines \q
-                    var qMatch = Regex.Match(trimmed, "\\\\q\\s*(.*)", RegexOptions.Singleline);
+                    var qMatch = Regex.Match(trimmed, @"\\q\s*(.*)", RegexOptions.Singleline);
                     if (qMatch.Success)
                     {
                         var qtext = ProcessInline(qMatch.Groups[1].Value.Trim());
@@ -192,7 +192,7 @@ namespace Elementary.Core.Parsers
             // If no title found, try to infer from first non-empty book-level marker
             if (string.IsNullOrEmpty(book.Title))
             {
-                var idMatch = Regex.Match(content, "\\\\id\\s+([A-Za-z0-9_-]+)", RegexOptions.IgnoreCase);
+                var idMatch = Regex.Match(content, @"\\id\s+([A-Za-z0-9_-]+)", RegexOptions.IgnoreCase);
                 if (idMatch.Success) book.Title = idMatch.Groups[1].Value.Trim();
             }
 
@@ -204,21 +204,21 @@ namespace Elementary.Core.Parsers
             if (string.IsNullOrEmpty(text)) return string.Empty;
 
             // Replace cross-references \x ... \x*
-            text = Regex.Replace(text, "\\\\x\\s+(.*?)\\\\x\\*", m => $"<xr>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value.Trim())}</xr>", RegexOptions.Singleline);
+            text = Regex.Replace(text, @"\\x\s+(.*?)\\x\*", m => $"<xr>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value.Trim())}</xr>", RegexOptions.Singleline);
 
             // Replace emphasis \em ... \em* and \it ... \it*
-            text = Regex.Replace(text, "\\\\em\\s+", "<em>", RegexOptions.IgnoreCase);
-            text = Regex.Replace(text, "\\\\em\\*", "</em>", RegexOptions.IgnoreCase);
-            text = Regex.Replace(text, "\\\\it\\s+", "<em>", RegexOptions.IgnoreCase);
-            text = Regex.Replace(text, "\\\\it\\*", "</em>", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\\em\s+", "<em>", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\\em\*", "</em>", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\\it\s+", "<em>", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\\it\*", "</em>", RegexOptions.IgnoreCase);
 
             // Bold markers (some USFM use \bd ... \bd*)
-            text = Regex.Replace(text, "\\\\bd\\s+", "<b>", RegexOptions.IgnoreCase);
-            text = Regex.Replace(text, "\\\\bd\\*", "</b>", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\\bd\s+", "<b>", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\\bd\*", "</b>", RegexOptions.IgnoreCase);
 
             // Replace footnote placeholders (we will convert real footnotes earlier)
             // Any residual \v markers inside text remove
-            text = Regex.Replace(text, "\\\\v\\s+\\d+", "", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\\v\s+\d+", "", RegexOptions.IgnoreCase);
 
             // HTML-encode the remainder then un-encode known tags
             var encoded = System.Net.WebUtility.HtmlEncode(text);
