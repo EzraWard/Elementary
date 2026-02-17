@@ -14,7 +14,7 @@ namespace Elementary.Tests
             Assert.AreEqual("TestBook", book.Title);
             Assert.AreEqual(2, book.Chapters.Count);
             Assert.AreEqual(2, book.Chapters[0].Verses.Count);
-            Assert.AreEqual(1, book.Chapters[1].Index);
+            Assert.AreEqual(2, book.Chapters[1].Index);
         }
 
         [TestMethod]
