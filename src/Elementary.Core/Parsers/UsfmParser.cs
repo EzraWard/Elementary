@@ -204,6 +204,9 @@ namespace Elementary.Core.Parsers
         {
             if (string.IsNullOrEmpty(text)) return string.Empty;
 
+            // Remove word markers \w ... \w* keeping the displayed word before any attributes (e.g., \w word|strong="H123"\w*)
+            text = Regex.Replace(text, @"\\w\s+([^\\|]+?)(?:\|[^\\]*?)?\\w\*", m => m.Groups[1].Value.Trim(), RegexOptions.Singleline);
+
             // Replace cross-references \x ... \x*
             text = Regex.Replace(text, @"\\x\s+(.*?)\\x\*", m => $"<xr>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value.Trim())}</xr>", RegexOptions.Singleline);
 
