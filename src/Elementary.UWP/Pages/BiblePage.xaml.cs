@@ -28,6 +28,60 @@ namespace Elementary
             _viewModel = new BiblePageViewModel();
         }
 
+        // Simple tokenized HTML cache for prefetched chapters to speed rendering during fast scrolls.
+        private readonly Dictionary<string, string[]> _tokenCache = new Dictionary<string, string[]>();
+        private readonly object _cacheLock = new object();
+        private const int PrefetchDepth = 2; // configurable prefetch depth (chapters ahead/behind)
+
+        private string MakeCacheKey(Core.Models.Chapter chap)
+        {
+            try
+            {
+                var book = _viewModel?.Bible?.Books?.FirstOrDefault(b => b.Chapters.Contains(chap));
+                var title = book?.Title ?? "book";
+                return $"{title}:{chap.Index}";
+            }
+            catch { return $"unknown:{chap?.Index}"; }
+        }
+n        private Task EnsureTokenizedAsync(Core.Models.Chapter chap)
+        {
+            return System.Threading.Tasks.Task.Run(() =>
+            {
+                if (chap == null) return;
+                var key = MakeCacheKey(chap);
+                lock (_cacheLock)
+                {
+                    if (_tokenCache.ContainsKey(key)) return;
+                }
+
+                var decoded = System.Net.WebUtility.HtmlDecode(chap.ChapterText ?? string.Empty);
+                var matches = Regex.Matches(decoded, "(<[^>]+>|[^<]+)", RegexOptions.Singleline);
+                var parts = new List<string>();
+                foreach (Match m in matches) parts.Add(m.Value);
+                lock (_cacheLock)
+                {
+                    if (!_tokenCache.ContainsKey(key)) _tokenCache[key] = parts.ToArray();
+                }
+            });
+        }
+
+        private void PrefetchAroundChapter(Core.Models.Chapter current)
+        {
+            System.Threading.Tasks.Task.Run(async () =>
+            {
+                var chapters = _viewModel?.Chapters;
+                if (chapters == null || current == null) return;
+                var idx = chapters.IndexOf(current);
+                if (idx < 0) return;
+                int start = Math.Max(0, idx - PrefetchDepth);
+                int end = Math.Min(chapters.Count - 1, idx + PrefetchDepth);
+                for (int i = start; i <= end; i++)
+                {
+                    await EnsureTokenizedAsync(chapters[i]);
+                }
+            });
+        }
+
         private async void BiblePage_Loaded(object sender, RoutedEventArgs e)
         {
             DataContext = _viewModel;
@@ -42,6 +96,8 @@ namespace Elementary
                 // Give UI time to layout
                 await System.Threading.Tasks.Task.Delay(100);
                 ScrollToCurrentChapter();
+                // Prefetch around the current chapter
+                PrefetchAroundChapter(_viewModel.CurrentChapter);
             }
         }
 
@@ -120,7 +176,24 @@ namespace Elementary
                 var chapter = grid.DataContext as Chapter;
                 if (chapter != null)
                 {
-                    PopulateRichTextBlock(richTextBlock, chapter.ChapterText);
+                    // If we have a prefetched tokenized representation, use it for faster rendering
+                    var key = MakeCacheKey(chapter);
+                    string[] tokens = null;
+                    lock (_cacheLock)
+                    {
+                        _tokenCache.TryGetValue(key, out tokens);
+                    }
+
+                    if (tokens != null)
+                    {
+                        PopulateRichTextBlockFromTokens(richTextBlock, tokens);
+                    }
+                    else
+                    {
+                        // Kick off background tokenization for future renders
+                        _ = EnsureTokenizedAsync(chapter);
+                        PopulateRichTextBlock(richTextBlock, chapter.ChapterText);
+                    }
                 }
             }
             catch
@@ -195,6 +268,8 @@ namespace Elementary
                     _isUpdatingFromScroll = true;
                     _viewModel.UpdateCurrentChapterFromScroll(mostVisibleChapter);
                     _isUpdatingFromScroll = false;
+                    // Prefetch nearby chapters to avoid stalls when user scrolls quickly
+                    PrefetchAroundChapter(mostVisibleChapter);
                 }
             }
             catch
@@ -386,6 +461,130 @@ namespace Elementary
             }
         }
 
+        // Populate from pre-tokenized parts (used by prefetch cache)
+        private void PopulateRichTextBlockFromTokens(RichTextBlock rtb, string[] parts)
+        {
+            rtb.Blocks.Clear();
+            if (parts == null || parts.Length == 0)
+            {
+                rtb.Blocks.Add(new Paragraph());
+                return;
+            }
+
+            Paragraph currentPara = null;
+            var styleStack = new Stack<(bool italic, bool bold)>();
+            styleStack.Push((false, false));
+
+            void StartParagraph(Paragraph p)
+            {
+                if (p == null) return;
+                currentPara = p;
+                rtb.Blocks.Add(currentPara);
+            }
+
+            foreach (var token in parts)
+            {
+                if (token.StartsWith("<"))
+                {
+                    var tag = token.Trim('<', '>', ' ', '\t', '\r', '\n');
+                    var tagLower = tag.ToLowerInvariant();
+
+                    if (tagLower.StartsWith("p") || tagLower == "/p")
+                    {
+                        if (!tagLower.StartsWith("/")) StartParagraph(new Paragraph());
+                        else currentPara = null;
+                        continue;
+                    }
+
+                    if (tagLower.StartsWith("h1") || tagLower.StartsWith("h"))
+                    {
+                        var h = new Paragraph { FontWeight = FontWeights.Bold, FontSize = rtb.FontSize * 1.15 };
+                        StartParagraph(h);
+                        continue;
+                    }
+
+                    if (tagLower.StartsWith("quote") || tagLower.StartsWith("div class=\"q\""))
+                    {
+                        var bq = new Paragraph { Margin = new Thickness(20,0,0,0) };
+                        StartParagraph(bq);
+                        continue;
+                    }
+
+                    if (tagLower == "br")
+                    {
+                        StartParagraph(new Paragraph());
+                        continue;
+                    }
+
+                    if (tagLower.StartsWith("sup") && !tagLower.StartsWith("/")) { continue; }
+                    if (tagLower.StartsWith("/sup")) { continue; }
+
+                    if (tagLower.StartsWith("em") && !tagLower.StartsWith("/")) { var top = styleStack.Peek(); styleStack.Push((true, top.bold)); continue; }
+                    if (tagLower.StartsWith("/em") || tagLower.StartsWith("/it")) { if (styleStack.Count>1) styleStack.Pop(); continue; }
+                    if (tagLower.StartsWith("b") && !tagLower.StartsWith("/")) { var top = styleStack.Peek(); styleStack.Push((top.italic, true)); continue; }
+                    if (tagLower.StartsWith("/b") || tagLower.StartsWith("/bd")) { if (styleStack.Count>1) styleStack.Pop(); continue; }
+
+                    if (tagLower.StartsWith("fn ") || tagLower.StartsWith("fn"))
+                    {
+                        var idMatch = Regex.Match(tag, "id=\"(\\d+)\"");
+                        if (idMatch.Success)
+                        {
+                            var id = idMatch.Groups[1].Value;
+                            if (currentPara == null) StartParagraph(new Paragraph());
+                            var tb = new TextBlock { Text = id, FontSize = rtb.FontSize * 0.7, Margin = new Thickness(0,-6,2,0) };
+                            var container = new InlineUIContainer { Child = tb };
+                            currentPara.Inlines.Add(container);
+                        }
+                        continue;
+                    }
+
+                    if (tagLower.StartsWith("xr") && !tagLower.StartsWith("/"))
+                    {
+                        if (currentPara == null) StartParagraph(new Paragraph());
+                        currentPara.Inlines.Add(new Run { Text = " (", FontStyle = FontStyle.Normal });
+                        continue;
+                    }
+                    if (tagLower.StartsWith("/xr"))
+                    {
+                        if (currentPara == null) StartParagraph(new Paragraph());
+                        currentPara.Inlines.Add(new Run { Text = ")", FontStyle = FontStyle.Normal });
+                        continue;
+                    }
+
+                    continue;
+                }
+
+                var text = token;
+                if (currentPara == null) StartParagraph(new Paragraph());
+
+                var supMatch = Regex.Match(text, "<sup>(\\d+)</sup>", RegexOptions.IgnoreCase);
+                if (supMatch.Success)
+                {
+                    var num = supMatch.Groups[1].Value;
+                    var tb = new TextBlock { Text = num, FontSize = rtb.FontSize * 0.75, Margin = new Thickness(0,-6,4,0) };
+                    currentPara.Inlines.Add(new InlineUIContainer { Child = tb });
+
+                    var after = text.Substring(supMatch.Index + supMatch.Length).TrimStart();
+                    if (!string.IsNullOrEmpty(after))
+                    {
+                        var top = styleStack.Peek();
+                        var run = new Run { Text = after + " " };
+                        if (top.italic) run.FontStyle = FontStyle.Italic;
+                        if (top.bold) run.FontWeight = FontWeights.Bold;
+                        currentPara.Inlines.Add(run);
+                    }
+
+                    continue;
+                }
+
+                var topStyle = styleStack.Peek();
+                var run2 = new Run { Text = text };
+                if (topStyle.italic) run2.FontStyle = FontStyle.Italic;
+                if (topStyle.bold) run2.FontWeight = FontWeights.Bold;
+                currentPara.Inlines.Add(run2);
+            }
+        }
+
         private void BibleBookChapterComboBoxes_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!_isLoaded || _isUpdatingFromScroll) return;
@@ -422,6 +621,7 @@ namespace Elementary
             
             // Scroll to the current chapter
             ScrollToCurrentChapter();
+            PrefetchAroundChapter(_viewModel.CurrentChapter);
         }
 
         public void NavigateToFromHistory(string bookTitle, int chapter)
@@ -434,6 +634,7 @@ namespace Elementary
                     _viewModel.UpdateNavigationSettings(bookTitle, chapter);
                     _viewModel.LoadInitialChapters();
                     ScrollToCurrentChapter();
+                    PrefetchAroundChapter(_viewModel.CurrentChapter);
                 };
                 return;
             }
@@ -441,6 +642,7 @@ namespace Elementary
             _viewModel.UpdateNavigationSettings(bookTitle, chapter);
             _viewModel.LoadInitialChapters();
             ScrollToCurrentChapter();
+            PrefetchAroundChapter(_viewModel.CurrentChapter);
         }
 
         // Show only the provided chapters in the Bible view (used by Reading Plan)
@@ -463,6 +665,7 @@ namespace Elementary
             _viewModel.Chapters = new System.Collections.ObjectModel.ObservableCollection<Chapter>(chapters);
             _viewModel.CurrentChapter = chapters[0];
             ScrollToCurrentChapter();
+            PrefetchAroundChapter(_viewModel.CurrentChapter);
         }
     }
 }
