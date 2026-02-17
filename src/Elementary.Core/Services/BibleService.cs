@@ -124,43 +124,19 @@ namespace Elementary.Core.Services
                     {
                         var content = await reader.ReadToEndAsync();
 
-                        // Extract book title from \h or \mt fields if available
-                        var titleMatch = System.Text.RegularExpressions.Regex.Match(content, @"\\h\s+(.+)", System.Text.RegularExpressions.RegexOptions.Multiline);
-                        if (!titleMatch.Success)
-                        {
-                            titleMatch = System.Text.RegularExpressions.Regex.Match(content, @"\\mt\s+(.+)", System.Text.RegularExpressions.RegexOptions.Multiline);
-                        }
-
-                        var bookTitle = titleMatch.Success ? titleMatch.Groups[1].Value.Trim() : Path.GetFileNameWithoutExtension(filePath);
+                        // Parse USFM into structured book
+                        var usfmBook = Elementary.Core.Parsers.UsfmParser.ParseBook(content);
+                        var bookTitle = usfmBook?.Title ?? Path.GetFileNameWithoutExtension(filePath);
 
                         var book = new Book { Title = bookTitle };
                         book.Chapters = new ObservableCollection<Chapter>();
 
-                        // Split into chapter sections by \c markers
-                        var chapterSections = System.Text.RegularExpressions.Regex.Split(content, "(?=\\\\c\\s+\\d+)");
-
-                        foreach (var section in chapterSections)
+                        if (usfmBook != null)
                         {
-                            var chapMatch = System.Text.RegularExpressions.Regex.Match(section, "\\\\c\\s+(\\d+)");
-                            if (!chapMatch.Success)
-                                continue;
-
-                            var chapNum = int.Parse(chapMatch.Groups[1].Value);
-
-                            // Find all verses in the chapter
-                            var verses = System.Text.RegularExpressions.Regex.Matches(section, "\\\\v\\s+(\\d+)\\s+([^\\\\]+|(?:\\\\(?!v|c)[^\\\\]+)*)", System.Text.RegularExpressions.RegexOptions.Singleline);
-
-                            var sb = new System.Text.StringBuilder();
-                            foreach (System.Text.RegularExpressions.Match v in verses)
+                            foreach (var ch in usfmBook.Chapters)
                             {
-                                var vnum = v.Groups[1].Value;
-                                var vtext = v.Groups[2].Value.Trim().Replace("\n", " ").Replace("\r", " ");
-
-                                // Simple HTML output for a verse
-                                sb.Append($"<sup>{vnum}</sup> {System.Net.WebUtility.HtmlEncode(vtext)} ");
+                                book.Chapters.Add(new Chapter { Index = ch.Index, ChapterText = ch.ToHtml() });
                             }
-
-                            book.Chapters.Add(new Chapter { Index = chapNum, ChapterText = sb.ToString() });
                         }
 
                         bible.Books.Add(book);

@@ -259,9 +259,8 @@ namespace Elementary
             var parts = Regex.Matches(decoded, "(<[^>]+>|[^<]+)", RegexOptions.Singleline);
 
             Paragraph currentPara = null;
-            var italic = false;
-            var bold = false;
-            var superscript = false;
+            var styleStack = new Stack<(bool italic, bool bold)>();
+            styleStack.Push((false, false));
 
             void StartParagraph(Paragraph p)
             {
@@ -275,37 +274,78 @@ namespace Elementary
                 var token = part.Value;
                 if (token.StartsWith("<"))
                 {
-                    var tag = token.Trim('<', '>', ' ', '\t', '\r', '\n').ToLowerInvariant();
-                    if (tag.StartsWith("p") || tag.StartsWith("/p") )
+                    var tag = token.Trim('<', '>', ' ', '\t', '\r', '\n');
+                    var tagLower = tag.ToLowerInvariant();
+
+                    if (tagLower.StartsWith("p") || tagLower == "/p")
                     {
-                        if (!tag.StartsWith("/")) StartParagraph(new Paragraph());
+                        if (!tagLower.StartsWith("/")) StartParagraph(new Paragraph());
                         else currentPara = null;
                         continue;
                     }
-                    if (tag.StartsWith("h1") || tag.StartsWith("h"))
+
+                    if (tagLower.StartsWith("h1") || tagLower.StartsWith("h"))
                     {
                         var h = new Paragraph { FontWeight = FontWeights.Bold, FontSize = rtb.FontSize * 1.15 };
                         StartParagraph(h);
                         continue;
                     }
-                    if (tag.StartsWith("blockquote") || tag.StartsWith("div class=\"q\""))
+
+                    if (tagLower.StartsWith("quote") || tagLower.StartsWith("div class=\"q\""))
                     {
                         var bq = new Paragraph { Margin = new Thickness(20,0,0,0) };
                         StartParagraph(bq);
                         continue;
                     }
-                    if (tag.StartsWith("br"))
+
+                    if (tagLower == "br")
                     {
-                        // new paragraph for line break
                         StartParagraph(new Paragraph());
                         continue;
                     }
-                    if (tag.StartsWith("i") && !tag.StartsWith("/")) { italic = true; continue; }
-                    if (tag.StartsWith("/i")) { italic = false; continue; }
-                    if (tag.StartsWith("b") && !tag.StartsWith("/")) { bold = true; continue; }
-                    if (tag.StartsWith("/b")) { bold = false; continue; }
-                    if (tag.StartsWith("sup") && !tag.StartsWith("/")) { superscript = true; continue; }
-                    if (tag.StartsWith("/sup")) { superscript = false; continue; }
+
+                    // superscript tags create an InlineUIContainer hosting a small TextBlock
+                    if (tagLower.StartsWith("sup") && !tagLower.StartsWith("/"))
+                    {
+                        // extract number if present inside tag like <sup>1</sup> will be handled when text token appears, so just set a marker by adding nothing
+                        continue;
+                    }
+                    if (tagLower.StartsWith("/sup")) { continue; }
+
+                    if (tagLower.StartsWith("em") && !tagLower.StartsWith("/")) { var top = styleStack.Peek(); styleStack.Push((true, top.bold)); continue; }
+                    if (tagLower.StartsWith("/em") || tagLower.StartsWith("/it")) { if (styleStack.Count>1) styleStack.Pop(); continue; }
+                    if (tagLower.StartsWith("b") && !tagLower.StartsWith("/")) { var top = styleStack.Peek(); styleStack.Push((top.italic, true)); continue; }
+                    if (tagLower.StartsWith("/b") || tagLower.StartsWith("/bd")) { if (styleStack.Count>1) styleStack.Pop(); continue; }
+
+                    // footnote tag <fn id="n"/> - render a small superscript marker
+                    if (tagLower.StartsWith("fn ") || tagLower.StartsWith("fn") )
+                    {
+                        // extract id
+                        var idMatch = Regex.Match(tag, "id=\"(\\d+)\"");
+                        if (idMatch.Success)
+                        {
+                            var id = idMatch.Groups[1].Value;
+                            if (currentPara == null) StartParagraph(new Paragraph());
+                            var tb = new TextBlock { Text = id, FontSize = rtb.FontSize * 0.7, Margin = new Thickness(0,-6,2,0) };
+                            var container = new InlineUIContainer { Child = tb };
+                            currentPara.Inlines.Add(container);
+                        }
+                        continue;
+                    }
+
+                    if (tagLower.StartsWith("xr") && !tagLower.StartsWith("/"))
+                    {
+                        // open crossref span (we'll render as parentheses)
+                        if (currentPara == null) StartParagraph(new Paragraph());
+                        currentPara.Inlines.Add(new Run { Text = " (", FontStyle = FontStyle.Normal });
+                        continue;
+                    }
+                    if (tagLower.StartsWith("/xr"))
+                    {
+                        if (currentPara == null) StartParagraph(new Paragraph());
+                        currentPara.Inlines.Add(new Run { Text = ")", FontStyle = FontStyle.Normal });
+                        continue;
+                    }
 
                     // unknown tag: ignore
                     continue;
@@ -315,14 +355,34 @@ namespace Elementary
                 var text = token;
                 if (currentPara == null) StartParagraph(new Paragraph());
 
-                // Split by verse markers if present (we used <sup>num</sup>) so those are parsed as tags; but also handle inline numbers like "1"
-                // Create run with styles
-                var run = new Run { Text = text };
-                if (italic) run.FontStyle = FontStyle.Italic;
-                if (bold) run.FontWeight = FontWeights.Bold;
-                if (superscript) run.FontSize = rtb.FontSize * 0.75;
+                // If the text contains a simple <sup>number</sup> pattern, handle with InlineUIContainer
+                var supMatch = Regex.Match(text, "<sup>(\\d+)</sup>", RegexOptions.IgnoreCase);
+                if (supMatch.Success)
+                {
+                    var num = supMatch.Groups[1].Value;
+                    // Add superscript number
+                    var tb = new TextBlock { Text = num, FontSize = rtb.FontSize * 0.75, Margin = new Thickness(0,-6,4,0) };
+                    currentPara.Inlines.Add(new InlineUIContainer { Child = tb });
 
-                currentPara.Inlines.Add(run);
+                    // Append the remaining text after the sup
+                    var after = text.Substring(supMatch.Index + supMatch.Length).TrimStart();
+                    if (!string.IsNullOrEmpty(after))
+                    {
+                        var top = styleStack.Peek();
+                        var run = new Run { Text = after + " " };
+                        if (top.italic) run.FontStyle = FontStyle.Italic;
+                        if (top.bold) run.FontWeight = FontWeights.Bold;
+                        currentPara.Inlines.Add(run);
+                    }
+
+                    continue;
+                }
+
+                var topStyle = styleStack.Peek();
+                var run2 = new Run { Text = text };
+                if (topStyle.italic) run2.FontStyle = FontStyle.Italic;
+                if (topStyle.bold) run2.FontWeight = FontWeights.Bold;
+                currentPara.Inlines.Add(run2);
             }
         }
 
