@@ -62,7 +62,15 @@ namespace Elementary.Tests.Services
             var nonExistentPath = Path.Combine(_testDirectory, "nonexistent.txt");
 
             // Act & Assert
-            await Assert.ThrowsExceptionAsync<System.IO.FileNotFoundException>(async () => await _fileService.ReadFileAsync(nonExistentPath));
+            try
+            {
+                await _fileService.ReadFileAsync(nonExistentPath);
+                Assert.Fail("Expected FileNotFoundException was not thrown.");
+            }
+            catch (System.IO.FileNotFoundException)
+            {
+                // Expected
+            }
         }
 
         [TestMethod]
