@@ -9,6 +9,7 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Documents;
 using System.Text.RegularExpressions;
 using System.Net;
+using Windows.UI.Text;
 
 namespace Elementary
 {
@@ -245,37 +246,84 @@ namespace Elementary
         private void PopulateRichTextBlock(RichTextBlock rtb, string html)
         {
             rtb.Blocks.Clear();
-            var paragraph = new Paragraph();
+
             if (string.IsNullOrEmpty(html))
             {
-                rtb.Blocks.Add(paragraph);
+                rtb.Blocks.Add(new Paragraph());
                 return;
             }
 
             var decoded = WebUtility.HtmlDecode(html);
 
-            // Match patterns like <sup>1</sup> verse text
-            var matches = Regex.Matches(decoded, @"<sup>(\\d+)</sup>\s*([^<]+)", RegexOptions.Singleline);
-            if (matches.Count > 0)
+            // Tokenize into tags and text
+            var parts = Regex.Matches(decoded, "(<[^>]+>|[^<]+)", RegexOptions.Singleline);
+
+            Paragraph currentPara = null;
+            var italic = false;
+            var bold = false;
+            var superscript = false;
+
+            void StartParagraph(Paragraph p)
             {
-                foreach (Match m in matches)
+                if (p == null) return;
+                currentPara = p;
+                rtb.Blocks.Add(currentPara);
+            }
+
+            foreach (Match part in parts)
+            {
+                var token = part.Value;
+                if (token.StartsWith("<"))
                 {
-                    var num = m.Groups[1].Value;
-                    var text = m.Groups[2].Value.Trim();
+                    var tag = token.Trim('<', '>', ' ', '\t', '\r', '\n').ToLowerInvariant();
+                    if (tag.StartsWith("p") || tag.StartsWith("/p") )
+                    {
+                        if (!tag.StartsWith("/")) StartParagraph(new Paragraph());
+                        else currentPara = null;
+                        continue;
+                    }
+                    if (tag.StartsWith("h1") || tag.StartsWith("h"))
+                    {
+                        var h = new Paragraph { FontWeight = FontWeights.Bold, FontSize = rtb.FontSize * 1.15 };
+                        StartParagraph(h);
+                        continue;
+                    }
+                    if (tag.StartsWith("blockquote") || tag.StartsWith("div class=\"q\""))
+                    {
+                        var bq = new Paragraph { Margin = new Thickness(20,0,0,0) };
+                        StartParagraph(bq);
+                        continue;
+                    }
+                    if (tag.StartsWith("br"))
+                    {
+                        // new paragraph for line break
+                        StartParagraph(new Paragraph());
+                        continue;
+                    }
+                    if (tag.StartsWith("i") && !tag.StartsWith("/")) { italic = true; continue; }
+                    if (tag.StartsWith("/i")) { italic = false; continue; }
+                    if (tag.StartsWith("b") && !tag.StartsWith("/")) { bold = true; continue; }
+                    if (tag.StartsWith("/b")) { bold = false; continue; }
+                    if (tag.StartsWith("sup") && !tag.StartsWith("/")) { superscript = true; continue; }
+                    if (tag.StartsWith("/sup")) { superscript = false; continue; }
 
-                    var numRun = new Run { Text = num + " ", FontSize = rtb.FontSize * 0.75 };
-                    paragraph.Inlines.Add(numRun);
-
-                    var textRun = new Run { Text = text + " " };
-                    paragraph.Inlines.Add(textRun);
+                    // unknown tag: ignore
+                    continue;
                 }
-            }
-            else
-            {
-                paragraph.Inlines.Add(new Run { Text = decoded });
-            }
 
-            rtb.Blocks.Add(paragraph);
+                // Text token
+                var text = token;
+                if (currentPara == null) StartParagraph(new Paragraph());
+
+                // Split by verse markers if present (we used <sup>num</sup>) so those are parsed as tags; but also handle inline numbers like "1"
+                // Create run with styles
+                var run = new Run { Text = text };
+                if (italic) run.FontStyle = FontStyle.Italic;
+                if (bold) run.FontWeight = FontWeights.Bold;
+                if (superscript) run.FontSize = rtb.FontSize * 0.75;
+
+                currentPara.Inlines.Add(run);
+            }
         }
 
         private void BibleBookChapterComboBoxes_SelectionChanged(object sender, SelectionChangedEventArgs e)
