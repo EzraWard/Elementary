@@ -15,6 +15,7 @@ namespace Elementary.Tests
             Assert.AreEqual(2, book.Chapters.Count);
             Assert.AreEqual(2, book.Chapters[0].Verses.Count);
             Assert.AreEqual(2, book.Chapters[1].Index);
+            Assert.IsTrue(book.Chapters[0].ToHtml().Contains("<h2>1</h2>"));
         }
 
         [TestMethod]
@@ -27,6 +28,30 @@ namespace Elementary.Tests
             var ch = book.Chapters[0];
             Assert.IsTrue(ch.Verses[0].Text.Contains("<em>italic</em>") || ch.Verses[0].Text.Contains("italic"));
             Assert.IsTrue(ch.Footnotes.Count == 1);
+        }
+
+        [TestMethod]
+        public void ParseBook_ShouldStripExtendedMarkers()
+        {
+            var usfm = "\\id T\\n\\h T\\n\\c 1\\n\\v 1 \\nd \\+w Lord|strong=\\\"H3068\\\"\\+w*\\nd* reigns.";
+            var book = UsfmParser.ParseBook(usfm);
+            var text = book.Chapters[0].Verses[0].Text;
+            Assert.IsFalse(text.Contains("\\nd"));
+            Assert.IsFalse(text.Contains("\\+w"));
+            Assert.IsFalse(text.Contains(" d "));
+            Assert.IsFalse(text.Contains("d*"));
+            Assert.IsTrue(text.Contains("Lord"));
+        }
+
+        [TestMethod]
+        public void ParseBook_ShouldStripClosingMarkerBeforePunctuation()
+        {
+            var usfm = "\\id T\\n\\h T\\n\\c 1\\n\\v 1 Rise up, \\nd Lord\\nd*!";
+            var book = UsfmParser.ParseBook(usfm);
+            var text = book.Chapters[0].Verses[0].Text;
+            Assert.IsFalse(text.Contains("\\nd"));
+            Assert.IsFalse(text.Contains("\\nd*"));
+            Assert.IsTrue(text.Contains("Lord!"));
         }
     }
 }

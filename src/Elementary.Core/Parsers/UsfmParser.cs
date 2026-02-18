@@ -20,6 +20,7 @@ namespace Elementary.Core.Parsers
         {
             var sb = new StringBuilder();
             sb.Append("<div class=\"chapter\">");
+            sb.Append($"<h2>{Index}</h2>");
             foreach (var v in Verses)
             {
                 if (v.Number == 0)
@@ -63,8 +64,9 @@ namespace Elementary.Core.Parsers
 
             var book = new UsfmBook();
 
-            // Normalize line endings and convert escaped \n sequences used in tests to actual newlines
-            content = content.Replace("\\n", "\n");
+            // Normalize line endings and convert escaped \n sequences used in tests to actual newlines.
+            // Only convert when \n is used as an escaped line break (e.g. "\n\h"), not USFM markers like "\nd".
+            content = Regex.Replace(content, @"\\n(?=\\|$)", "\n");
             content = content.Replace("\r\n", "\n").Replace("\r", "\n");
 
             // Extract title from \h or \mt or \id
@@ -169,12 +171,14 @@ namespace Elementary.Core.Parsers
                         continue;
                     }
 
-                    // Poetic lines \q
-                    var qMatch = Regex.Match(trimmed, @"\\q\s*(.*)", RegexOptions.Singleline);
+                    // Poetic lines \q, \q1, \q2, etc - preserve indent level
+                    var qMatch = Regex.Match(trimmed, @"\\q(\d*)\s*(.*)", RegexOptions.Singleline);
                     if (qMatch.Success)
                     {
-                        var qtext = ProcessInline(qMatch.Groups[1].Value.Trim());
-                        chapter.Verses.Add(new UsfmVerse { Number = 0, Text = $"<quote>{qtext}</quote>" });
+                        var qtext = ProcessInline(qMatch.Groups[2].Value.Trim());
+                        var level = string.IsNullOrEmpty(qMatch.Groups[1].Value) ? 0 : int.Parse(qMatch.Groups[1].Value);
+                        var indent = level * 20; // 20px per indent level
+                        chapter.Verses.Add(new UsfmVerse { Number = 0, Text = $"<div class=\"poetry\" style=\"margin-left:{indent}px\">{qtext}</div>" });
                         continue;
                     }
 
@@ -204,8 +208,12 @@ namespace Elementary.Core.Parsers
         {
             if (string.IsNullOrEmpty(text)) return string.Empty;
 
-            // Remove word markers \w ... \w* keeping the displayed word before any attributes (e.g., \w word|strong="H123"\w*)
-            text = Regex.Replace(text, @"\\w\s+([^\\|]+?)(?:\|[^\\]*?)?\\w\*", m => m.Groups[1].Value.Trim(), RegexOptions.Singleline);
+            // Remove word markers (\w ... \w* and \+w ... \+w*) keeping only display text.
+            text = Regex.Replace(text, @"\\\+?w\s+([^|\\]+?)(?:\|.*?)?\\\+?w\*", m => m.Groups[1].Value.Trim(), RegexOptions.Singleline);
+
+            // Replace quote markers \qt ... \qt*
+            text = Regex.Replace(text, @"\\qt\s+", "<qt>", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\\qt\*", "</qt>", RegexOptions.IgnoreCase);
 
             // Replace cross-references \x ... \x*
             text = Regex.Replace(text, @"\\x\s+(.*?)\\x\*", m => $"<xr>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value.Trim())}</xr>", RegexOptions.Singleline);
@@ -220,19 +228,23 @@ namespace Elementary.Core.Parsers
             text = Regex.Replace(text, @"\\bd\s+", "<b>", RegexOptions.IgnoreCase);
             text = Regex.Replace(text, @"\\bd\*", "</b>", RegexOptions.IgnoreCase);
 
-            // Replace footnote placeholders (we will convert real footnotes earlier)
-            // Any residual \v markers inside text remove
-            text = Regex.Replace(text, @"\\v\s+\d+", "", RegexOptions.IgnoreCase);
+            // Remove any other remaining USFM markers to prevent leakage (e.g. \nd, \nd*, \q1, \+w),
+            // even when followed by punctuation like \nd*!
+            text = Regex.Replace(text, @"\\\+?[a-z]+\d*\*?(?=[^A-Za-z0-9]|$)", "", RegexOptions.IgnoreCase);
 
             // HTML-encode the remainder then un-encode known tags
             var encoded = System.Net.WebUtility.HtmlEncode(text);
             // restore our simple tags
             encoded = encoded.Replace("&lt;em&gt;", "<em>").Replace("&lt;/em&gt;", "</em>");
             encoded = encoded.Replace("&lt;b&gt;", "<b>").Replace("&lt;/b&gt;", "</b>");
+            encoded = encoded.Replace("&lt;qt&gt;", "<qt>").Replace("&lt;/qt&gt;", "</qt>");
             encoded = encoded.Replace("&lt;xr&gt;", "<xr>").Replace("&lt;/xr&gt;", "</xr>");
             encoded = encoded.Replace("&lt;fn id=\"", "<fn id=\"").Replace("/&gt;", "/>");
             encoded = encoded.Replace("&lt;h1&gt;", "<h1>").Replace("&lt;/h1&gt;", "</h1>");
             encoded = encoded.Replace("&lt;quote&gt;", "<quote>").Replace("&lt;/quote&gt;", "</quote>");
+            // Restore poetry div with inline style (Regex pattern to handle variable pixel values)
+            encoded = Regex.Replace(encoded, @"&lt;div class=&quot;poetry&quot; style=&quot;margin-left:(\d+)px&quot;&gt;", "<div class=\"poetry\" style=\"margin-left:$1px\">");
+            encoded = encoded.Replace("&lt;/div&gt;", "</div>");
 
             return encoded;
         }

@@ -10,6 +10,7 @@ using Windows.UI.Xaml.Documents;
 using System.Text.RegularExpressions;
 using System.Net;
 using Windows.UI.Text;
+using System.Threading.Tasks;
 
 namespace Elementary
 {
@@ -43,7 +44,8 @@ namespace Elementary
             }
             catch { return $"unknown:{chap?.Index}"; }
         }
-n        private Task EnsureTokenizedAsync(Core.Models.Chapter chap)
+
+        private Task EnsureTokenizedAsync(Core.Models.Chapter chap)
         {
             return System.Threading.Tasks.Task.Run(() =>
             {
@@ -58,7 +60,8 @@ namespace Elementary
                 var matches = Regex.Matches(decoded, "(<[^>]+>|[^<]+)", RegexOptions.Singleline);
                 var parts = new List<string>();
                 foreach (Match m in matches) parts.Add(m.Value);
-                lock (_cacheLock)
+
+                lock (_cacheLock)
                 {
                     if (!_tokenCache.ContainsKey(key)) _tokenCache[key] = parts.ToArray();
                 }
@@ -332,133 +335,7 @@ namespace Elementary
 
             // Tokenize into tags and text
             var parts = Regex.Matches(decoded, "(<[^>]+>|[^<]+)", RegexOptions.Singleline);
-
-            Paragraph currentPara = null;
-            var styleStack = new Stack<(bool italic, bool bold)>();
-            styleStack.Push((false, false));
-
-            void StartParagraph(Paragraph p)
-            {
-                if (p == null) return;
-                currentPara = p;
-                rtb.Blocks.Add(currentPara);
-            }
-
-            foreach (Match part in parts)
-            {
-                var token = part.Value;
-                if (token.StartsWith("<"))
-                {
-                    var tag = token.Trim('<', '>', ' ', '\t', '\r', '\n');
-                    var tagLower = tag.ToLowerInvariant();
-
-                    if (tagLower.StartsWith("p") || tagLower == "/p")
-                    {
-                        if (!tagLower.StartsWith("/")) StartParagraph(new Paragraph());
-                        else currentPara = null;
-                        continue;
-                    }
-
-                    if (tagLower.StartsWith("h1") || tagLower.StartsWith("h"))
-                    {
-                        var h = new Paragraph { FontWeight = FontWeights.Bold, FontSize = rtb.FontSize * 1.15 };
-                        StartParagraph(h);
-                        continue;
-                    }
-
-                    if (tagLower.StartsWith("quote") || tagLower.StartsWith("div class=\"q\""))
-                    {
-                        var bq = new Paragraph { Margin = new Thickness(20,0,0,0) };
-                        StartParagraph(bq);
-                        continue;
-                    }
-
-                    if (tagLower == "br")
-                    {
-                        StartParagraph(new Paragraph());
-                        continue;
-                    }
-
-                    // superscript tags create an InlineUIContainer hosting a small TextBlock
-                    if (tagLower.StartsWith("sup") && !tagLower.StartsWith("/"))
-                    {
-                        // extract number if present inside tag like <sup>1</sup> will be handled when text token appears, so just set a marker by adding nothing
-                        continue;
-                    }
-                    if (tagLower.StartsWith("/sup")) { continue; }
-
-                    if (tagLower.StartsWith("em") && !tagLower.StartsWith("/")) { var top = styleStack.Peek(); styleStack.Push((true, top.bold)); continue; }
-                    if (tagLower.StartsWith("/em") || tagLower.StartsWith("/it")) { if (styleStack.Count>1) styleStack.Pop(); continue; }
-                    if (tagLower.StartsWith("b") && !tagLower.StartsWith("/")) { var top = styleStack.Peek(); styleStack.Push((top.italic, true)); continue; }
-                    if (tagLower.StartsWith("/b") || tagLower.StartsWith("/bd")) { if (styleStack.Count>1) styleStack.Pop(); continue; }
-
-                    // footnote tag <fn id="n"/> - render a small superscript marker
-                    if (tagLower.StartsWith("fn ") || tagLower.StartsWith("fn") )
-                    {
-                        // extract id
-                        var idMatch = Regex.Match(tag, "id=\"(\\d+)\"");
-                        if (idMatch.Success)
-                        {
-                            var id = idMatch.Groups[1].Value;
-                            if (currentPara == null) StartParagraph(new Paragraph());
-                            var tb = new TextBlock { Text = id, FontSize = rtb.FontSize * 0.7, Margin = new Thickness(0,-6,2,0) };
-                            var container = new InlineUIContainer { Child = tb };
-                            currentPara.Inlines.Add(container);
-                        }
-                        continue;
-                    }
-
-                    if (tagLower.StartsWith("xr") && !tagLower.StartsWith("/"))
-                    {
-                        // open crossref span (we'll render as parentheses)
-                        if (currentPara == null) StartParagraph(new Paragraph());
-                        currentPara.Inlines.Add(new Run { Text = " (", FontStyle = FontStyle.Normal });
-                        continue;
-                    }
-                    if (tagLower.StartsWith("/xr"))
-                    {
-                        if (currentPara == null) StartParagraph(new Paragraph());
-                        currentPara.Inlines.Add(new Run { Text = ")", FontStyle = FontStyle.Normal });
-                        continue;
-                    }
-
-                    // unknown tag: ignore
-                    continue;
-                }
-
-                // Text token
-                var text = token;
-                if (currentPara == null) StartParagraph(new Paragraph());
-
-                // If the text contains a simple <sup>number</sup> pattern, handle with InlineUIContainer
-                var supMatch = Regex.Match(text, "<sup>(\\d+)</sup>", RegexOptions.IgnoreCase);
-                if (supMatch.Success)
-                {
-                    var num = supMatch.Groups[1].Value;
-                    // Add superscript number
-                    var tb = new TextBlock { Text = num, FontSize = rtb.FontSize * 0.75, Margin = new Thickness(0,-6,4,0) };
-                    currentPara.Inlines.Add(new InlineUIContainer { Child = tb });
-
-                    // Append the remaining text after the sup
-                    var after = text.Substring(supMatch.Index + supMatch.Length).TrimStart();
-                    if (!string.IsNullOrEmpty(after))
-                    {
-                        var top = styleStack.Peek();
-                        var run = new Run { Text = after + " " };
-                        if (top.italic) run.FontStyle = FontStyle.Italic;
-                        if (top.bold) run.FontWeight = FontWeights.Bold;
-                        currentPara.Inlines.Add(run);
-                    }
-
-                    continue;
-                }
-
-                var topStyle = styleStack.Peek();
-                var run2 = new Run { Text = text };
-                if (topStyle.italic) run2.FontStyle = FontStyle.Italic;
-                if (topStyle.bold) run2.FontWeight = FontWeights.Bold;
-                currentPara.Inlines.Add(run2);
-            }
+            RenderHtmlTokens(rtb, parts);
         }
 
         // Populate from pre-tokenized parts (used by prefetch cache)
@@ -471,9 +348,18 @@ namespace Elementary
                 return;
             }
 
+            var combined = string.Concat(parts);
+            var matches = Regex.Matches(combined, "(<[^>]+>|[^<]+)", RegexOptions.Singleline);
+            RenderHtmlTokens(rtb, matches.Cast<Match>());
+        }
+
+        // Render HTML tokens into RichTextBlock
+        private void RenderHtmlTokens(RichTextBlock rtb, IEnumerable<dynamic> tokens)
+        {
             Paragraph currentPara = null;
             var styleStack = new Stack<(bool italic, bool bold)>();
             styleStack.Push((false, false));
+            bool inSuperscript = false;
 
             void StartParagraph(Paragraph p)
             {
@@ -482,8 +368,10 @@ namespace Elementary
                 rtb.Blocks.Add(currentPara);
             }
 
-            foreach (var token in parts)
+            foreach (var tokenObj in tokens)
             {
+                // Handle both Match objects and string tokens
+                var token = tokenObj is Match m ? m.Value : (string)tokenObj;
                 if (token.StartsWith("<"))
                 {
                     var tag = token.Trim('<', '>', ' ', '\t', '\r', '\n');
@@ -496,6 +384,18 @@ namespace Elementary
                         continue;
                     }
 
+                    if (tagLower.StartsWith("h2"))
+                    {
+                        var h2 = new Paragraph
+                        {
+                            FontWeight = FontWeights.Bold,
+                            FontSize = rtb.FontSize * 1.2,
+                            Margin = new Thickness(0, 24, 0, 6)
+                        };
+                        StartParagraph(h2);
+                        continue;
+                    }
+
                     if (tagLower.StartsWith("h1") || tagLower.StartsWith("h"))
                     {
                         var h = new Paragraph { FontWeight = FontWeights.Bold, FontSize = rtb.FontSize * 1.15 };
@@ -503,9 +403,16 @@ namespace Elementary
                         continue;
                     }
 
+                    if (tagLower.StartsWith("div class=\"poetry\""))
+                    {
+                        var poetry = new Paragraph { Margin = new Thickness(20, 0, 0, 0) };
+                        StartParagraph(poetry);
+                        continue;
+                    }
+
                     if (tagLower.StartsWith("quote") || tagLower.StartsWith("div class=\"q\""))
                     {
-                        var bq = new Paragraph { Margin = new Thickness(20,0,0,0) };
+                        var bq = new Paragraph { Margin = new Thickness(20, 0, 0, 0) };
                         StartParagraph(bq);
                         continue;
                     }
@@ -516,14 +423,18 @@ namespace Elementary
                         continue;
                     }
 
-                    if (tagLower.StartsWith("sup") && !tagLower.StartsWith("/")) { continue; }
-                    if (tagLower.StartsWith("/sup")) { continue; }
+                    if (tagLower.StartsWith("sup") && !tagLower.StartsWith("/")) { inSuperscript = true; continue; }
+                    if (tagLower.StartsWith("/sup")) { inSuperscript = false; continue; }
 
                     if (tagLower.StartsWith("em") && !tagLower.StartsWith("/")) { var top = styleStack.Peek(); styleStack.Push((true, top.bold)); continue; }
-                    if (tagLower.StartsWith("/em") || tagLower.StartsWith("/it")) { if (styleStack.Count>1) styleStack.Pop(); continue; }
+                    if (tagLower.StartsWith("/em") || tagLower.StartsWith("/it")) { if (styleStack.Count > 1) styleStack.Pop(); continue; }
                     if (tagLower.StartsWith("b") && !tagLower.StartsWith("/")) { var top = styleStack.Peek(); styleStack.Push((top.italic, true)); continue; }
-                    if (tagLower.StartsWith("/b") || tagLower.StartsWith("/bd")) { if (styleStack.Count>1) styleStack.Pop(); continue; }
+                    if (tagLower.StartsWith("/b") || tagLower.StartsWith("/bd")) { if (styleStack.Count > 1) styleStack.Pop(); continue; }
 
+                    if (tagLower.StartsWith("qt") && !tagLower.StartsWith("/")) { var top = styleStack.Peek(); styleStack.Push((true, top.bold)); continue; }
+                    if (tagLower.StartsWith("/qt")) { if (styleStack.Count > 1) styleStack.Pop(); continue; }
+
+                    // footnote tag <fn id="n"/> - render a small superscript marker
                     if (tagLower.StartsWith("fn ") || tagLower.StartsWith("fn"))
                     {
                         var idMatch = Regex.Match(tag, "id=\"(\\d+)\"");
@@ -531,7 +442,7 @@ namespace Elementary
                         {
                             var id = idMatch.Groups[1].Value;
                             if (currentPara == null) StartParagraph(new Paragraph());
-                            var tb = new TextBlock { Text = id, FontSize = rtb.FontSize * 0.7, Margin = new Thickness(0,-6,2,0) };
+                            var tb = new TextBlock { Text = id, FontSize = rtb.FontSize * 0.7, Margin = new Thickness(0, -6, 2, 0) };
                             var container = new InlineUIContainer { Child = tb };
                             currentPara.Inlines.Add(container);
                         }
@@ -551,29 +462,27 @@ namespace Elementary
                         continue;
                     }
 
+                    if (tagLower.StartsWith("/div"))
+                    {
+                        currentPara = null;
+                        continue;
+                    }
+
                     continue;
                 }
 
+                // Text token
                 var text = token;
                 if (currentPara == null) StartParagraph(new Paragraph());
 
-                var supMatch = Regex.Match(text, "<sup>(\\d+)</sup>", RegexOptions.IgnoreCase);
-                if (supMatch.Success)
+                if (inSuperscript)
                 {
-                    var num = supMatch.Groups[1].Value;
-                    var tb = new TextBlock { Text = num, FontSize = rtb.FontSize * 0.75, Margin = new Thickness(0,-6,4,0) };
-                    currentPara.Inlines.Add(new InlineUIContainer { Child = tb });
-
-                    var after = text.Substring(supMatch.Index + supMatch.Length).TrimStart();
-                    if (!string.IsNullOrEmpty(after))
+                    var supText = text.Trim();
+                    if (!string.IsNullOrEmpty(supText))
                     {
-                        var top = styleStack.Peek();
-                        var run = new Run { Text = after + " " };
-                        if (top.italic) run.FontStyle = FontStyle.Italic;
-                        if (top.bold) run.FontWeight = FontWeights.Bold;
-                        currentPara.Inlines.Add(run);
+                        var tb = new TextBlock { Text = supText, FontSize = rtb.FontSize * 0.75, Margin = new Thickness(0, -6, 4, 0) };
+                        currentPara.Inlines.Add(new InlineUIContainer { Child = tb });
                     }
-
                     continue;
                 }
 
@@ -645,27 +554,5 @@ namespace Elementary
             PrefetchAroundChapter(_viewModel.CurrentChapter);
         }
 
-        // Show only the provided chapters in the Bible view (used by Reading Plan)
-        public void ShowChapters(List<Chapter> chapters)
-        {
-            if (chapters == null || chapters.Count == 0) return;
-
-            // If page isn't initialized yet, wait until Loaded completes
-            if (!_isLoaded)
-            {
-                Loaded += (s, e) =>
-                {
-                    _viewModel.Chapters = new System.Collections.ObjectModel.ObservableCollection<Chapter>(chapters);
-                    _viewModel.CurrentChapter = chapters[0];
-                    ScrollToCurrentChapter();
-                };
-                return;
-            }
-
-            _viewModel.Chapters = new System.Collections.ObjectModel.ObservableCollection<Chapter>(chapters);
-            _viewModel.CurrentChapter = chapters[0];
-            ScrollToCurrentChapter();
-            PrefetchAroundChapter(_viewModel.CurrentChapter);
-        }
     }
 }
