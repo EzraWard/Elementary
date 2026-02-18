@@ -1,4 +1,5 @@
 using Elementary.Core.Parsers;
+using System.Linq;
 
 namespace Elementary.Tests
 {
@@ -16,6 +17,7 @@ namespace Elementary.Tests
             Assert.AreEqual(2, book.Chapters[0].Verses.Count);
             Assert.AreEqual(2, book.Chapters[1].Index);
             Assert.IsTrue(book.Chapters[0].ToHtml().Contains("<h2>1</h2>"));
+            Assert.IsTrue(book.Chapters[0].ToDisplayLines().Any(l => l.IsVerse));
         }
 
         [TestMethod]

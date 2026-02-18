@@ -38,6 +38,7 @@ namespace Elementary.ViewModels
             {
                 if (SetProperty(ref _currentBook, value))
                 {
+                    EnsureCurrentBookLoaded();
                     OnPropertyChanged(nameof(ChapterIndices));
                     // Automatically update chapter when book changes
                     CurrentChapter = _currentBook?.Chapters.FirstOrDefault();
@@ -141,7 +142,9 @@ namespace Elementary.ViewModels
             _bibleService = App.Services.GetRequiredService<IBibleService>();
             Bible = await _bibleService.GetBible(ETranslation.NET);
 
-            CurrentBook = Bible.Books.FirstOrDefault(b => b.Title == AppSettings.Book.ToString()) ?? Bible.Books.FirstOrDefault();
+            CurrentBook = Bible.Books.FirstOrDefault(b =>
+                EBookToLocation.EBookTitleToEBook.TryGetValue(b.Title, out var bookEnum) && bookEnum == AppSettings.Book)
+                ?? Bible.Books.FirstOrDefault();
             CurrentChapter = CurrentBook?.Chapters.FirstOrDefault(c => c.Index == AppSettings.Chapter) ?? CurrentBook?.Chapters.FirstOrDefault() ?? new Chapter();
             // Ensure the selected chapter index reflects the current chapter so the ComboBox shows correctly
             SelectedChapterIndex = CurrentChapter?.Index ?? 1;
@@ -173,6 +176,7 @@ namespace Elementary.ViewModels
                 {
                     // Try previous book's last chapter
                     var prevBook = Bible.Books.FirstOrDefault(b => b.ReadingOrderIndex == currentBook.ReadingOrderIndex - 1);
+                    EnsureBookLoaded(prevBook);
                     if (prevBook?.Chapters.Count > 0)
                     {
                         Chapters.Insert(0, prevBook.Chapters.Last());
@@ -211,6 +215,7 @@ namespace Elementary.ViewModels
                     {
                         // Move to next book
                         var nextBook = Bible.Books.FirstOrDefault(b => b.ReadingOrderIndex == currentBook.ReadingOrderIndex + 1);
+                        EnsureBookLoaded(nextBook);
                         if (nextBook?.Chapters.Count > 0)
                         {
                             Chapters.Add(nextBook.Chapters.First());
@@ -251,6 +256,7 @@ namespace Elementary.ViewModels
                     {
                         // Move to previous book
                         var prevBook = Bible.Books.FirstOrDefault(b => b.ReadingOrderIndex == currentBook.ReadingOrderIndex - 1);
+                        EnsureBookLoaded(prevBook);
                         if (prevBook?.Chapters.Count > 0)
                         {
                             Chapters.Insert(0, prevBook.Chapters.Last());
@@ -319,6 +325,7 @@ namespace Elementary.ViewModels
                 var book = Bible.Books.FirstOrDefault(b => b.Title == bookTitle);
                 if (book != null)
                 {
+                    EnsureBookLoaded(book);
                     CurrentBook = book;
                     var chapter = book.Chapters.FirstOrDefault(c => c.Index == chapterIndex);
                     if (chapter != null)
@@ -328,6 +335,19 @@ namespace Elementary.ViewModels
                     }
                 }
             }
+        }
+
+        private void EnsureCurrentBookLoaded()
+        {
+            EnsureBookLoaded(_currentBook);
+        }
+
+        private void EnsureBookLoaded(Book book)
+        {
+            if (book == null || book.IsChaptersLoaded || _bibleService == null || AppSettings == null) return;
+
+            Task.Run(async () => await _bibleService.EnsureBookLoaded(AppSettings.Translation, book)).GetAwaiter().GetResult();
+            OnPropertyChanged(nameof(ChapterIndices));
         }
     }
 }

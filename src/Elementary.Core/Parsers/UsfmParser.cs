@@ -1,3 +1,4 @@
+using Elementary.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -16,6 +17,61 @@ namespace Elementary.Core.Parsers
         public int Index { get; set; }
         public List<UsfmVerse> Verses { get; set; } = new List<UsfmVerse>();
         public List<string> Footnotes { get; set; } = new List<string>();
+
+        public List<ChapterDisplayLine> ToDisplayLines()
+        {
+            var lines = new List<ChapterDisplayLine>();
+            foreach (var v in Verses)
+            {
+                if (v.Number > 0)
+                {
+                    lines.Add(new ChapterDisplayLine
+                    {
+                        Type = ChapterDisplayLineType.Verse,
+                        VerseNumber = v.Number,
+                        Text = ToPlainText(v.Text)
+                    });
+                    continue;
+                }
+
+                var text = v.Text ?? string.Empty;
+                if (text.IndexOf("<h1>", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    lines.Add(new ChapterDisplayLine { Type = ChapterDisplayLineType.Heading, Text = ToPlainText(text) });
+                }
+                else if (text.IndexOf("class=\"poetry\"", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    lines.Add(new ChapterDisplayLine { Type = ChapterDisplayLineType.Poetry, Text = ToPlainText(text) });
+                }
+                else if (text.IndexOf("<p", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    lines.Add(new ChapterDisplayLine { Type = ChapterDisplayLineType.ParagraphBreak, Text = string.Empty });
+                }
+                else
+                {
+                    var plain = ToPlainText(text);
+                    if (!string.IsNullOrWhiteSpace(plain))
+                    {
+                        lines.Add(new ChapterDisplayLine { Type = ChapterDisplayLineType.Text, Text = plain });
+                    }
+                }
+            }
+
+            if (Footnotes.Count > 0)
+            {
+                for (int i = 0; i < Footnotes.Count; i++)
+                {
+                    lines.Add(new ChapterDisplayLine
+                    {
+                        Type = ChapterDisplayLineType.Footnote,
+                        Text = $"{i + 1}. {ToPlainText(Footnotes[i])}"
+                    });
+                }
+            }
+
+            return lines;
+        }
+
         public string ToHtml()
         {
             var sb = new StringBuilder();
@@ -46,6 +102,16 @@ namespace Elementary.Core.Parsers
             }
             sb.Append("</div>");
             return sb.ToString();
+        }
+
+        private static string ToPlainText(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return string.Empty;
+            var decoded = System.Net.WebUtility.HtmlDecode(text);
+            decoded = Regex.Replace(decoded, "<sup>(\\d+)</sup>", "$1", RegexOptions.IgnoreCase);
+            decoded = Regex.Replace(decoded, "<[^>]+>", string.Empty, RegexOptions.Singleline);
+            decoded = Regex.Replace(decoded, "\\s+", " ").Trim();
+            return decoded;
         }
     }
 

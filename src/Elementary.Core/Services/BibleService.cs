@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using VersOne.Epub;
@@ -40,6 +41,62 @@ namespace Elementary.Core.Services
                 default:
                     return null;
             }
+        }
+
+        public async Task EnsureBookLoaded(ETranslation translation, Book book)
+        {
+            if (book == null || book.IsChaptersLoaded) return;
+
+            if (translation != ETranslation.NET)
+            {
+                if (book.Chapters == null) book.Chapters = new ObservableCollection<Chapter>();
+                book.IsChaptersLoaded = true;
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(book.SourcePath))
+            {
+                if (book.Chapters == null) book.Chapters = new ObservableCollection<Chapter>();
+                book.IsChaptersLoaded = true;
+                return;
+            }
+
+            var chapters = new ObservableCollection<Chapter>();
+
+            try
+            {
+                using (var stream = await _fileService.ReadFileAsync(book.SourcePath))
+                using (var reader = new StreamReader(stream))
+                {
+                    var content = await reader.ReadToEndAsync();
+                    var usfmBook = Elementary.Core.Parsers.UsfmParser.ParseBook(content);
+
+                    if (usfmBook != null)
+                    {
+                        if (!string.IsNullOrWhiteSpace(usfmBook.Title))
+                        {
+                            book.Title = usfmBook.Title;
+                        }
+
+                        foreach (var ch in usfmBook.Chapters)
+                        {
+                            chapters.Add(new Chapter
+                            {
+                                Index = ch.Index,
+                                ChapterText = ch.ToHtml(),
+                                DisplayLines = new ObservableCollection<ChapterDisplayLine>(ch.ToDisplayLines())
+                            });
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Keep book with empty chapters on failure.
+            }
+
+            book.Chapters = chapters;
+            book.IsChaptersLoaded = true;
         }
 
         private Bible GetBibleASV()
@@ -119,28 +176,14 @@ namespace Elementary.Core.Services
             {
                 try
                 {
-                    using (var stream = await _fileService.ReadFileAsync(filePath))
-                    using (var reader = new StreamReader(stream))
+                    var bookTitle = await ReadUsfmBookTitleAsync(filePath);
+                    bible.Books.Add(new Book
                     {
-                        var content = await reader.ReadToEndAsync();
-
-                        // Parse USFM into structured book
-                        var usfmBook = Elementary.Core.Parsers.UsfmParser.ParseBook(content);
-                        var bookTitle = usfmBook?.Title ?? Path.GetFileNameWithoutExtension(filePath);
-
-                        var book = new Book { Title = bookTitle };
-                        book.Chapters = new ObservableCollection<Chapter>();
-
-                        if (usfmBook != null)
-                        {
-                            foreach (var ch in usfmBook.Chapters)
-                            {
-                                book.Chapters.Add(new Chapter { Index = ch.Index, ChapterText = ch.ToHtml() });
-                            }
-                        }
-
-                        bible.Books.Add(book);
-                    }
+                        Title = bookTitle,
+                        SourcePath = filePath,
+                        Chapters = new ObservableCollection<Chapter>(),
+                        IsChaptersLoaded = false
+                    });
                 }
                 catch
                 {
@@ -157,7 +200,61 @@ namespace Elementary.Core.Services
                 }
             }
 
+            var targetBookEnum = _settingsService.GetSettings()?.Book ?? EBook.Genesis;
+            var currentBook = bible.Books.FirstOrDefault(b =>
+                EBookToLocation.EBookTitleToEBook.TryGetValue(b.Title, out var bookEnum) && bookEnum == targetBookEnum)
+                ?? bible.Books.FirstOrDefault();
+
+            if (currentBook != null)
+            {
+                await EnsureBookLoaded(ETranslation.NET, currentBook);
+            }
+
             return bible;
+        }
+
+        private async Task<string> ReadUsfmBookTitleAsync(string filePath)
+        {
+            try
+            {
+                using (var stream = await _fileService.ReadFileAsync(filePath))
+                using (var reader = new StreamReader(stream))
+                {
+                    string line;
+                    string idFallback = null;
+                    int lineCount = 0;
+
+                    while ((line = await reader.ReadLineAsync()) != null && lineCount < 300)
+                    {
+                        lineCount++;
+                        var trimmed = line.Trim();
+                        if (string.IsNullOrWhiteSpace(trimmed)) continue;
+
+                        var hMatch = Regex.Match(trimmed, @"^\\h\s+(.+)$", RegexOptions.IgnoreCase);
+                        if (hMatch.Success) return hMatch.Groups[1].Value.Trim();
+
+                        var mtMatch = Regex.Match(trimmed, @"^\\mt\d*\s+(.+)$", RegexOptions.IgnoreCase);
+                        if (mtMatch.Success) return mtMatch.Groups[1].Value.Trim();
+
+                        var idMatch = Regex.Match(trimmed, @"^\\id\s+(.+)$", RegexOptions.IgnoreCase);
+                        if (idMatch.Success)
+                        {
+                            idFallback = idMatch.Groups[1].Value.Trim();
+                        }
+
+                        if (trimmed.StartsWith("\\c ", StringComparison.OrdinalIgnoreCase))
+                        {
+                            break;
+                        }
+                    }
+
+                    return !string.IsNullOrWhiteSpace(idFallback) ? idFallback : Path.GetFileNameWithoutExtension(filePath);
+                }
+            }
+            catch
+            {
+                return Path.GetFileNameWithoutExtension(filePath);
+            }
         }
 
         private string CleanChapterHtml(string chapterText, string BookName, int chapterNum)

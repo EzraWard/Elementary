@@ -47,42 +47,12 @@ namespace Elementary
 
         private Task EnsureTokenizedAsync(Core.Models.Chapter chap)
         {
-            return System.Threading.Tasks.Task.Run(() =>
-            {
-                if (chap == null) return;
-                var key = MakeCacheKey(chap);
-                lock (_cacheLock)
-                {
-                    if (_tokenCache.ContainsKey(key)) return;
-                }
-
-                var decoded = System.Net.WebUtility.HtmlDecode(chap.ChapterText ?? string.Empty);
-                var matches = Regex.Matches(decoded, "(<[^>]+>|[^<]+)", RegexOptions.Singleline);
-                var parts = new List<string>();
-                foreach (Match m in matches) parts.Add(m.Value);
-
-                lock (_cacheLock)
-                {
-                    if (!_tokenCache.ContainsKey(key)) _tokenCache[key] = parts.ToArray();
-                }
-            });
+            return Task.CompletedTask;
         }
 
         private void PrefetchAroundChapter(Core.Models.Chapter current)
         {
-            System.Threading.Tasks.Task.Run(async () =>
-            {
-                var chapters = _viewModel?.Chapters;
-                if (chapters == null || current == null) return;
-                var idx = chapters.IndexOf(current);
-                if (idx < 0) return;
-                int start = Math.Max(0, idx - PrefetchDepth);
-                int end = Math.Min(chapters.Count - 1, idx + PrefetchDepth);
-                for (int i = start; i <= end; i++)
-                {
-                    await EnsureTokenizedAsync(chapters[i]);
-                }
-            });
+            // No-op: chapter rendering is now template-driven from POCO display lines.
         }
 
         private async void BiblePage_Loaded(object sender, RoutedEventArgs e)
