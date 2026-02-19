@@ -30,24 +30,27 @@
 					<muxc:ItemsRepeater.ItemTemplate>
 						<DataTemplate>
                             <Grid x:Name="ChapterItemGrid" Margin="0,0,0,20">
-                                <StackPanel MaxWidth="700" HorizontalAlignment="Center">
+                                <StackPanel MaxWidth="700"
+                                            HorizontalAlignment="Center">
                                     <TextBlock Text="{Binding Index}" FontSize="26" FontWeight="Bold" Margin="0,24,0,8"/>
                                     <muxc:ItemsRepeater ItemsSource="{Binding DisplayLines}">
                                         <muxc:ItemsRepeater.ItemTemplate>
                                             <DataTemplate>
-                                                <StackPanel>
+                                                <StackPanel Loaded="DisplayLineContainer_Loaded">
                                                     <Grid Visibility="{Binding IsVerse, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,6">
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="Auto"/>
                                                             <ColumnDefinition Width="*"/>
                                                         </Grid.ColumnDefinitions>
-                                                        <TextBlock Text="{Binding VerseNumberText}" FontSize="12" Margin="0,-4,6,0" VerticalAlignment="Top" Opacity="0.8"/>
-                                                        <TextBlock Grid.Column="1" Text="{Binding Text}" TextWrapping="WrapWholeWords"/>
+                                                        <TextBlock Text="{Binding VerseNumberText}" Margin="0,-4,6,0" VerticalAlignment="Top" Opacity="0.8"/>
+                                                        <TextBlock Grid.Column="1"
+                                                                   Text="{Binding Text}"
+                                                                   TextWrapping="WrapWholeWords"/>
                                                     </Grid>
-                                                    <TextBlock Text="{Binding Text}" Visibility="{Binding IsHeading, Converter={StaticResource BoolToVisibilityConverter}}" FontSize="20" FontWeight="SemiBold" Margin="0,10,0,6" TextWrapping="WrapWholeWords"/>
+                                                    <TextBlock Text="{Binding Text}" Visibility="{Binding IsHeading, Converter={StaticResource BoolToVisibilityConverter}}" FontWeight="SemiBold" Margin="0,10,0,6" TextWrapping="WrapWholeWords"/>
                                                     <TextBlock Text="{Binding Text}" Visibility="{Binding IsPoetry, Converter={StaticResource BoolToVisibilityConverter}}" Margin="20,0,0,6" TextWrapping="WrapWholeWords"/>
                                                     <TextBlock Text="{Binding Text}" Visibility="{Binding IsText, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,6" TextWrapping="WrapWholeWords"/>
-                                                    <TextBlock Text="{Binding Text}" Visibility="{Binding IsFootnote, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,4,0,0" Opacity="0.75" FontSize="12" TextWrapping="WrapWholeWords"/>
+                                                    <TextBlock Text="{Binding Text}" Visibility="{Binding IsFootnote, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,4,0,0" Opacity="0.75" TextWrapping="WrapWholeWords"/>
                                                     <Border Visibility="{Binding IsParagraphBreak, Converter={StaticResource BoolToVisibilityConverter}}" Height="8" Background="Transparent"/>
                                                 </StackPanel>
                                             </DataTemplate>

@@ -1,19 +1,19 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 namespace Elementary.Core.Enums
 {
     public enum EFont
     {
-        [Description("Not Set")]
+        [Display(Name = "NotSet")]
         NotSet,
 
-        [Description("Segoe UI")]
+        [Display(Name = "Segoe UI")]
         SegoeUIVariable,
 
-        [Description("Georgia")]
+        [Display(Name = "Georgia")]
         Georgia
     }
 }

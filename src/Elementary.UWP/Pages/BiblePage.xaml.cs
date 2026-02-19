@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using System.Net;
 using Windows.UI.Text;
 using System.Threading.Tasks;
+using Windows.UI.Xaml.Media;
 
 namespace Elementary
 {
@@ -130,6 +131,38 @@ namespace Elementary
             catch
             {
                 // ignore errors
+            }
+        }
+
+        private void DisplayLineContainer_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement element)
+            {
+                ApplyReadingTypography(element);
+            }
+        }
+
+        private void ApplyReadingTypography(DependencyObject root)
+        {
+            if (root == null || _viewModel == null) return;
+
+            var fontFamily = new FontFamily(_viewModel.Font);
+            var fontSize = _viewModel.FontSize;
+            ApplyReadingTypographyRecursive(root, fontFamily, fontSize);
+        }
+
+        private void ApplyReadingTypographyRecursive(DependencyObject node, FontFamily fontFamily, double fontSize)
+        {
+            if (node is TextBlock textBlock)
+            {
+                textBlock.FontFamily = fontFamily;
+                textBlock.FontSize = fontSize;
+            }
+
+            var childCount = VisualTreeHelper.GetChildrenCount(node);
+            for (int i = 0; i < childCount; i++)
+            {
+                ApplyReadingTypographyRecursive(VisualTreeHelper.GetChild(node, i), fontFamily, fontSize);
             }
         }
 
