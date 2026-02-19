@@ -227,7 +227,7 @@
       <Version>1.12.4</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection">
-      <Version>10.0.1</Version>
+      <Version>10.0.3</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.14</Version>
@@ -242,7 +242,7 @@
       <Version>4.3.1</Version>
     </PackageReference>
     <PackageReference Include="VersOne.Epub">
-      <Version>3.3.4</Version>
+      <Version>3.3.5</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
