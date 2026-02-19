@@ -38,7 +38,7 @@ namespace Elementary.ViewModels
             {
                 if (SetProperty(ref _currentBook, value))
                 {
-                    EnsureCurrentBookLoaded();
+                    EnsureBookLoaded(_currentBook);
                     OnPropertyChanged(nameof(ChapterIndices));
                     // Automatically update chapter when book changes
                     CurrentChapter = _currentBook?.Chapters.FirstOrDefault();
@@ -134,6 +134,12 @@ namespace Elementary.ViewModels
             Chapters = new ObservableCollection<Chapter>();
         }
 
+        public void RefreshSettings()
+        {
+            if (_settingsService == null) return;
+            AppSettings = _settingsService.GetSettings();
+        }
+
         public async Task Initialize()
         {
             _settingsService = App.Services.GetRequiredService<ISettingsService>();
@@ -150,12 +156,12 @@ namespace Elementary.ViewModels
             SelectedChapterIndex = CurrentChapter?.Index ?? 1;
 
             // Initialize with current chapter and load adjacent chapters
-            LoadInitialChapters();
+            await LoadInitialChaptersAsync();
 
             IsLoaded = true;
         }
 
-        public void LoadInitialChapters()
+        public async Task LoadInitialChaptersAsync()
         {
             Chapters.Clear();
             if (CurrentChapter == null) return;
@@ -176,7 +182,7 @@ namespace Elementary.ViewModels
                 {
                     // Try previous book's last chapter
                     var prevBook = Bible.Books.FirstOrDefault(b => b.ReadingOrderIndex == currentBook.ReadingOrderIndex - 1);
-                    EnsureBookLoaded(prevBook);
+                    await EnsureBookLoadedAsync(prevBook);
                     if (prevBook?.Chapters.Count > 0)
                     {
                         Chapters.Insert(0, prevBook.Chapters.Last());
@@ -185,10 +191,10 @@ namespace Elementary.ViewModels
             }
             
             // Load next chapter
-            LoadNextChapter();
+            await LoadNextChapterAsync();
         }
 
-        public void LoadNextChapter()
+        public async Task LoadNextChapterAsync()
         {
             if (IsLoadingMore) return;
 
@@ -215,7 +221,7 @@ namespace Elementary.ViewModels
                     {
                         // Move to next book
                         var nextBook = Bible.Books.FirstOrDefault(b => b.ReadingOrderIndex == currentBook.ReadingOrderIndex + 1);
-                        EnsureBookLoaded(nextBook);
+                        await EnsureBookLoadedAsync(nextBook);
                         if (nextBook?.Chapters.Count > 0)
                         {
                             Chapters.Add(nextBook.Chapters.First());
@@ -229,7 +235,7 @@ namespace Elementary.ViewModels
             }
         }
 
-        public void LoadPreviousChapter()
+        public async Task LoadPreviousChapterAsync()
         {
             if (IsLoadingMore) return;
 
@@ -256,7 +262,7 @@ namespace Elementary.ViewModels
                     {
                         // Move to previous book
                         var prevBook = Bible.Books.FirstOrDefault(b => b.ReadingOrderIndex == currentBook.ReadingOrderIndex - 1);
-                        EnsureBookLoaded(prevBook);
+                        await EnsureBookLoadedAsync(prevBook);
                         if (prevBook?.Chapters.Count > 0)
                         {
                             Chapters.Insert(0, prevBook.Chapters.Last());
@@ -317,15 +323,14 @@ namespace Elementary.ViewModels
             }
         }
 
-        // Optional: Public method to manually update settings (useful for navigation scenarios)
-        public void UpdateNavigationSettings(string bookTitle, int chapterIndex)
+        public async Task UpdateNavigationSettingsAsync(string bookTitle, int chapterIndex)
         {
             if (Bible?.Books != null)
             {
                 var book = Bible.Books.FirstOrDefault(b => b.Title == bookTitle);
                 if (book != null)
                 {
-                    EnsureBookLoaded(book);
+                    await EnsureBookLoadedAsync(book);
                     CurrentBook = book;
                     var chapter = book.Chapters.FirstOrDefault(c => c.Index == chapterIndex);
                     if (chapter != null)
@@ -337,11 +342,15 @@ namespace Elementary.ViewModels
             }
         }
 
-        private void EnsureCurrentBookLoaded()
+        private async Task EnsureBookLoadedAsync(Book book)
         {
-            EnsureBookLoaded(_currentBook);
+            if (book == null || book.IsChaptersLoaded || _bibleService == null || AppSettings == null) return;
+
+            await _bibleService.EnsureBookLoaded(AppSettings.Translation, book);
+            OnPropertyChanged(nameof(ChapterIndices));
         }
 
+        // Sync wrapper for use in property setters where async is not possible
         private void EnsureBookLoaded(Book book)
         {
             if (book == null || book.IsChaptersLoaded || _bibleService == null || AppSettings == null) return;

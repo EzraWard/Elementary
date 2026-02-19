@@ -3,22 +3,19 @@ using Elementary.ViewModels;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Documents;
-using System.Text.RegularExpressions;
-using System.Net;
-using Windows.UI.Text;
-using System.Threading.Tasks;
 using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Navigation;
 
 namespace Elementary
 {
     public sealed partial class BiblePage : Page
     {
-        public BiblePageViewModel _viewModel;
-        public bool _isLoaded;
+        private BiblePageViewModel _viewModel;
+        private bool _isLoaded;
         private double _previousVerticalOffset = 0;
         private bool _isUpdatingFromScroll = false;
 
@@ -30,30 +27,36 @@ namespace Elementary
             _viewModel = new BiblePageViewModel();
         }
 
-        // Simple tokenized HTML cache for prefetched chapters to speed rendering during fast scrolls.
-        private readonly Dictionary<string, string[]> _tokenCache = new Dictionary<string, string[]>();
-        private readonly object _cacheLock = new object();
-        private const int PrefetchDepth = 2; // configurable prefetch depth (chapters ahead/behind)
-
-        private string MakeCacheKey(Core.Models.Chapter chap)
+        protected override void OnNavigatedTo(NavigationEventArgs e)
         {
+            base.OnNavigatedTo(e);
+
+            if (!_isLoaded || _viewModel == null) return;
+
+            // Re-read settings so font/size changes from Settings page apply immediately
+            _viewModel.RefreshSettings();
+            ReapplyTypographyToAllElements();
+        }
+
+        private void ReapplyTypographyToAllElements()
+        {
+            if (_viewModel == null) return;
+
             try
             {
-                var book = _viewModel?.Bible?.Books?.FirstOrDefault(b => b.Chapters.Contains(chap));
-                var title = book?.Title ?? "book";
-                return $"{title}:{chap.Index}";
+                for (int i = 0; i < _viewModel.Chapters.Count; i++)
+                {
+                    var element = ChaptersRepeater.TryGetElement(i);
+                    if (element is FrameworkElement fe)
+                    {
+                        ApplyReadingTypography(fe);
+                    }
+                }
             }
-            catch { return $"unknown:{chap?.Index}"; }
-        }
-
-        private Task EnsureTokenizedAsync(Core.Models.Chapter chap)
-        {
-            return Task.CompletedTask;
-        }
-
-        private void PrefetchAroundChapter(Core.Models.Chapter current)
-        {
-            // No-op: chapter rendering is now template-driven from POCO display lines.
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error reapplying typography: {ex.Message}");
+            }
         }
 
         private async void BiblePage_Loaded(object sender, RoutedEventArgs e)
@@ -70,8 +73,6 @@ namespace Elementary
                 // Give UI time to layout
                 await System.Threading.Tasks.Task.Delay(100);
                 ScrollToCurrentChapter();
-                // Prefetch around the current chapter
-                PrefetchAroundChapter(_viewModel.CurrentChapter);
             }
         }
 
@@ -128,9 +129,9 @@ namespace Elementary
                 }
                 firstElement.Margin = new Thickness(0);
             }
-            catch
+            catch (Exception ex)
             {
-                // ignore errors
+                Debug.WriteLine($"Error applying top offset: {ex.Message}");
             }
         }
 
@@ -156,7 +157,22 @@ namespace Elementary
             if (node is TextBlock textBlock)
             {
                 textBlock.FontFamily = fontFamily;
-                textBlock.FontSize = fontSize;
+                var tag = textBlock.Tag as string;
+                switch (tag)
+                {
+                    case "heading":
+                        textBlock.FontSize = fontSize * 1.2;
+                        break;
+                    case "versenum":
+                        textBlock.FontSize = fontSize * 0.7;
+                        break;
+                    case "footnote":
+                        textBlock.FontSize = fontSize * 0.75;
+                        break;
+                    default:
+                        textBlock.FontSize = fontSize;
+                        break;
+                }
             }
 
             var childCount = VisualTreeHelper.GetChildrenCount(node);
@@ -164,70 +180,6 @@ namespace Elementary
             {
                 ApplyReadingTypographyRecursive(VisualTreeHelper.GetChild(node, i), fontFamily, fontSize);
             }
-        }
-
-        private void ChapterItemGrid_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            var grid = (Grid)sender;
-            var richTextBlock = grid.Children[0] as RichTextBlock;
-            if (richTextBlock == null) return;
-
-            // Set font properties from ViewModel
-            richTextBlock.FontFamily = new Windows.UI.Xaml.Media.FontFamily(_viewModel.Font);
-            richTextBlock.FontSize = _viewModel.FontSize;
-
-            // Populate content from bound Chapter
-            try
-            {
-                var chapter = grid.DataContext as Chapter;
-                if (chapter != null)
-                {
-                    // If we have a prefetched tokenized representation, use it for faster rendering
-                    var key = MakeCacheKey(chapter);
-                    string[] tokens = null;
-                    lock (_cacheLock)
-                    {
-                        _tokenCache.TryGetValue(key, out tokens);
-                    }
-
-                    if (tokens != null)
-                    {
-                        PopulateRichTextBlockFromTokens(richTextBlock, tokens);
-                    }
-                    else
-                    {
-                        // Kick off background tokenization for future renders
-                        _ = EnsureTokenizedAsync(chapter);
-                        PopulateRichTextBlock(richTextBlock, chapter.ChapterText);
-                    }
-                }
-            }
-            catch
-            {
-                // ignore rendering errors
-            }
-
-            var gridWidth = grid.ActualWidth;
-
-            if (gridWidth > 750)
-            {
-                richTextBlock.Width = 700;
-                // If this is the first element, ensure offset is applied after size settles
-                var first = ChaptersRepeater.TryGetElement(0);
-                if (object.ReferenceEquals(grid, first)) ApplyTopOffsetToFirstChapter();
-                return;
-            }
-            if (gridWidth < 350)
-            {
-                richTextBlock.Width = 300;
-                var first = ChaptersRepeater.TryGetElement(0);
-                if (object.ReferenceEquals(grid, first)) ApplyTopOffsetToFirstChapter();
-                return;
-            }
-
-            richTextBlock.Width = gridWidth - 50;
-            var firstElement = ChaptersRepeater.TryGetElement(0);
-            if (object.ReferenceEquals(grid, firstElement)) ApplyTopOffsetToFirstChapter();
         }
 
         private void UpdateCurrentChapterFromScroll()
@@ -274,17 +226,15 @@ namespace Elementary
                     _isUpdatingFromScroll = true;
                     _viewModel.UpdateCurrentChapterFromScroll(mostVisibleChapter);
                     _isUpdatingFromScroll = false;
-                    // Prefetch nearby chapters to avoid stalls when user scrolls quickly
-                    PrefetchAroundChapter(mostVisibleChapter);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Ignore errors during visual tree traversal
+                Debug.WriteLine($"Error updating chapter from scroll: {ex.Message}");
             }
         }
 
-        private void BibleScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
+        private async void BibleScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
         {
             if (!_isLoaded) return;
 
@@ -295,14 +245,14 @@ namespace Elementary
             // Load next chapter when scrolling down near bottom
             if (verticalOffset > _previousVerticalOffset && maxVerticalOffset - verticalOffset < 500)
             {
-                _viewModel.LoadNextChapter();
+                await _viewModel.LoadNextChapterAsync();
             }
             // Load previous chapter when scrolling up near top
             else if (verticalOffset < _previousVerticalOffset && verticalOffset < 500)
             {
                 // Store the current scroll position to restore after adding content at top
                 var oldScrollableHeight = scrollViewer.ScrollableHeight;
-                _viewModel.LoadPreviousChapter();
+                await _viewModel.LoadPreviousChapterAsync();
                 
                 // Adjust scroll position to maintain view (needs to be done after layout updates)
                 scrollViewer.UpdateLayout();
@@ -323,181 +273,7 @@ namespace Elementary
             _previousVerticalOffset = verticalOffset;
         }
 
-        // Populate a RichTextBlock from simplified HTML created by the USFM parser.
-        private void PopulateRichTextBlock(RichTextBlock rtb, string html)
-        {
-            rtb.Blocks.Clear();
-
-            if (string.IsNullOrEmpty(html))
-            {
-                rtb.Blocks.Add(new Paragraph());
-                return;
-            }
-
-            var decoded = WebUtility.HtmlDecode(html);
-
-            // Tokenize into tags and text
-            var parts = Regex.Matches(decoded, "(<[^>]+>|[^<]+)", RegexOptions.Singleline);
-            RenderHtmlTokens(rtb, parts);
-        }
-
-        // Populate from pre-tokenized parts (used by prefetch cache)
-        private void PopulateRichTextBlockFromTokens(RichTextBlock rtb, string[] parts)
-        {
-            rtb.Blocks.Clear();
-            if (parts == null || parts.Length == 0)
-            {
-                rtb.Blocks.Add(new Paragraph());
-                return;
-            }
-
-            var combined = string.Concat(parts);
-            var matches = Regex.Matches(combined, "(<[^>]+>|[^<]+)", RegexOptions.Singleline);
-            RenderHtmlTokens(rtb, matches.Cast<Match>());
-        }
-
-        // Render HTML tokens into RichTextBlock
-        private void RenderHtmlTokens(RichTextBlock rtb, IEnumerable<dynamic> tokens)
-        {
-            Paragraph currentPara = null;
-            var styleStack = new Stack<(bool italic, bool bold)>();
-            styleStack.Push((false, false));
-            bool inSuperscript = false;
-
-            void StartParagraph(Paragraph p)
-            {
-                if (p == null) return;
-                currentPara = p;
-                rtb.Blocks.Add(currentPara);
-            }
-
-            foreach (var tokenObj in tokens)
-            {
-                // Handle both Match objects and string tokens
-                var token = tokenObj is Match m ? m.Value : (string)tokenObj;
-                if (token.StartsWith("<"))
-                {
-                    var tag = token.Trim('<', '>', ' ', '\t', '\r', '\n');
-                    var tagLower = tag.ToLowerInvariant();
-
-                    if (tagLower.StartsWith("p") || tagLower == "/p")
-                    {
-                        if (!tagLower.StartsWith("/")) StartParagraph(new Paragraph());
-                        else currentPara = null;
-                        continue;
-                    }
-
-                    if (tagLower.StartsWith("h2"))
-                    {
-                        var h2 = new Paragraph
-                        {
-                            FontWeight = FontWeights.Bold,
-                            FontSize = rtb.FontSize * 1.2,
-                            Margin = new Thickness(0, 24, 0, 6)
-                        };
-                        StartParagraph(h2);
-                        continue;
-                    }
-
-                    if (tagLower.StartsWith("h1") || tagLower.StartsWith("h"))
-                    {
-                        var h = new Paragraph { FontWeight = FontWeights.Bold, FontSize = rtb.FontSize * 1.15 };
-                        StartParagraph(h);
-                        continue;
-                    }
-
-                    if (tagLower.StartsWith("div class=\"poetry\""))
-                    {
-                        var poetry = new Paragraph { Margin = new Thickness(20, 0, 0, 0) };
-                        StartParagraph(poetry);
-                        continue;
-                    }
-
-                    if (tagLower.StartsWith("quote") || tagLower.StartsWith("div class=\"q\""))
-                    {
-                        var bq = new Paragraph { Margin = new Thickness(20, 0, 0, 0) };
-                        StartParagraph(bq);
-                        continue;
-                    }
-
-                    if (tagLower == "br")
-                    {
-                        StartParagraph(new Paragraph());
-                        continue;
-                    }
-
-                    if (tagLower.StartsWith("sup") && !tagLower.StartsWith("/")) { inSuperscript = true; continue; }
-                    if (tagLower.StartsWith("/sup")) { inSuperscript = false; continue; }
-
-                    if (tagLower.StartsWith("em") && !tagLower.StartsWith("/")) { var top = styleStack.Peek(); styleStack.Push((true, top.bold)); continue; }
-                    if (tagLower.StartsWith("/em") || tagLower.StartsWith("/it")) { if (styleStack.Count > 1) styleStack.Pop(); continue; }
-                    if (tagLower.StartsWith("b") && !tagLower.StartsWith("/")) { var top = styleStack.Peek(); styleStack.Push((top.italic, true)); continue; }
-                    if (tagLower.StartsWith("/b") || tagLower.StartsWith("/bd")) { if (styleStack.Count > 1) styleStack.Pop(); continue; }
-
-                    if (tagLower.StartsWith("qt") && !tagLower.StartsWith("/")) { var top = styleStack.Peek(); styleStack.Push((true, top.bold)); continue; }
-                    if (tagLower.StartsWith("/qt")) { if (styleStack.Count > 1) styleStack.Pop(); continue; }
-
-                    // footnote tag <fn id="n"/> - render a small superscript marker
-                    if (tagLower.StartsWith("fn ") || tagLower.StartsWith("fn"))
-                    {
-                        var idMatch = Regex.Match(tag, "id=\"(\\d+)\"");
-                        if (idMatch.Success)
-                        {
-                            var id = idMatch.Groups[1].Value;
-                            if (currentPara == null) StartParagraph(new Paragraph());
-                            var tb = new TextBlock { Text = id, FontSize = rtb.FontSize * 0.7, Margin = new Thickness(0, -6, 2, 0) };
-                            var container = new InlineUIContainer { Child = tb };
-                            currentPara.Inlines.Add(container);
-                        }
-                        continue;
-                    }
-
-                    if (tagLower.StartsWith("xr") && !tagLower.StartsWith("/"))
-                    {
-                        if (currentPara == null) StartParagraph(new Paragraph());
-                        currentPara.Inlines.Add(new Run { Text = " (", FontStyle = FontStyle.Normal });
-                        continue;
-                    }
-                    if (tagLower.StartsWith("/xr"))
-                    {
-                        if (currentPara == null) StartParagraph(new Paragraph());
-                        currentPara.Inlines.Add(new Run { Text = ")", FontStyle = FontStyle.Normal });
-                        continue;
-                    }
-
-                    if (tagLower.StartsWith("/div"))
-                    {
-                        currentPara = null;
-                        continue;
-                    }
-
-                    continue;
-                }
-
-                // Text token
-                var text = token;
-                if (currentPara == null) StartParagraph(new Paragraph());
-
-                if (inSuperscript)
-                {
-                    var supText = text.Trim();
-                    if (!string.IsNullOrEmpty(supText))
-                    {
-                        var tb = new TextBlock { Text = supText, FontSize = rtb.FontSize * 0.75, Margin = new Thickness(0, -6, 4, 0) };
-                        currentPara.Inlines.Add(new InlineUIContainer { Child = tb });
-                    }
-                    continue;
-                }
-
-                var topStyle = styleStack.Peek();
-                var run2 = new Run { Text = text };
-                if (topStyle.italic) run2.FontStyle = FontStyle.Italic;
-                if (topStyle.bold) run2.FontWeight = FontWeights.Bold;
-                currentPara.Inlines.Add(run2);
-            }
-        }
-
-        private void BibleBookChapterComboBoxes_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private async void BibleBookChapterComboBoxes_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!_isLoaded || _isUpdatingFromScroll) return;
 
@@ -523,38 +299,35 @@ namespace Elementary
                     settingsService.SaveNavigationHistory(history);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // ignore errors saving history
+                Debug.WriteLine($"Error saving navigation history: {ex.Message}");
             }
 
             // Reload chapters from the selected position
-            _viewModel.LoadInitialChapters();
+            await _viewModel.LoadInitialChaptersAsync();
             
             // Scroll to the current chapter
             ScrollToCurrentChapter();
-            PrefetchAroundChapter(_viewModel.CurrentChapter);
         }
 
-        public void NavigateToFromHistory(string bookTitle, int chapter)
+        public async void NavigateToFromHistory(string bookTitle, int chapter)
         {
             // If page isn't fully initialized yet, defer until Loaded finishes
             if (!_isLoaded)
             {
-                Loaded += (s, e) =>
+                Loaded += async (s, e) =>
                 {
-                    _viewModel.UpdateNavigationSettings(bookTitle, chapter);
-                    _viewModel.LoadInitialChapters();
+                    await _viewModel.UpdateNavigationSettingsAsync(bookTitle, chapter);
+                    await _viewModel.LoadInitialChaptersAsync();
                     ScrollToCurrentChapter();
-                    PrefetchAroundChapter(_viewModel.CurrentChapter);
                 };
                 return;
             }
 
-            _viewModel.UpdateNavigationSettings(bookTitle, chapter);
-            _viewModel.LoadInitialChapters();
+            await _viewModel.UpdateNavigationSettingsAsync(bookTitle, chapter);
+            await _viewModel.LoadInitialChaptersAsync();
             ScrollToCurrentChapter();
-            PrefetchAroundChapter(_viewModel.CurrentChapter);
         }
 
     }

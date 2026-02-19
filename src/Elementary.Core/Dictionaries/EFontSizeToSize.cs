@@ -7,9 +7,9 @@ namespace Elementary.Core.Dictionaries
     {
         public static readonly Dictionary<EFontSize, int> EFontSizeToSize = new Dictionary<EFontSize, int>
         {
-            { EFontSize.Small, 16 },
+            { EFontSize.Small, 14 },
             { EFontSize.Medium, 18 },
-            { EFontSize.Large, 20 }
+            { EFontSize.Large, 22 }
         };
     }
 }
