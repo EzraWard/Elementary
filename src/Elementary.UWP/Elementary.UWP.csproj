@@ -223,9 +223,6 @@
     <PackageReference Include="CommunityToolkit.Uwp.Helpers">
       <Version>8.2.251219</Version>
     </PackageReference>
-    <PackageReference Include="HtmlAgilityPack">
-      <Version>1.12.4</Version>
-    </PackageReference>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection">
       <Version>10.0.3</Version>
     </PackageReference>
@@ -233,17 +230,6 @@
       <Version>6.2.14</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.UI.Xaml">
-      <Version>2.8.7</Version>
-    </PackageReference>
-    <PackageReference Include="System.Private.Uri">
-      <Version>4.3.2</Version>
-    </PackageReference>
-    <PackageReference Include="System.Text.RegularExpressions">
-      <Version>4.3.1</Version>
-    </PackageReference>
-    <PackageReference Include="VersOne.Epub">
-      <Version>3.3.5</Version>
-    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\NET21NOTELESS.epub">
