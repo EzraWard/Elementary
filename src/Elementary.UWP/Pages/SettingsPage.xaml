@@ -44,8 +44,7 @@
                     <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
                            Text="Reading" />
                     <controls:SettingsCard Description="The translation of the Bible you would like to use"
-                                       Header="Translation (Coming soon!)"
-                                       IsEnabled="False">
+                                       Header="Translation">
                         <controls:SettingsCard.HeaderIcon>
                             <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE736;"/>
                         </controls:SettingsCard.HeaderIcon>

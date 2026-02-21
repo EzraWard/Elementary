@@ -146,7 +146,7 @@ namespace Elementary.ViewModels
             AppSettings = _settingsService.GetSettings();
 
             _bibleService = App.Services.GetRequiredService<IBibleService>();
-            Bible = await _bibleService.GetBible(ETranslation.NET);
+            Bible = await _bibleService.GetBible(AppSettings.Translation);
 
             CurrentBook = Bible.Books.FirstOrDefault(b =>
                 EBookToLocation.EBookTitleToEBook.TryGetValue(b.Title, out var bookEnum) && bookEnum == AppSettings.Book)

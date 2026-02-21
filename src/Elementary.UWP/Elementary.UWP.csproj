@@ -232,6 +232,12 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Content\ASV\**\*.usfm">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\KJV\**\*.usfm">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Content\NET\**\*.usfm">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

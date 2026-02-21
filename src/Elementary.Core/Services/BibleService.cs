@@ -36,11 +36,11 @@ namespace Elementary.Core.Services
             switch (translation)
             {
                 case ETranslation.ASV:
-                    return GetBibleASV();
+                    return await GetBibleFromTranslation(translation);
                 case ETranslation.KJV:
-                    return GetBibleKJV();
+                    return await GetBibleFromTranslation(translation);
                 case ETranslation.NET:
-                    return await GetBibleNET();
+                    return await GetBibleFromTranslation(translation);
                 default:
                     return null;
             }
@@ -49,13 +49,6 @@ namespace Elementary.Core.Services
         public async Task EnsureBookLoaded(ETranslation translation, Book book)
         {
             if (book == null || book.IsChaptersLoaded) return;
-
-            if (translation != ETranslation.NET)
-            {
-                if (book.Chapters == null) book.Chapters = new ObservableCollection<Chapter>();
-                book.IsChaptersLoaded = true;
-                return;
-            }
 
             if (string.IsNullOrWhiteSpace(book.SourcePath))
             {
@@ -102,20 +95,10 @@ namespace Elementary.Core.Services
             book.IsChaptersLoaded = true;
         }
 
-        private Bible GetBibleASV()
-        {
-            throw new NotImplementedException();
-        }
-
-        private Bible GetBibleKJV()
-        {
-            throw new NotImplementedException();
-        }
-
-        private async Task<Bible> GetBibleNET()
+        private async Task<Bible> GetBibleFromTranslation(ETranslation translation)
         {
             var bible = new Bible();
-            var bibleFilePath = _filePathProvider.GetPathForTranslation(ETranslation.NET);
+            var bibleFilePath = _filePathProvider.GetPathForTranslation(translation);
 
             // If path ends with .epub keep existing behavior
             if (!string.IsNullOrEmpty(bibleFilePath) && bibleFilePath.EndsWith(".epub", StringComparison.OrdinalIgnoreCase))
@@ -210,7 +193,7 @@ namespace Elementary.Core.Services
 
             if (currentBook != null)
             {
-                await EnsureBookLoaded(ETranslation.NET, currentBook);
+                await EnsureBookLoaded(translation, currentBook);
             }
 
             return bible;
