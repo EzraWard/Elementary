@@ -6,6 +6,7 @@ using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -17,6 +18,8 @@ namespace Elementary.Core.Services
 {
     public class BibleService : IBibleService
     {
+        private const int RevelationChapterCount = 22;
+
         private readonly ISettingsService _settingsService;
         private readonly IFileService _fileService;
         private readonly IFilePathProvider _filePathProvider;
@@ -24,8 +27,8 @@ namespace Elementary.Core.Services
         public BibleService(ISettingsService settingsService, IFileService fileService, IFilePathProvider filePathProvider)
         {
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
-            _fileService = fileService ?? throw new ArgumentNullException(nameof(settingsService));
-            _filePathProvider = filePathProvider ?? throw new ArgumentNullException(nameof(settingsService));
+            _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
+            _filePathProvider = filePathProvider ?? throw new ArgumentNullException(nameof(filePathProvider));
         }
 
         public async Task<Bible> GetBible(ETranslation translation)
@@ -90,9 +93,9 @@ namespace Elementary.Core.Services
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Keep book with empty chapters on failure.
+                Debug.WriteLine($"Failed to load chapters for {book.SourcePath}: {ex}");
             }
 
             book.Chapters = chapters;
@@ -149,7 +152,7 @@ namespace Elementary.Core.Services
                     }
                     else
                     {
-                        numberOfChapters = 23; //this is wrong, but it works for now...
+                        numberOfChapters = RevelationChapterCount + 1;
                     }
 
                     //Set
@@ -185,9 +188,9 @@ namespace Elementary.Core.Services
                         IsChaptersLoaded = false
                     });
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Ignore problematic files and continue
+                    Debug.WriteLine($"Failed to read USFM title from {filePath}: {ex}");
                 }
             }
 
@@ -251,8 +254,9 @@ namespace Elementary.Core.Services
                     return !string.IsNullOrWhiteSpace(idFallback) ? idFallback : Path.GetFileNameWithoutExtension(filePath);
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"Falling back to filename for USFM title: {filePath}. Error: {ex}");
                 return Path.GetFileNameWithoutExtension(filePath);
             }
         }

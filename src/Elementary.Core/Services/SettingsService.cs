@@ -11,7 +11,7 @@ namespace Elementary.Core.Services
 
         public SettingsService(ISettingsProvider settingsProvider)
         {
-            _settingsProvider = settingsProvider;
+            _settingsProvider = settingsProvider ?? throw new ArgumentNullException(nameof(settingsProvider));
         }
 
         public ISettings GetSettings()
