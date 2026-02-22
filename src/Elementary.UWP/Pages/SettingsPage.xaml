@@ -119,7 +119,7 @@
                         <controls:SettingsExpander.Items>
                             <controls:SettingsCard>
                                 <controls:SettingsCard.Header>
-                                    <TextBlock Text="👨🏻‍👩🏻‍👧🏻‍👦🏻 Hello from Marietta" />
+                                    <TextBlock Text="👨🏻‍👩🏻‍👧🏻‍👦🏻 Hello from Williamstown" />
                                 </controls:SettingsCard.Header>
                             </controls:SettingsCard>
                         </controls:SettingsExpander.Items>
