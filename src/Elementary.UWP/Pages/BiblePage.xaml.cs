@@ -5,6 +5,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
@@ -18,10 +19,16 @@ namespace Elementary
         private bool _isLoaded;
         private double _previousVerticalOffset = 0;
         private bool _isUpdatingFromScroll = false;
+        private bool _isAwaitingChapterSelection = false;
+        private bool _suppressComboHandling = false;
+        private bool _ignoreNextChapterSelectionChange = false;
+        private Book _committedBook;
+        private int _committedChapterIndex = 1;
 
         public BiblePage()
         {
             InitializeComponent();
+            NavigationCacheMode = NavigationCacheMode.Required;
             Loaded += BiblePage_Loaded;
 
             _viewModel = new BiblePageViewModel();
@@ -63,6 +70,7 @@ namespace Elementary
         {
             DataContext = _viewModel;
             await _viewModel.Initialize();
+            UpdateCommittedSelection();
 
             _isLoaded = true;
             
@@ -226,12 +234,22 @@ namespace Elementary
                     _isUpdatingFromScroll = true;
                     _viewModel.UpdateCurrentChapterFromScroll(mostVisibleChapter);
                     _isUpdatingFromScroll = false;
+                    if (!_isAwaitingChapterSelection)
+                    {
+                        UpdateCommittedSelection();
+                    }
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error updating chapter from scroll: {ex.Message}");
             }
+        }
+
+        private void BibleBookComboBox_DropDownOpened(object sender, object e)
+        {
+            if (!_isLoaded || _isAwaitingChapterSelection) return;
+            UpdateCommittedSelection();
         }
 
         private async void BibleScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
@@ -275,12 +293,34 @@ namespace Elementary
 
         private async void BibleBookChapterComboBoxes_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (!_isLoaded || _isUpdatingFromScroll) return;
+            if (!_isLoaded || _isUpdatingFromScroll || _suppressComboHandling) return;
 
-            // If the book ComboBox triggered this, reset chapter selection to 1 so the chapter ComboBox reflects the new book
             if (sender == BibleBookComboBox)
             {
-                _viewModel.SelectedChapterIndex = 1;
+                _isAwaitingChapterSelection = true;
+                _ignoreNextChapterSelectionChange = true;
+                await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    BookChapterComboBox.IsDropDownOpen = true;
+                });
+                return;
+            }
+
+            if (sender == BookChapterComboBox && _isAwaitingChapterSelection)
+            {
+                if (!BookChapterComboBox.IsDropDownOpen)
+                {
+                    // Ignore programmatic chapter changes caused by selecting a new book.
+                    return;
+                }
+
+                if (_ignoreNextChapterSelectionChange)
+                {
+                    _ignoreNextChapterSelectionChange = false;
+                    return;
+                }
+
+                _isAwaitingChapterSelection = false;
             }
 
             // Save manual selection to navigation history (only on explicit combobox selection)
@@ -306,9 +346,31 @@ namespace Elementary
 
             // Reload chapters from the selected position
             await _viewModel.LoadInitialChaptersAsync();
-            
+             
             // Scroll to the current chapter
             ScrollToCurrentChapter();
+            UpdateCommittedSelection();
+        }
+
+        private async void BookChapterComboBox_DropDownClosed(object sender, object e)
+        {
+            if (!_isLoaded || !_isAwaitingChapterSelection) return;
+
+            _isAwaitingChapterSelection = false;
+            _ignoreNextChapterSelectionChange = false;
+            _suppressComboHandling = true;
+            try
+            {
+                _viewModel.CurrentBook = _committedBook;
+                _viewModel.SelectedChapterIndex = _committedChapterIndex;
+                await _viewModel.LoadInitialChaptersAsync();
+                ScrollToCurrentChapter();
+                UpdateCommittedSelection();
+            }
+            finally
+            {
+                _suppressComboHandling = false;
+            }
         }
 
         public async void NavigateToFromHistory(string bookTitle, int chapter)
@@ -328,6 +390,13 @@ namespace Elementary
             await _viewModel.UpdateNavigationSettingsAsync(bookTitle, chapter);
             await _viewModel.LoadInitialChaptersAsync();
             ScrollToCurrentChapter();
+            UpdateCommittedSelection();
+        }
+
+        private void UpdateCommittedSelection()
+        {
+            _committedBook = _viewModel.CurrentBook;
+            _committedChapterIndex = _viewModel.SelectedChapterIndex;
         }
 
     }

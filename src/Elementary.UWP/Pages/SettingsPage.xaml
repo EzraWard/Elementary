@@ -25,6 +25,8 @@
                TargetType="TextBlock">
             <Style.Setters>
                 <Setter Property="Margin" Value="1,30,0,6" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="TextAlignment" Value="Center" />
             </Style.Setters>
         </Style>
     </Page.Resources>

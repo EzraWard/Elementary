@@ -32,7 +32,14 @@
                             <Grid x:Name="ChapterItemGrid" Margin="0,0,0,20">
                                 <StackPanel MaxWidth="700"
                                             HorizontalAlignment="Center">
-                                    <TextBlock Text="{Binding Index}" FontSize="26" FontWeight="Bold" Margin="0,24,0,8"/>
+                                    <TextBlock FontSize="26"
+                                               FontWeight="Bold"
+                                               HorizontalAlignment="Center"
+                                               TextAlignment="Center"
+                                               Margin="0,24,0,8">
+                                        <Run Text="Chapter " />
+                                        <Run Text="{Binding Index}" />
+                                    </TextBlock>
                                     <muxc:ItemsRepeater ItemsSource="{Binding DisplayLines}">
                                         <muxc:ItemsRepeater.ItemTemplate>
                                             <DataTemplate>
@@ -74,6 +81,7 @@
                           SelectedItem="{Binding CurrentBook, Mode=TwoWay}"
                           PlaceholderText="Bible" 
                           Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
+                          DropDownOpened="BibleBookComboBox_DropDownOpened"
                           SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged"/>
 
 				<ComboBox x:Name="BookChapterComboBox" 
@@ -83,6 +91,7 @@
                           SelectedItem="{Binding SelectedChapterIndex, Mode=TwoWay}"
                           PlaceholderText="Chapter" 
                           Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
+                          DropDownClosed="BookChapterComboBox_DropDownClosed"
                           SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged"/>
 			</StackPanel>
 		</Border>

@@ -108,7 +108,7 @@ namespace Elementary.Core.Parsers
         {
             if (string.IsNullOrWhiteSpace(text)) return string.Empty;
             var decoded = System.Net.WebUtility.HtmlDecode(text);
-            decoded = Regex.Replace(decoded, "<sup>(\\d+)</sup>", "$1", RegexOptions.IgnoreCase);
+            decoded = Regex.Replace(decoded, "<sup>(\\d+)</sup>", string.Empty, RegexOptions.IgnoreCase);
             decoded = Regex.Replace(decoded, "<[^>]+>", string.Empty, RegexOptions.Singleline);
             decoded = Regex.Replace(decoded, "\\s+", " ").Trim();
             return decoded;
@@ -219,8 +219,8 @@ namespace Elementary.Core.Parsers
                         continue;
                     }
 
-                    // Section heading \s
-                    var sMatch = Regex.Match(trimmed, @"\\s\s*(.*)", RegexOptions.Singleline);
+                    // Section heading \s, \s1, \s2, etc.
+                    var sMatch = Regex.Match(trimmed, @"\\s\d*\s*(.*)", RegexOptions.Singleline);
                     if (sMatch.Success)
                     {
                         var stext = ProcessInline(sMatch.Groups[1].Value.Trim());
