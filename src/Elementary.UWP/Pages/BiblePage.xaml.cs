@@ -238,37 +238,15 @@ namespace Elementary
             UpdateCommittedSelection();
         }
 
-        private async void BibleScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
+        private void BibleScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
         {
             if (!_isLoaded) return;
 
             var scrollViewer = (ScrollViewer)sender;
             var verticalOffset = scrollViewer.VerticalOffset;
-            var maxVerticalOffset = scrollViewer.ScrollableHeight;
+
             var delta = verticalOffset - _previousVerticalOffset;
             UpdateChooserPosition(delta, verticalOffset);
-
-            // Load next chapter when scrolling down near bottom
-            if (verticalOffset > _previousVerticalOffset && maxVerticalOffset - verticalOffset < 500)
-            {
-                await _viewModel.LoadNextChapterAsync();
-            }
-            // Load previous chapter when scrolling up near top
-            else if (verticalOffset < _previousVerticalOffset && verticalOffset < 500)
-            {
-                // Store the current scroll position to restore after adding content at top
-                var oldScrollableHeight = scrollViewer.ScrollableHeight;
-                await _viewModel.LoadPreviousChapterAsync();
-                
-                // Adjust scroll position to maintain view (needs to be done after layout updates)
-                scrollViewer.UpdateLayout();
-                var newScrollableHeight = scrollViewer.ScrollableHeight;
-                var heightDifference = newScrollableHeight - oldScrollableHeight;
-                if (heightDifference > 0)
-                {
-                    scrollViewer.ChangeView(null, verticalOffset + heightDifference, null, true);
-                }
-            }
 
             // Update the current chapter based on scroll position
             if (!e.IsIntermediate)
@@ -287,6 +265,12 @@ namespace Elementary
             if (hiddenOffset <= 0) return;
 
             if (verticalOffset <= 0)
+            {
+                _chooserTranslate.Y = 0;
+                return;
+            }
+
+            if (scrollDelta <= 0)
             {
                 _chooserTranslate.Y = 0;
                 return;

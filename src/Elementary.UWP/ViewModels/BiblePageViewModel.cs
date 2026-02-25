@@ -165,116 +165,25 @@ namespace Elementary.ViewModels
         public async Task LoadInitialChaptersAsync()
         {
             Chapters.Clear();
-            if (CurrentChapter == null) return;
+            if (CurrentBook == null) return;
 
-            // Add current chapter first
-            Chapters.Add(CurrentChapter);
-            
-            // Load previous chapter
-            var currentBook = Bible.Books.FirstOrDefault(b => b.Chapters.Contains(CurrentChapter));
-            if (currentBook != null)
+            await EnsureBookLoadedAsync(CurrentBook);
+            if (CurrentBook.Chapters == null || CurrentBook.Chapters.Count == 0) return;
+
+            foreach (var chapter in CurrentBook.Chapters.OrderBy(c => c.Index))
             {
-                var prevChapter = currentBook.Chapters.FirstOrDefault(c => c.Index == CurrentChapter.Index - 1);
-                if (prevChapter != null)
-                {
-                    Chapters.Insert(0, prevChapter);
-                }
-                else
-                {
-                    // Try previous book's last chapter
-                    var prevBook = Bible.Books.FirstOrDefault(b => b.ReadingOrderIndex == currentBook.ReadingOrderIndex - 1);
-                    await EnsureBookLoadedAsync(prevBook);
-                    if (prevBook?.Chapters.Count > 0)
-                    {
-                        Chapters.Insert(0, prevBook.Chapters.Last());
-                    }
-                }
-            }
-            
-            // Load next chapter
-            await LoadNextChapterAsync();
-        }
-
-        public async Task LoadNextChapterAsync()
-        {
-            if (IsLoadingMore) return;
-
-            IsLoadingMore = true;
-
-            try
-            {
-                var lastChapter = Chapters.LastOrDefault();
-                if (lastChapter == null)
-                {
-                    return;
-                }
-
-                // Find the next chapter
-                var currentBook = Bible.Books.FirstOrDefault(b => b.Chapters.Contains(lastChapter));
-                if (currentBook != null)
-                {
-                    var nextChapter = currentBook.Chapters.FirstOrDefault(c => c.Index == lastChapter.Index + 1);
-                    if (nextChapter != null)
-                    {
-                        Chapters.Add(nextChapter);
-                    }
-                    else
-                    {
-                        // Move to next book
-                        var nextBook = Bible.Books.FirstOrDefault(b => b.ReadingOrderIndex == currentBook.ReadingOrderIndex + 1);
-                        await EnsureBookLoadedAsync(nextBook);
-                        if (nextBook?.Chapters.Count > 0)
-                        {
-                            Chapters.Add(nextBook.Chapters.First());
-                        }
-                    }
-                }
-            }
-            finally
-            {
-                IsLoadingMore = false;
+                Chapters.Add(chapter);
             }
         }
 
-        public async Task LoadPreviousChapterAsync()
+        public Task LoadNextChapterAsync()
         {
-            if (IsLoadingMore) return;
+            return Task.CompletedTask;
+        }
 
-            IsLoadingMore = true;
-
-            try
-            {
-                var firstChapter = Chapters.FirstOrDefault();
-                if (firstChapter == null)
-                {
-                    return;
-                }
-
-                // Find the previous chapter
-                var currentBook = Bible.Books.FirstOrDefault(b => b.Chapters.Contains(firstChapter));
-                if (currentBook != null)
-                {
-                    var prevChapter = currentBook.Chapters.FirstOrDefault(c => c.Index == firstChapter.Index - 1);
-                    if (prevChapter != null)
-                    {
-                        Chapters.Insert(0, prevChapter);
-                    }
-                    else
-                    {
-                        // Move to previous book
-                        var prevBook = Bible.Books.FirstOrDefault(b => b.ReadingOrderIndex == currentBook.ReadingOrderIndex - 1);
-                        await EnsureBookLoadedAsync(prevBook);
-                        if (prevBook?.Chapters.Count > 0)
-                        {
-                            Chapters.Insert(0, prevBook.Chapters.Last());
-                        }
-                    }
-                }
-            }
-            finally
-            {
-                IsLoadingMore = false;
-            }
+        public Task LoadPreviousChapterAsync()
+        {
+            return Task.CompletedTask;
         }
 
         public void UpdateCurrentChapterFromScroll(Chapter chapter)
