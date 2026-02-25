@@ -22,6 +22,7 @@ namespace Elementary
         private bool _isAwaitingChapterSelection = false;
         private bool _suppressComboHandling = false;
         private bool _ignoreNextChapterSelectionChange = false;
+        private bool _isChooserHidden = false;
         private readonly TranslateTransform _chooserTranslate = new TranslateTransform();
         private Book _committedBook;
         private int _committedChapterIndex = 1;
@@ -263,23 +264,27 @@ namespace Elementary
 
             var hiddenOffset = ChooserBorder.ActualHeight + ChooserBorder.Margin.Top + 2;
             if (hiddenOffset <= 0) return;
+            const double directionThreshold = 2.0;
 
             if (verticalOffset <= 0)
             {
                 _chooserTranslate.Y = 0;
+                _isChooserHidden = false;
                 return;
             }
 
-            if (scrollDelta <= 0)
+            if (scrollDelta < -directionThreshold && _isChooserHidden)
             {
                 _chooserTranslate.Y = 0;
+                _isChooserHidden = false;
                 return;
             }
 
-            var next = _chooserTranslate.Y - scrollDelta;
-            if (next > 0) next = 0;
-            if (next < -hiddenOffset) next = -hiddenOffset;
-            _chooserTranslate.Y = next;
+            if (scrollDelta > directionThreshold && !_isChooserHidden)
+            {
+                _chooserTranslate.Y = -hiddenOffset;
+                _isChooserHidden = true;
+            }
         }
 
         private async void BibleBookChapterComboBoxes_SelectionChanged(object sender, SelectionChangedEventArgs e)
