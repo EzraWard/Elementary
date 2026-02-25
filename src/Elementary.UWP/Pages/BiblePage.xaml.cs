@@ -121,22 +121,6 @@ namespace Elementary
             {
                 var firstElement = ChaptersRepeater.TryGetElement(0) as Grid;
                 if (firstElement == null) return;
-
-                var firstChapter = _viewModel?.Chapters?.Count > 0 ? _viewModel.Chapters[0] : null;
-                if (firstChapter != null)
-                {
-                    var book = _viewModel?.Bible?.Books?.FirstOrDefault(b => b.Chapters.Contains(firstChapter));
-                    if (book != null && firstChapter.Index == 1)
-                    {
-                        double offset = 0;
-                        if (ChooserBorder != null)
-                        {
-                            offset = ChooserBorder.ActualHeight + ChooserBorder.Margin.Top + ChooserBorder.Padding.Top + 8;
-                        }
-                        firstElement.Margin = new Thickness(0, offset, 0, 0);
-                        return;
-                    }
-                }
                 firstElement.Margin = new Thickness(0);
             }
             catch (Exception ex)
