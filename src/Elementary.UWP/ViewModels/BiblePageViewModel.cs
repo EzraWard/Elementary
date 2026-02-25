@@ -42,7 +42,8 @@ namespace Elementary.ViewModels
                     OnPropertyChanged(nameof(ChapterIndices));
                     // Automatically update chapter when book changes
                     CurrentChapter = _currentBook?.Chapters.FirstOrDefault();
-                    SelectedChapterIndex = 1;
+                    _selectedChapterIndex = CurrentChapter?.Index ?? 1;
+                    OnPropertyChanged(nameof(SelectedChapterIndex));
 
                     // Update app settings when book changes
                     UpdateBookSetting();

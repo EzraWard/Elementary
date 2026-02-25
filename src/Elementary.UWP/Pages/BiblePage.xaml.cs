@@ -22,6 +22,7 @@ namespace Elementary
         private bool _isAwaitingChapterSelection = false;
         private bool _suppressComboHandling = false;
         private bool _ignoreNextChapterSelectionChange = false;
+        private readonly TranslateTransform _chooserTranslate = new TranslateTransform();
         private Book _committedBook;
         private int _committedChapterIndex = 1;
 
@@ -30,6 +31,7 @@ namespace Elementary
             InitializeComponent();
             NavigationCacheMode = NavigationCacheMode.Required;
             Loaded += BiblePage_Loaded;
+            ChooserBorder.RenderTransform = _chooserTranslate;
 
             _viewModel = new BiblePageViewModel();
         }
@@ -259,6 +261,8 @@ namespace Elementary
             var scrollViewer = (ScrollViewer)sender;
             var verticalOffset = scrollViewer.VerticalOffset;
             var maxVerticalOffset = scrollViewer.ScrollableHeight;
+            var delta = verticalOffset - _previousVerticalOffset;
+            UpdateChooserPosition(delta, verticalOffset);
 
             // Load next chapter when scrolling down near bottom
             if (verticalOffset > _previousVerticalOffset && maxVerticalOffset - verticalOffset < 500)
@@ -289,6 +293,25 @@ namespace Elementary
             }
 
             _previousVerticalOffset = verticalOffset;
+        }
+
+        private void UpdateChooserPosition(double scrollDelta, double verticalOffset)
+        {
+            if (ChooserBorder == null) return;
+
+            var hiddenOffset = ChooserBorder.ActualHeight + ChooserBorder.Margin.Top + 2;
+            if (hiddenOffset <= 0) return;
+
+            if (verticalOffset <= 0)
+            {
+                _chooserTranslate.Y = 0;
+                return;
+            }
+
+            var next = _chooserTranslate.Y - scrollDelta;
+            if (next > 0) next = 0;
+            if (next < -hiddenOffset) next = -hiddenOffset;
+            _chooserTranslate.Y = next;
         }
 
         private async void BibleBookChapterComboBoxes_SelectionChanged(object sender, SelectionChangedEventArgs e)
