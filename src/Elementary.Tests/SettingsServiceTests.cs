@@ -107,5 +107,41 @@ namespace Elementary.Core.Tests.Services
             Assert.AreEqual(EFontSize.Medium, settings.FontSize);
             Assert.IsTrue(settings.ShowVerseNumbers);
         }
+
+        [TestMethod]
+        public void SaveNavigationHistory_ShouldTrimToLastTenItems()
+        {
+            // Arrange
+            var history = Enumerable.Range(1, 12)
+                .Select(i => new NavigationHistoryItem { BookTitle = $"Book{i}", Chapter = i })
+                .ToList();
+
+            // Act
+            _settingsService.SaveNavigationHistory(history);
+
+            // Assert
+            _settingsProviderMock.Verify(x => x.SaveSetting(
+                "navigationHistory",
+                "Book3|3;Book4|4;Book5|5;Book6|6;Book7|7;Book8|8;Book9|9;Book10|10;Book11|11;Book12|12"), Times.Once);
+        }
+
+        [TestMethod]
+        public void GetNavigationHistory_ShouldParseValidEntriesAndIgnoreInvalidRows()
+        {
+            // Arrange
+            _settingsProviderMock
+                .Setup(x => x.GetSetting("navigationHistory"))
+                .Returns("Genesis|1;InvalidOnly;Exodus|NaN;John|3");
+
+            // Act
+            var history = _settingsService.GetNavigationHistory();
+
+            // Assert
+            Assert.AreEqual(2, history.Count);
+            Assert.AreEqual("Genesis", history[0].BookTitle);
+            Assert.AreEqual(1, history[0].Chapter);
+            Assert.AreEqual("John", history[1].BookTitle);
+            Assert.AreEqual(3, history[1].Chapter);
+        }
     }
 }

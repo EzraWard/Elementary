@@ -21,8 +21,6 @@ namespace Elementary
         private bool _isUpdatingFromScroll = false;
         private bool _isAwaitingChapterSelection = false;
         private bool _suppressComboHandling = false;
-        private bool _ignoreNextChapterSelectionChange = false;
-        private bool _isChooserHidden = false;
         private readonly TranslateTransform _chooserTranslate = new TranslateTransform();
         private Book _committedBook;
         private int _committedChapterIndex = 1;
@@ -76,7 +74,8 @@ namespace Elementary
             UpdateCommittedSelection();
 
             _isLoaded = true;
-            
+            _chooserTranslate.Y = 0;
+             
             // Only scroll if current chapter is not the first in the list
             var currentChapterIndex = _viewModel.Chapters.IndexOf(_viewModel.CurrentChapter);
             if (currentChapterIndex > 0)
@@ -85,6 +84,8 @@ namespace Elementary
                 await System.Threading.Tasks.Task.Delay(100);
                 ScrollToCurrentChapter();
             }
+
+            _previousVerticalOffset = BibleScrollViewer.VerticalOffset;
         }
 
         private void ScrollToCurrentChapter()
@@ -92,7 +93,7 @@ namespace Elementary
             if (_viewModel?.Chapters == null || _viewModel.Chapters.Count == 0) return;
 
             BibleScrollViewer.UpdateLayout();
-            
+
             var currentChapterIndex = _viewModel.Chapters.IndexOf(_viewModel.CurrentChapter);
             if (currentChapterIndex > 0)
             {
@@ -246,8 +247,7 @@ namespace Elementary
             var scrollViewer = (ScrollViewer)sender;
             var verticalOffset = scrollViewer.VerticalOffset;
 
-            var delta = verticalOffset - _previousVerticalOffset;
-            UpdateChooserPosition(delta, verticalOffset);
+            _chooserTranslate.Y = 0;
 
             // Update the current chapter based on scroll position
             if (!e.IsIntermediate)
@@ -258,35 +258,6 @@ namespace Elementary
             _previousVerticalOffset = verticalOffset;
         }
 
-        private void UpdateChooserPosition(double scrollDelta, double verticalOffset)
-        {
-            if (ChooserBorder == null) return;
-
-            var hiddenOffset = ChooserBorder.ActualHeight + ChooserBorder.Margin.Top + 2;
-            if (hiddenOffset <= 0) return;
-            const double directionThreshold = 2.0;
-
-            if (verticalOffset <= 0)
-            {
-                _chooserTranslate.Y = 0;
-                _isChooserHidden = false;
-                return;
-            }
-
-            if (scrollDelta < -directionThreshold && _isChooserHidden)
-            {
-                _chooserTranslate.Y = 0;
-                _isChooserHidden = false;
-                return;
-            }
-
-            if (scrollDelta > directionThreshold && !_isChooserHidden)
-            {
-                _chooserTranslate.Y = -hiddenOffset;
-                _isChooserHidden = true;
-            }
-        }
-
         private async void BibleBookChapterComboBoxes_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!_isLoaded || _isUpdatingFromScroll || _suppressComboHandling) return;
@@ -294,7 +265,16 @@ namespace Elementary
             if (sender == BibleBookComboBox)
             {
                 _isAwaitingChapterSelection = true;
-                _ignoreNextChapterSelectionChange = true;
+                _suppressComboHandling = true;
+                try
+                {
+                    // Force explicit chapter choice after a new book is selected.
+                    BookChapterComboBox.SelectedItem = null;
+                }
+                finally
+                {
+                    _suppressComboHandling = false;
+                }
                 await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
                 {
                     BookChapterComboBox.IsDropDownOpen = true;
@@ -310,9 +290,8 @@ namespace Elementary
                     return;
                 }
 
-                if (_ignoreNextChapterSelectionChange)
+                if (!(BookChapterComboBox.SelectedItem is int))
                 {
-                    _ignoreNextChapterSelectionChange = false;
                     return;
                 }
 
@@ -353,7 +332,6 @@ namespace Elementary
             if (!_isLoaded || !_isAwaitingChapterSelection) return;
 
             _isAwaitingChapterSelection = false;
-            _ignoreNextChapterSelectionChange = false;
             _suppressComboHandling = true;
             try
             {

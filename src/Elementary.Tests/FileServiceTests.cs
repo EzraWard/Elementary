@@ -100,6 +100,37 @@ namespace Elementary.Tests.Services
             Assert.IsFalse(exists);
         }
 
+        [TestMethod]
+        public async Task ListFilesAsync_ShouldReturnMatchingFiles()
+        {
+            // Arrange
+            await File.WriteAllTextAsync(Path.Combine(_testDirectory, "one.usfm"), "a");
+            await File.WriteAllTextAsync(Path.Combine(_testDirectory, "two.usfm"), "b");
+            await File.WriteAllTextAsync(Path.Combine(_testDirectory, "three.txt"), "c");
+
+            // Act
+            var files = await _fileService.ListFilesAsync(_testDirectory, "*.usfm");
+
+            // Assert
+            var list = files.ToList();
+            Assert.AreEqual(2, list.Count);
+            Assert.IsTrue(list.Any(f => f.EndsWith("one.usfm")));
+            Assert.IsTrue(list.Any(f => f.EndsWith("two.usfm")));
+        }
+
+        [TestMethod]
+        public async Task ListFilesAsync_ShouldReturnEmptyWhenDirectoryDoesNotExist()
+        {
+            // Arrange
+            var missingPath = Path.Combine(_testDirectory, "missing");
+
+            // Act
+            var files = await _fileService.ListFilesAsync(missingPath, "*.usfm");
+
+            // Assert
+            Assert.AreEqual(0, files.Count());
+        }
+
         public void Dispose()
         {
             if (Directory.Exists(_testDirectory))
