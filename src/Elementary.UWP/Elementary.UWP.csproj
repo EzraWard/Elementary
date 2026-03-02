@@ -125,6 +125,8 @@
       <DependentUpon>SettingsPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Services\UWPFileService.cs" />
+    <Compile Include="Services\IVerseOfTheDayDialogService.cs" />
+    <Compile Include="Services\VerseOfTheDayDialogService.cs" />
     <Compile Include="Services\WindowsFilePathProvider.cs" />
     <Compile Include="Services\WindowsSettingsProvider.cs" />
     <Compile Include="ViewModels\BiblePageViewModel.cs" />

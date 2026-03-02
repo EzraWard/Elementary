@@ -10,7 +10,6 @@ using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Animation;
-using Windows.UI.Xaml.Media.Imaging;
 using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
 using System.Collections.Generic;
@@ -22,11 +21,11 @@ namespace Elementary
     public sealed partial class MainPage : Page
     {
         private Microsoft.UI.Xaml.Controls.NavigationViewItem _lastItem;
-        private IVerseOfTheDayService _verseOfTheDayService;
+        private IVerseOfTheDayDialogService _verseOfTheDayDialogService;
 
         public MainPage()
         {
-            _verseOfTheDayService = App.Services.GetRequiredService<IVerseOfTheDayService>();
+            _verseOfTheDayDialogService = App.Services.GetRequiredService<IVerseOfTheDayDialogService>();
 
             this.InitializeComponent();
 
@@ -66,7 +65,7 @@ namespace Elementary
 
             if (clickedView == "VerseOfTheDay")
             {
-                await ShowVerseOfTheDayDialogAsync();
+                await _verseOfTheDayDialogService.ShowAsync();
 
                 // Reset selection back to the currently displayed page
                 MainNavigationView.SelectedItem = _lastItem;
@@ -145,28 +144,6 @@ namespace Elementary
             {
                 WindowHelpers.SetCaptionButtonColors(sender.CurrentTheme);
             }
-        }
-
-        private async Task ShowVerseOfTheDayDialogAsync()
-        {
-            var verse = _verseOfTheDayService.GetVerseOfTheDay();
-
-            var dialog = new ContentDialog
-            {
-                Title = verse.Title,
-                CloseButtonText = "Close",
-                DefaultButton = ContentDialogButton.Primary
-            };
-
-            var image = new Image
-            {
-                Height = 500,
-                Width = 500,
-                Source = new BitmapImage(new Uri(verse.ImageUrl))
-            };
-
-            dialog.Content = image;
-            await dialog.ShowAsync();
         }
 
         private void HistoryListView_ItemClick(object sender, ItemClickEventArgs e)
