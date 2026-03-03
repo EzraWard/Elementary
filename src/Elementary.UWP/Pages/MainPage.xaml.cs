@@ -78,7 +78,21 @@ namespace Elementary
                 var settingsService = App.Services.GetRequiredService<ISettingsService>();
                 var history = settingsService.GetNavigationHistory() ?? new List<NavigationHistoryItem>();
                 // Display newest items first (reverse chronological)
-                HistoryListView.ItemsSource = history.AsEnumerable().Reverse().ToList();
+                var displayHistory = history.AsEnumerable().Reverse().ToList();
+                HistoryListView.ItemsSource = displayHistory;
+
+                // Show empty state or list
+                if (displayHistory.Count == 0)
+                {
+                    HistoryEmptyText.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                    HistoryListView.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                }
+                else
+                {
+                    HistoryEmptyText.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                    HistoryListView.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                }
+
                 HistoryFlyout.ShowAt(item);
 
                 // Reset selection back to the currently displayed page

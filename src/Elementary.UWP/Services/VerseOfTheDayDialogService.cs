@@ -24,7 +24,7 @@ namespace Elementary.Services
             {
                 Title = verse.Title,
                 CloseButtonText = "Close",
-                DefaultButton = ContentDialogButton.Primary
+                DefaultButton = ContentDialogButton.Close
             };
 
             var image = new Image

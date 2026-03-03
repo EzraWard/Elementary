@@ -11,8 +11,14 @@
 
     <Page.Resources>
         <Flyout x:Name="HistoryFlyout" Placement="Right">
-            <Grid>
-                <ListView x:Name="HistoryListView" IsItemClickEnabled="True" ItemClick="HistoryListView_ItemClick" />
+            <Grid MinWidth="200">
+                <TextBlock x:Name="HistoryEmptyText"
+                           Text="No history yet"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Opacity="0.6"
+                           Visibility="Collapsed" />
+                <ListView x:Name="HistoryListView" IsItemClickEnabled="True" ItemClick="HistoryListView_ItemClick" DisplayMemberPath="DisplayText" />
             </Grid>
         </Flyout>
     </Page.Resources>

@@ -24,6 +24,11 @@ namespace Elementary
         private readonly TranslateTransform _chooserTranslate = new TranslateTransform();
         private Book _committedBook;
         private int _committedChapterIndex = 1;
+        // Deferred history navigation (Bug 7: avoids stacking Loaded handlers)
+        private string _pendingHistoryBook;
+        private int _pendingHistoryChapter;
+        // Track last translation to detect changes (Bug 5)
+        private Core.Enums.ETranslation? _lastTranslation;
 
         public BiblePage()
         {
@@ -35,7 +40,7 @@ namespace Elementary
             _viewModel = new BiblePageViewModel();
         }
 
-        protected override void OnNavigatedTo(NavigationEventArgs e)
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
 
@@ -43,7 +48,28 @@ namespace Elementary
 
             // Re-read settings so font/size changes from Settings page apply immediately
             _viewModel.RefreshSettings();
-            ReapplyTypographyToAllElements();
+
+            // Detect translation change and re-initialize the Bible
+            var currentTranslation = _viewModel.AppSettings?.Translation;
+            if (_lastTranslation != null && currentTranslation != _lastTranslation)
+            {
+                _lastTranslation = currentTranslation;
+                _suppressComboHandling = true;
+                try
+                {
+                    await _viewModel.Initialize();
+                    UpdateCommittedSelection();
+                    ScrollToCurrentChapter();
+                }
+                finally
+                {
+                    _suppressComboHandling = false;
+                }
+            }
+            else
+            {
+                ReapplyTypographyToAllElements();
+            }
         }
 
         private void ReapplyTypographyToAllElements()
@@ -74,7 +100,34 @@ namespace Elementary
             UpdateCommittedSelection();
 
             _isLoaded = true;
+            _lastTranslation = _viewModel.AppSettings?.Translation;
             _chooserTranslate.Y = 0;
+
+            // Handle deferred history navigation (set before page was loaded)
+            if (_pendingHistoryBook != null)
+            {
+                var book = _pendingHistoryBook;
+                var chapter = _pendingHistoryChapter;
+                _pendingHistoryBook = null;
+                _pendingHistoryChapter = 0;
+
+                _isAwaitingChapterSelection = false;
+                _suppressComboHandling = true;
+                try
+                {
+                    BookChapterComboBox.IsDropDownOpen = false;
+                    await _viewModel.UpdateNavigationSettingsAsync(book, chapter);
+                    await _viewModel.LoadInitialChaptersAsync();
+                    ScrollToCurrentChapter();
+                    UpdateCommittedSelection();
+                }
+                finally
+                {
+                    _suppressComboHandling = false;
+                }
+                _previousVerticalOffset = BibleScrollViewer.VerticalOffset;
+                return;
+            }
              
             // Only scroll if current chapter is not the first in the list
             var currentChapterIndex = _viewModel.Chapters.IndexOf(_viewModel.CurrentChapter);
@@ -349,22 +402,28 @@ namespace Elementary
 
         public async void NavigateToFromHistory(string bookTitle, int chapter)
         {
-            // If page isn't fully initialized yet, defer until Loaded finishes
+            // If page isn't fully initialized yet, defer until BiblePage_Loaded finishes
             if (!_isLoaded)
             {
-                Loaded += async (s, e) =>
-                {
-                    await _viewModel.UpdateNavigationSettingsAsync(bookTitle, chapter);
-                    await _viewModel.LoadInitialChaptersAsync();
-                    ScrollToCurrentChapter();
-                };
+                _pendingHistoryBook = bookTitle;
+                _pendingHistoryChapter = chapter;
                 return;
             }
 
-            await _viewModel.UpdateNavigationSettingsAsync(bookTitle, chapter);
-            await _viewModel.LoadInitialChaptersAsync();
-            ScrollToCurrentChapter();
-            UpdateCommittedSelection();
+            _isAwaitingChapterSelection = false;
+            _suppressComboHandling = true;
+            try
+            {
+                BookChapterComboBox.IsDropDownOpen = false;
+                await _viewModel.UpdateNavigationSettingsAsync(bookTitle, chapter);
+                await _viewModel.LoadInitialChaptersAsync();
+                ScrollToCurrentChapter();
+                UpdateCommittedSelection();
+            }
+            finally
+            {
+                _suppressComboHandling = false;
+            }
         }
 
         private void UpdateCommittedSelection()

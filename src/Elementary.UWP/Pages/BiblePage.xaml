@@ -31,7 +31,7 @@
                            FontWeight="Bold"
                            HorizontalAlignment="Center"
                            TextAlignment="Center"
-                           Margin="0,56,0,10"/>
+                           Margin="0,68,0,10"/>
 				<muxc:ItemsRepeater x:Name="ChaptersRepeater" ItemsSource="{Binding Chapters}">
 					<muxc:ItemsRepeater.ItemTemplate>
 						<DataTemplate>

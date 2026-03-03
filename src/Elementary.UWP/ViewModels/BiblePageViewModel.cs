@@ -216,7 +216,7 @@ namespace Elementary.ViewModels
             if (AppSettings != null && CurrentBook != null && _settingsService != null && IsLoaded)
             {
                 // Parse the book title to the appropriate enum value
-                if (System.Enum.TryParse<EBook>(CurrentBook.Title, out var bookEnum))
+                if (EBookToLocation.EBookTitleToEBook.TryGetValue(CurrentBook.Title, out var bookEnum))
                 {
                     AppSettings.Book = bookEnum;
                     _settingsService.SaveSettings(AppSettings);
@@ -265,7 +265,8 @@ namespace Elementary.ViewModels
         {
             if (book == null || book.IsChaptersLoaded || _bibleService == null || AppSettings == null) return;
 
-            Task.Run(async () => await _bibleService.EnsureBookLoaded(AppSettings.Translation, book)).GetAwaiter().GetResult();
+            // Task.Run avoids SynchronizationContext deadlock; ConfigureAwait(false) for defense-in-depth
+            Task.Run(async () => await _bibleService.EnsureBookLoaded(AppSettings.Translation, book).ConfigureAwait(false)).GetAwaiter().GetResult();
             OnPropertyChanged(nameof(ChapterIndices));
         }
     }
