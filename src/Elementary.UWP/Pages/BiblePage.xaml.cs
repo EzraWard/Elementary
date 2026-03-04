@@ -198,10 +198,11 @@ namespace Elementary
 
             var fontFamily = new FontFamily(_viewModel.Font);
             var fontSize = _viewModel.FontSize;
-            ApplyReadingTypographyRecursive(root, fontFamily, fontSize);
+            var showVerseNumbers = _viewModel.AppSettings?.ShowVerseNumbers ?? true;
+            ApplyReadingTypographyRecursive(root, fontFamily, fontSize, showVerseNumbers);
         }
 
-        private void ApplyReadingTypographyRecursive(DependencyObject node, FontFamily fontFamily, double fontSize)
+        private void ApplyReadingTypographyRecursive(DependencyObject node, FontFamily fontFamily, double fontSize, bool showVerseNumbers)
         {
             if (node is TextBlock textBlock)
             {
@@ -214,6 +215,7 @@ namespace Elementary
                         break;
                     case "versenum":
                         textBlock.FontSize = fontSize * 0.7;
+                        textBlock.Visibility = showVerseNumbers ? Visibility.Visible : Visibility.Collapsed;
                         break;
                     case "footnote":
                         textBlock.FontSize = fontSize * 0.75;
@@ -227,7 +229,7 @@ namespace Elementary
             var childCount = VisualTreeHelper.GetChildrenCount(node);
             for (int i = 0; i < childCount; i++)
             {
-                ApplyReadingTypographyRecursive(VisualTreeHelper.GetChild(node, i), fontFamily, fontSize);
+                ApplyReadingTypographyRecursive(VisualTreeHelper.GetChild(node, i), fontFamily, fontSize, showVerseNumbers);
             }
         }
 
