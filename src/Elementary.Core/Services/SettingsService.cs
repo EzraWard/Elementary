@@ -109,11 +109,16 @@ namespace Elementary.Core.Services
             foreach (var p in parts)
             {
                 var pieces = p.Split(new char[] {'|'});
-                if (pieces.Length == 2)
+                if (pieces.Length >= 2)
                 {
                     if (int.TryParse(pieces[1], out int chap))
                     {
-                        list.Add(new NavigationHistoryItem { BookTitle = pieces[0], Chapter = chap });
+                        list.Add(new NavigationHistoryItem
+                        {
+                            BookTitle = pieces[0],
+                            Chapter = chap,
+                            BookKey = pieces.Length >= 3 ? pieces[2] : null
+                        });
                     }
                 }
             }
@@ -131,7 +136,13 @@ namespace Elementary.Core.Services
             var parts = new System.Collections.Generic.List<string>();
             foreach (var h in history)
             {
-                parts.Add($"{h.BookTitle}|{h.Chapter}");
+                if (string.IsNullOrWhiteSpace(h.BookKey))
+                {
+                    parts.Add($"{h.BookTitle}|{h.Chapter}");
+                    continue;
+                }
+
+                parts.Add($"{h.BookTitle}|{h.Chapter}|{h.BookKey}");
             }
             SaveSetting("navigationHistory", string.Join(";", parts));
         }

@@ -104,13 +104,13 @@ namespace Elementary
             _lastItem = item;
         }
 
-        private bool NavigateToView(string clickedView)
+        private bool NavigateToView(string clickedView, object parameter = null)
         {
             var view = Assembly.GetExecutingAssembly().GetType($"Elementary.{clickedView}");
 
             if (string.IsNullOrWhiteSpace(clickedView) || view == null) return false;
 
-            ContentFrame.Navigate(view, null, new EntranceNavigationTransitionInfo());
+            ContentFrame.Navigate(view, parameter, new EntranceNavigationTransitionInfo());
             return true;
         }
 
@@ -160,14 +160,19 @@ namespace Elementary
             }
         }
 
-        private void HistoryListView_ItemClick(object sender, ItemClickEventArgs e)
+        private async void HistoryListView_ItemClick(object sender, ItemClickEventArgs e)
         {
             if (e?.ClickedItem is NavigationHistoryItem item)
             {
-                // Navigate to BiblePage and instruct it to show the selected book/chapter
-                if (!NavigateToView("BiblePage")) return;
-                var biblePage = ContentFrame.Content as BiblePage;
-                biblePage?.NavigateToFromHistory(item.BookTitle, item.Chapter);
+                if (ContentFrame.Content is BiblePage biblePage)
+                {
+                    await biblePage.NavigateToFromHistoryAsync(item.BookTitle, item.Chapter, item.BookKey);
+                }
+                else if (!NavigateToView("BiblePage", item))
+                {
+                    return;
+                }
+
                 HistoryFlyout.Hide();
                 // Update last item to Bible Page navigation item
                 _lastItem = BiblePageNavigationViewItem;

@@ -85,6 +85,15 @@
 				</muxc:ItemsRepeater>
 			</StackPanel>
         </ScrollViewer>
+
+		<!-- Blur layer behind the gradient and picker -->
+		<Border x:Name="BlurBorder" Grid.RowSpan="2" VerticalAlignment="Top"
+		        Height="65" IsHitTestVisible="False" Margin="-22,0,-22,0" />
+
+		<!-- Gradient fade behind the picker: z-order below ChooserBorder -->
+		<Border x:Name="TopFadeBorder" Grid.RowSpan="2" VerticalAlignment="Top"
+		        Height="90" IsHitTestVisible="False" Margin="-22,0,-22,0" />
+
 		<Border x:Name="ChooserBorder" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="12" Padding="6" CornerRadius="6" Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}" Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
 			<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
 				<ComboBox x:Name="BibleBookComboBox"

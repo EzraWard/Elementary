@@ -5,6 +5,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+using Windows.UI;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -27,6 +28,7 @@ namespace Elementary
         // Deferred history navigation (Bug 7: avoids stacking Loaded handlers)
         private string _pendingHistoryBook;
         private int _pendingHistoryChapter;
+        private string _pendingHistoryBookKey;
         // Track last translation to detect changes (Bug 5)
         private Core.Enums.ETranslation? _lastTranslation;
 
@@ -43,6 +45,20 @@ namespace Elementary
         protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+
+            if (e.Parameter is NavigationHistoryItem historyItem)
+            {
+                if (!_isLoaded || _viewModel == null)
+                {
+                    _pendingHistoryBook = historyItem.BookTitle;
+                    _pendingHistoryChapter = historyItem.Chapter;
+                    _pendingHistoryBookKey = historyItem.BookKey;
+                    return;
+                }
+
+                await NavigateToFromHistoryAsync(historyItem.BookTitle, historyItem.Chapter, historyItem.BookKey);
+                return;
+            }
 
             if (!_isLoaded || _viewModel == null) return;
 
@@ -102,30 +118,18 @@ namespace Elementary
             _isLoaded = true;
             _lastTranslation = _viewModel.AppSettings?.Translation;
             _chooserTranslate.Y = 0;
+            SetupTopFadeGradient();
 
             // Handle deferred history navigation (set before page was loaded)
             if (_pendingHistoryBook != null)
             {
                 var book = _pendingHistoryBook;
                 var chapter = _pendingHistoryChapter;
+                var bookKey = _pendingHistoryBookKey;
                 _pendingHistoryBook = null;
                 _pendingHistoryChapter = 0;
-
-                _isAwaitingChapterSelection = false;
-                _suppressComboHandling = true;
-                try
-                {
-                    BookChapterComboBox.IsDropDownOpen = false;
-                    await _viewModel.UpdateNavigationSettingsAsync(book, chapter);
-                    await _viewModel.LoadInitialChaptersAsync();
-                    ScrollToCurrentChapter();
-                    UpdateCommittedSelection();
-                }
-                finally
-                {
-                    _suppressComboHandling = false;
-                }
-                _previousVerticalOffset = BibleScrollViewer.VerticalOffset;
+                _pendingHistoryBookKey = null;
+                await NavigateToFromHistoryAsync(book, chapter, bookKey);
                 return;
             }
              
@@ -182,6 +186,45 @@ namespace Elementary
             {
                 Debug.WriteLine($"Error applying top offset: {ex.Message}");
             }
+        }
+
+        private void SetupTopFadeGradient()
+        {
+            Color baseColor;
+            if (Application.Current.Resources.TryGetValue("ApplicationPageBackgroundThemeBrush", out var res)
+                && res is SolidColorBrush bgBrush)
+            {
+                baseColor = bgBrush.Color;
+            }
+            else
+            {
+                var isDark = ActualTheme == ElementTheme.Dark ||
+                             (ActualTheme == ElementTheme.Default && Application.Current.RequestedTheme == ApplicationTheme.Dark);
+                baseColor = isDark ? Color.FromArgb(255, 32, 32, 32) : Color.FromArgb(255, 243, 243, 243);
+            }
+
+            // Gradient shadow layer
+            var gradient = new LinearGradientBrush
+            {
+                StartPoint = new Windows.Foundation.Point(0, 0),
+                EndPoint = new Windows.Foundation.Point(0, 1)
+            };
+            // Gradient shadow layer — lighter tint, extended fade to soften blur edge
+            gradient.GradientStops.Add(new GradientStop { Color = Color.FromArgb(160, baseColor.R, baseColor.G, baseColor.B), Offset = 0 });
+            gradient.GradientStops.Add(new GradientStop { Color = Color.FromArgb(120, baseColor.R, baseColor.G, baseColor.B), Offset = 0.55 });
+            gradient.GradientStops.Add(new GradientStop { Color = Color.FromArgb(60, baseColor.R, baseColor.G, baseColor.B), Offset = 0.75 });
+            gradient.GradientStops.Add(new GradientStop { Color = Color.FromArgb(20, baseColor.R, baseColor.G, baseColor.B), Offset = 0.9 });
+            gradient.GradientStops.Add(new GradientStop { Color = Color.FromArgb(0, baseColor.R, baseColor.G, baseColor.B), Offset = 1.0 });
+            TopFadeBorder.Background = gradient;
+
+            // Blur layer behind the gradient
+            BlurBorder.Background = new AcrylicBrush
+            {
+                BackgroundSource = AcrylicBackgroundSource.Backdrop,
+                TintColor = baseColor,
+                TintOpacity = 0.15,
+                FallbackColor = Color.FromArgb(180, baseColor.R, baseColor.G, baseColor.B)
+            };
         }
 
         private void DisplayLineContainer_Loaded(object sender, RoutedEventArgs e)
@@ -359,11 +402,22 @@ namespace Elementary
                 var settingsService = App.Services.GetRequiredService<Core.Interfaces.ISettingsService>();
                 var history = settingsService.GetNavigationHistory() ?? new System.Collections.Generic.List<Core.Models.NavigationHistoryItem>();
                 var currentBookTitle = _viewModel.CurrentBook?.Title ?? _viewModel.Bible?.Books?.FirstOrDefault()?.Title ?? string.Empty;
+                var currentBookKey = Core.Dictionaries.EBookToLocation.EBookTitleToEBook.TryGetValue(currentBookTitle, out var bookEnum)
+                    ? bookEnum.ToString()
+                    : null;
                 var currentChapter = _viewModel.SelectedChapterIndex;
                 // Avoid duplicate consecutive entries
-                if (history.Count == 0 || history[history.Count - 1].BookTitle != currentBookTitle || history[history.Count - 1].Chapter != currentChapter)
+                if (history.Count == 0
+                    || history[history.Count - 1].BookTitle != currentBookTitle
+                    || history[history.Count - 1].Chapter != currentChapter
+                    || history[history.Count - 1].BookKey != currentBookKey)
                 {
-                    history.Add(new Core.Models.NavigationHistoryItem { BookTitle = currentBookTitle, Chapter = currentChapter });
+                    history.Add(new Core.Models.NavigationHistoryItem
+                    {
+                        BookTitle = currentBookTitle,
+                        Chapter = currentChapter,
+                        BookKey = currentBookKey
+                    });
                     // keep max 10, remove oldest if necessary
                     if (history.Count > 10) history.RemoveAt(0);
                     settingsService.SaveNavigationHistory(history);
@@ -402,13 +456,14 @@ namespace Elementary
             }
         }
 
-        public async void NavigateToFromHistory(string bookTitle, int chapter)
+        public async System.Threading.Tasks.Task NavigateToFromHistoryAsync(string bookTitle, int chapter, string bookKey = null)
         {
             // If page isn't fully initialized yet, defer until BiblePage_Loaded finishes
             if (!_isLoaded)
             {
                 _pendingHistoryBook = bookTitle;
                 _pendingHistoryChapter = chapter;
+                _pendingHistoryBookKey = bookKey;
                 return;
             }
 
@@ -417,7 +472,7 @@ namespace Elementary
             try
             {
                 BookChapterComboBox.IsDropDownOpen = false;
-                await _viewModel.UpdateNavigationSettingsAsync(bookTitle, chapter);
+                await _viewModel.UpdateNavigationSettingsAsync(bookTitle, chapter, bookKey);
                 await _viewModel.LoadInitialChaptersAsync();
                 ScrollToCurrentChapter();
                 UpdateCommittedSelection();
@@ -426,6 +481,8 @@ namespace Elementary
             {
                 _suppressComboHandling = false;
             }
+
+            _previousVerticalOffset = BibleScrollViewer.VerticalOffset;
         }
 
         private void UpdateCommittedSelection()

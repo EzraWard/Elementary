@@ -5,6 +5,7 @@ using Elementary.Core.Extensions;
 using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -233,21 +234,31 @@ namespace Elementary.ViewModels
             }
         }
 
-        public async Task UpdateNavigationSettingsAsync(string bookTitle, int chapterIndex)
+        public async Task UpdateNavigationSettingsAsync(string bookTitle, int chapterIndex, string bookKey = null)
         {
-            if (Bible?.Books != null)
+            if (Bible?.Books == null) return;
+
+            Book book = null;
+            if (!string.IsNullOrWhiteSpace(bookKey) && Enum.TryParse(bookKey, out EBook requestedBook))
             {
-                var book = Bible.Books.FirstOrDefault(b => b.Title == bookTitle);
-                if (book != null)
+                book = Bible.Books.FirstOrDefault(b =>
+                    EBookToLocation.EBookTitleToEBook.TryGetValue(b.Title, out var mappedBook) && mappedBook == requestedBook);
+            }
+
+            if (book == null && !string.IsNullOrWhiteSpace(bookTitle))
+            {
+                book = Bible.Books.FirstOrDefault(b => string.Equals(b.Title, bookTitle, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (book != null)
+            {
+                await EnsureBookLoadedAsync(book);
+                CurrentBook = book;
+                var chapter = book.Chapters.FirstOrDefault(c => c.Index == chapterIndex);
+                if (chapter != null)
                 {
-                    await EnsureBookLoadedAsync(book);
-                    CurrentBook = book;
-                    var chapter = book.Chapters.FirstOrDefault(c => c.Index == chapterIndex);
-                    if (chapter != null)
-                    {
-                        CurrentChapter = chapter;
-                        SelectedChapterIndex = chapterIndex;
-                    }
+                    CurrentChapter = chapter;
+                    SelectedChapterIndex = chapterIndex;
                 }
             }
         }

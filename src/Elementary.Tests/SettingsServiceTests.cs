@@ -143,5 +143,26 @@ namespace Elementary.Core.Tests.Services
             Assert.AreEqual("John", history[1].BookTitle);
             Assert.AreEqual(3, history[1].Chapter);
         }
+
+        [TestMethod]
+        public void GetNavigationHistory_ShouldParseBookKeyWhenPresent()
+        {
+            // Arrange
+            _settingsProviderMock
+                .Setup(x => x.GetSetting("navigationHistory"))
+                .Returns("Genesis|1|Genesis;John|3|John");
+
+            // Act
+            var history = _settingsService.GetNavigationHistory();
+
+            // Assert
+            Assert.AreEqual(2, history.Count);
+            Assert.AreEqual("Genesis", history[0].BookTitle);
+            Assert.AreEqual("Genesis", history[0].BookKey);
+            Assert.AreEqual(1, history[0].Chapter);
+            Assert.AreEqual("John", history[1].BookTitle);
+            Assert.AreEqual("John", history[1].BookKey);
+            Assert.AreEqual(3, history[1].Chapter);
+        }
     }
 }
