@@ -186,16 +186,6 @@ namespace Elementary.Core.Services
                 }
             }
 
-            var targetBookEnum = _settingsService.GetSettings()?.Book ?? EBook.Genesis;
-            var currentBook = bible.Books.FirstOrDefault(b =>
-                EBookToLocation.EBookTitleToEBook.TryGetValue(b.Title, out var bookEnum) && bookEnum == targetBookEnum)
-                ?? bible.Books.FirstOrDefault();
-
-            if (currentBook != null)
-            {
-                await EnsureBookLoaded(translation, currentBook);
-            }
-
             return bible;
         }
 

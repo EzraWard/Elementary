@@ -24,7 +24,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <ScrollViewer x:Name="BibleScrollViewer" Grid.RowSpan="2" VerticalScrollBarVisibility="Hidden" ViewChanged="BibleScrollViewer_ViewChanged">
+        <ScrollViewer x:Name="BibleScrollViewer" Grid.RowSpan="2" VerticalScrollBarVisibility="Hidden" ViewChanged="BibleScrollViewer_ViewChanged" Opacity="0">
             <StackPanel x:Name="ChaptersContainer">
                 <TextBlock Text="{Binding CurrentBook.Title}"
                            FontSize="34"
@@ -96,22 +96,18 @@
 
 		<Border x:Name="ChooserBorder" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="12" Padding="6" CornerRadius="6" Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}" Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
 			<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
-				<ComboBox x:Name="BibleBookComboBox"
+                <ComboBox x:Name="BibleBookComboBox"
                           Width="200"
                           FontSize="12"
                           ItemsSource="{Binding Bible.Books}"
                           DisplayMemberPath="Title"
-                          SelectedItem="{Binding CurrentBook, Mode=TwoWay}"
                           PlaceholderText="Bible" 
                           Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
-                          DropDownOpened="BibleBookComboBox_DropDownOpened"
                           SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged"/>
 
-				<ComboBox x:Name="BookChapterComboBox" 
+                <ComboBox x:Name="BookChapterComboBox" 
                           Width="100"
                           FontSize="12"
-                          ItemsSource="{Binding ChapterIndices}" 
-                          SelectedItem="{Binding SelectedChapterIndex, Mode=TwoWay}"
                           PlaceholderText="Chapter" 
                           Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
                           DropDownClosed="BookChapterComboBox_DropDownClosed"
