@@ -124,6 +124,8 @@
     <Compile Include="Pages\SettingsPage.xaml.cs">
       <DependentUpon>SettingsPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Services\ILiveTileService.cs" />
+    <Compile Include="Services\LiveTileService.cs" />
     <Compile Include="Services\UWPFileService.cs" />
     <Compile Include="Services\IVerseOfTheDayDialogService.cs" />
     <Compile Include="Services\VerseOfTheDayDialogService.cs" />

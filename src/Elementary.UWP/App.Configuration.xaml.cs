@@ -42,6 +42,7 @@ namespace Elementary
             //Register the Verse of the Day service
             provider.AddSingleton<IVerseOfTheDayService, VerseOfTheDayService>();
             provider.AddSingleton<IVerseOfTheDayDialogService, VerseOfTheDayDialogService>();
+            provider.AddSingleton<ILiveTileService, LiveTileService>();
 
             return provider.BuildServiceProvider(true);
         }

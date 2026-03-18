@@ -1,7 +1,10 @@
 ﻿using Elementary.Helpers;
+using Elementary.Services;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
+using Windows.ApplicationModel.Background;
 using Windows.ApplicationModel.Core;
 using Windows.Storage;
 using Windows.UI.Xaml;
@@ -89,6 +92,10 @@ namespace Elementary
                     var currentTheme = Application.Current.RequestedTheme;
                     WindowHelpers.SetCaptionButtonColors(currentTheme);
                 }
+
+                var liveTileService = _serviceProvider.GetRequiredService<ILiveTileService>();
+                liveTileService.UpdateTile();
+                _ = liveTileService.RegisterBackgroundTaskAsync();
             }
         }
 
@@ -114,6 +121,31 @@ namespace Elementary
             var deferral = e.SuspendingOperation.GetDeferral();
             //TODO: Save application state and stop any background activity
             deferral.Complete();
+        }
+
+        /// <summary>
+        /// Invoked when the application is activated in the background by a registered background task.
+        /// </summary>
+        /// <param name="args">Details about the background task activation.</param>
+        protected override void OnBackgroundActivated(BackgroundActivatedEventArgs args)
+        {
+            base.OnBackgroundActivated(args);
+
+            var taskInstance = args.TaskInstance;
+            if (taskInstance.Task.Name == LiveTileService.BackgroundTaskName)
+            {
+                var deferral = taskInstance.GetDeferral();
+
+                if (_serviceProvider == null)
+                {
+                    _serviceProvider = ConfigureServices();
+                }
+
+                var liveTileService = _serviceProvider.GetRequiredService<ILiveTileService>();
+                liveTileService.UpdateTile();
+
+                deferral.Complete();
+            }
         }
     }
 }
