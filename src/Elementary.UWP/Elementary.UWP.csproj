@@ -131,6 +131,7 @@
     <Compile Include="Services\WindowsSettingsProvider.cs" />
     <Compile Include="ViewModels\BiblePageViewModel.cs" />
     <Compile Include="ViewModels\SettingsPageViewModel.cs" />
+    <Compile Include="Widgets\VerseOfTheDayWidgetProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">

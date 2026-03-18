@@ -1,4 +1,6 @@
 ﻿using Elementary.Helpers;
+using Elementary.Widgets;
+using Microsoft.Windows.Widgets.Providers;
 using System;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
@@ -44,6 +46,23 @@ namespace Elementary
         /// <param name="e">Details about the launch request and process.</param>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
+            // When launched as a COM server by the Windows 11 widget host the
+            // argument "-WidgetProvider" is injected by the com:ExeServer declaration
+            // in Package.appxmanifest.  In that case we register the widget provider
+            // and exit without showing any UI.
+            if (e.Arguments != null && e.Arguments.Contains("-WidgetProvider"))
+            {
+                if (_serviceProvider == null)
+                {
+                    _serviceProvider = ConfigureServices();
+                }
+
+                var widgetProvider = new VerseOfTheDayWidgetProvider(
+                    Services.GetRequiredService<Elementary.Core.Interfaces.IVerseOfTheDayService>());
+                WidgetManager.GetDefault().RegisterWidgetProvider(widgetProvider);
+                return;
+            }
+
             var titleBar = CoreApplication.GetCurrentView().TitleBar;
             titleBar.ExtendViewIntoTitleBar = true;
 

@@ -4,7 +4,9 @@
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
-  IgnorableNamespaces="uap mp">
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+  xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
+  IgnorableNamespaces="uap mp uap3 com">
 
   <Identity
     Name="21366BowTieWorkshop.ElementaryBibleDev"
@@ -46,6 +48,43 @@
         </uap:DefaultTile >
         <uap:SplashScreen Image="Assets\SplashScreen.png"  BackgroundColor="transparent"/>
       </uap:VisualElements>
+      <Extensions>
+        <!-- COM server registration: the widget host activates the app as a COM server
+             to request widget content. The app detects this via launch arguments. -->
+        <com:Extension Category="windows.comServer">
+          <com:ComServer>
+            <com:ExeServer Executable="$targetnametoken$.exe" Arguments="-WidgetProvider" DisplayName="Elementary Widget Provider">
+              <com:Class Id="3d74d74e-b22c-4e5c-9b5a-3e4b8b4f3b9a" DisplayName="Verse of the Day Widget Provider" />
+            </com:ExeServer>
+          </com:ComServer>
+        </com:Extension>
+
+        <!-- Widget provider declaration: registers the Verse of the Day widget with
+             the Windows 11 widget board. Supports small, medium, and large sizes. -->
+        <uap3:Extension Category="windows.widgetProvider">
+          <uap3:WidgetProvider>
+            <uap3:WidgetProviderIcons>
+              <uap3:Icon Path="Assets\StoreLogo.scale-100.png" />
+            </uap3:WidgetProviderIcons>
+            <uap3:Activation>
+              <uap3:CreateInstance ClassId="3d74d74e-b22c-4e5c-9b5a-3e4b8b4f3b9a" />
+            </uap3:Activation>
+            <uap3:Definitions>
+              <uap3:Definition
+                Id="VerseOfTheDayWidget"
+                DisplayName="Verse of the Day"
+                Description="Shows the daily Bible verse"
+                AllowMultiple="false">
+                <uap3:Capabilities>
+                  <uap3:Capability Type="size" Value="small" />
+                  <uap3:Capability Type="size" Value="medium" />
+                  <uap3:Capability Type="size" Value="large" />
+                </uap3:Capabilities>
+              </uap3:Definition>
+            </uap3:Definitions>
+          </uap3:WidgetProvider>
+        </uap3:Extension>
+      </Extensions>
     </Application>
   </Applications>
 
