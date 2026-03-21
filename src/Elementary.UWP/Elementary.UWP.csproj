@@ -125,6 +125,8 @@
       <DependentUpon>SettingsPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Services\UWPFileService.cs" />
+    <Compile Include="Services\IVerseOfTheDayDialogService.cs" />
+    <Compile Include="Services\VerseOfTheDayDialogService.cs" />
     <Compile Include="Services\WindowsFilePathProvider.cs" />
     <Compile Include="Services\WindowsSettingsProvider.cs" />
     <Compile Include="ViewModels\BiblePageViewModel.cs" />
@@ -182,8 +184,6 @@
     <Content Include="Assets\Wide310x150Logo.scale-125.png" />
     <Content Include="Assets\Wide310x150Logo.scale-150.png" />
     <Content Include="Assets\Wide310x150Logo.scale-400.png" />
-    <Content Include="Content\eng-asv.epub" />
-    <Content Include="Content\KJVNoImages.epub" />
     <Content Include="Assets\Fonts\Segoe Fluent Icons.ttf" />
     <None Include="Elementary.UWP_TemporaryKey.pfx" />
     <None Include="Package.StoreAssociation.xml" />
@@ -223,11 +223,8 @@
     <PackageReference Include="CommunityToolkit.Uwp.Helpers">
       <Version>8.2.251219</Version>
     </PackageReference>
-    <PackageReference Include="HtmlAgilityPack">
-      <Version>1.12.4</Version>
-    </PackageReference>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection">
-      <Version>10.0.1</Version>
+      <Version>10.0.3</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.14</Version>
@@ -235,18 +232,15 @@
     <PackageReference Include="Microsoft.UI.Xaml">
       <Version>2.8.7</Version>
     </PackageReference>
-    <PackageReference Include="System.Private.Uri">
-      <Version>4.3.2</Version>
-    </PackageReference>
-    <PackageReference Include="System.Text.RegularExpressions">
-      <Version>4.3.1</Version>
-    </PackageReference>
-    <PackageReference Include="VersOne.Epub">
-      <Version>3.3.4</Version>
-    </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Content\NET21NOTELESS.epub">
+    <Content Include="Content\ASV\**\*.usfm">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\KJV\**\*.usfm">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\NET\**\*.usfm">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -254,10 +248,6 @@
     <ProjectReference Include="..\Elementary.Core\Elementary.Core.csproj">
       <Project>{ffc22eb9-4a5f-4eb2-85e3-071f63dbb4e3}</Project>
       <Name>Elementary.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Html2Xaml\RichTextBlock.Html2Xaml.csproj">
-      <Project>{d3408113-4ef7-4056-9ec9-d383306514b8}</Project>
-      <Name>RichTextBlock.Html2Xaml</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

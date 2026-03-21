@@ -10,8 +10,6 @@ using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Animation;
-using Windows.UI.Xaml.Media.Imaging;
-using Microsoft.Extensions.DependencyInjection;
 using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
 using System.Collections.Generic;
@@ -23,11 +21,11 @@ namespace Elementary
     public sealed partial class MainPage : Page
     {
         private Microsoft.UI.Xaml.Controls.NavigationViewItem _lastItem;
-        private IVerseOfTheDayService _verseOfTheDayService;
+        private IVerseOfTheDayDialogService _verseOfTheDayDialogService;
 
         public MainPage()
         {
-            _verseOfTheDayService = App.Services.GetRequiredService<IVerseOfTheDayService>();
+            _verseOfTheDayDialogService = App.Services.GetRequiredService<IVerseOfTheDayDialogService>();
 
             this.InitializeComponent();
 
@@ -67,7 +65,7 @@ namespace Elementary
 
             if (clickedView == "VerseOfTheDay")
             {
-                await ShowVerseOfTheDayDialogAsync();
+                await _verseOfTheDayDialogService.ShowAsync();
 
                 // Reset selection back to the currently displayed page
                 MainNavigationView.SelectedItem = _lastItem;
@@ -80,7 +78,21 @@ namespace Elementary
                 var settingsService = App.Services.GetRequiredService<ISettingsService>();
                 var history = settingsService.GetNavigationHistory() ?? new List<NavigationHistoryItem>();
                 // Display newest items first (reverse chronological)
-                HistoryListView.ItemsSource = history.AsEnumerable().Reverse().ToList();
+                var displayHistory = history.AsEnumerable().Reverse().ToList();
+                HistoryListView.ItemsSource = displayHistory;
+
+                // Show empty state or list
+                if (displayHistory.Count == 0)
+                {
+                    HistoryEmptyText.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                    HistoryListView.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                }
+                else
+                {
+                    HistoryEmptyText.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                    HistoryListView.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                }
+
                 HistoryFlyout.ShowAt(item);
 
                 // Reset selection back to the currently displayed page
@@ -92,13 +104,13 @@ namespace Elementary
             _lastItem = item;
         }
 
-        private bool NavigateToView(string clickedView)
+        private bool NavigateToView(string clickedView, object parameter = null)
         {
             var view = Assembly.GetExecutingAssembly().GetType($"Elementary.{clickedView}");
 
             if (string.IsNullOrWhiteSpace(clickedView) || view == null) return false;
 
-            ContentFrame.Navigate(view, null, new EntranceNavigationTransitionInfo());
+            ContentFrame.Navigate(view, parameter, new EntranceNavigationTransitionInfo());
             return true;
         }
 
@@ -148,36 +160,19 @@ namespace Elementary
             }
         }
 
-        private async Task ShowVerseOfTheDayDialogAsync()
-        {
-            var verse = _verseOfTheDayService.GetVerseOfTheDay();
-
-            var dialog = new ContentDialog
-            {
-                Title = verse.Title,
-                CloseButtonText = "Close",
-                DefaultButton = ContentDialogButton.Primary
-            };
-
-            var image = new Image
-            {
-                Height = 500,
-                Width = 500,
-                Source = new BitmapImage(new Uri(verse.ImageUrl))
-            };
-
-            dialog.Content = image;
-            await dialog.ShowAsync();
-        }
-
-        private void HistoryListView_ItemClick(object sender, ItemClickEventArgs e)
+        private async void HistoryListView_ItemClick(object sender, ItemClickEventArgs e)
         {
             if (e?.ClickedItem is NavigationHistoryItem item)
             {
-                // Navigate to BiblePage and instruct it to show the selected book/chapter
-                if (!NavigateToView("BiblePage")) return;
-                var biblePage = ContentFrame.Content as BiblePage;
-                biblePage?.NavigateToFromHistory(item.BookTitle, item.Chapter);
+                if (ContentFrame.Content is BiblePage biblePage)
+                {
+                    await biblePage.NavigateToFromHistoryAsync(item.BookTitle, item.Chapter, item.BookKey);
+                }
+                else if (!NavigateToView("BiblePage", item))
+                {
+                    return;
+                }
+
                 HistoryFlyout.Hide();
                 // Update last item to Bible Page navigation item
                 _lastItem = BiblePageNavigationViewItem;

@@ -10,11 +10,11 @@ namespace Elementary.Services
             switch (translation)
             {
                 case ETranslation.ASV:
-                    return "ms-appx:///Content/eng-asv.epub";
+                    return "ms-appx:///Content/ASV";
                 case ETranslation.KJV:
-                    return "ms-appx:///Content/KJVNoImages.epub";
+                    return "ms-appx:///Content/KJV";
                 case ETranslation.NET:
-                    return "ms-appx:///Content/NET21NOTELESS.epub";
+                    return "ms-appx:///Content/NET";
                 default:
                     return null;
             }

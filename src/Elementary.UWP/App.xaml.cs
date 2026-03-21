@@ -34,6 +34,7 @@ namespace Elementary
 
             this.InitializeComponent();
             this.Suspending += OnSuspending;
+            CoreApplication.EnablePrelaunch(true);
         }
 
         /// <summary>
