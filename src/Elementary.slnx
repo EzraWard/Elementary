@@ -18,9 +18,4 @@
     <Platform Solution="*|x86" Project="x86" />
     <Deploy />
   </Project>
-  <Project Path="Html2Xaml/RichTextBlock.Html2Xaml.csproj" Id="d3408113-4ef7-4056-9ec9-d383306514b8">
-    <Platform Solution="*|ARM64" Project="ARM64" />
-    <Platform Solution="*|x64" Project="x64" />
-    <Platform Solution="*|x86" Project="x86" />
-  </Project>
 </Solution>

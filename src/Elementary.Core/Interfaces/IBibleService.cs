@@ -10,5 +10,6 @@ namespace Elementary.Core.Interfaces
     public interface IBibleService
     {
        Task<Bible> GetBible(ETranslation translation);
+       Task EnsureBookLoaded(ETranslation translation, Book book);
     }
 }

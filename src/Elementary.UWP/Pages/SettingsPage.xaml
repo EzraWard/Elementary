@@ -44,8 +44,7 @@
                     <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
                            Text="Reading" />
                     <controls:SettingsCard Description="The translation of the Bible you would like to use"
-                                       Header="Translation (Coming soon!)"
-                                       IsEnabled="False">
+                                       Header="Translation">
                         <controls:SettingsCard.HeaderIcon>
                             <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE736;"/>
                         </controls:SettingsCard.HeaderIcon>
@@ -59,8 +58,7 @@
                         <controls:SettingsCard.HeaderIcon>
                             <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE8A4;"/>
                         </controls:SettingsCard.HeaderIcon>
-                        <!--<ToggleSwitch IsOn="{x:Bind ViewModel.ShowVerseNumbers, Mode=TwoWay}" />-->
-                        <ToggleSwitch IsOn="True" />
+                        <ToggleSwitch IsOn="{x:Bind ViewModel.ShowVerseNumbers, Mode=TwoWay}" />
                     </controls:SettingsCard>
 
                     <controls:SettingsCard Description="Select the font for text"
@@ -120,7 +118,7 @@
                         <controls:SettingsExpander.Items>
                             <controls:SettingsCard>
                                 <controls:SettingsCard.Header>
-                                    <TextBlock Text="👨🏻‍👩🏻‍👧🏻‍👦🏻 Hello from Marietta" />
+                                    <TextBlock Text="👨🏻‍👩🏻‍👧🏻‍👦🏻 Hello from Williamstown" />
                                 </controls:SettingsCard.Header>
                             </controls:SettingsCard>
                         </controls:SettingsExpander.Items>

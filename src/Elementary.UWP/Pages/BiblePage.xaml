@@ -1,4 +1,5 @@
-﻿<Page
+<Page
+    x:Name="BiblePageRoot"
     x:Class="Elementary.BiblePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -8,7 +9,6 @@
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     xmlns:viewmodels="using:Elementary.ViewModels"
     xmlns:converters="using:Elementary.UWP.Converters"
-    xmlns:common="using:html2xaml"
     mc:Ignorable="d"
     d:DataContext="{d:DesignInstance viewmodels:BiblePageViewModel, IsDesignTimeCreatable=True}"
     Background="Transparent"
@@ -24,39 +24,93 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <ScrollViewer x:Name="BibleScrollViewer" Grid.RowSpan="2" VerticalScrollBarVisibility="Hidden" ViewChanged="BibleScrollViewer_ViewChanged">
+        <ScrollViewer x:Name="BibleScrollViewer" Grid.RowSpan="2" VerticalScrollBarVisibility="Hidden" ViewChanged="BibleScrollViewer_ViewChanged" Opacity="0">
             <StackPanel x:Name="ChaptersContainer">
+                <TextBlock Text="{Binding CurrentBook.Title}"
+                           FontSize="34"
+                           FontWeight="Bold"
+                           HorizontalAlignment="Center"
+                           TextAlignment="Center"
+                           Margin="0,68,0,10"/>
 				<muxc:ItemsRepeater x:Name="ChaptersRepeater" ItemsSource="{Binding Chapters}">
 					<muxc:ItemsRepeater.ItemTemplate>
 						<DataTemplate>
-							<Grid x:Name="ChapterItemGrid" SizeChanged="ChapterItemGrid_SizeChanged">
-								<RichTextBlock x:Name="ChapterRichTextBlock" 
-                                             common:Properties.Html="{Binding ChapterText}" />
-							</Grid>
+                            <Grid x:Name="ChapterItemGrid" Margin="0,0,0,20">
+                                <StackPanel MaxWidth="700"
+                                             HorizontalAlignment="Center">
+                                    <TextBlock FontSize="28"
+                                                FontWeight="Bold"
+                                                HorizontalAlignment="Center"
+                                                TextAlignment="Center"
+                                                Margin="0,24,0,8">
+                                        <Run Text="Chapter " />
+                                        <Run Text="{Binding Index}" />
+                                    </TextBlock>
+                                    <muxc:ItemsRepeater ItemsSource="{Binding DisplayLines}">
+                                        <muxc:ItemsRepeater.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Loaded="DisplayLineContainer_Loaded">
+                                                    <Grid Visibility="{Binding IsVerse, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,6">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="{Binding VerseNumberText}" Tag="versenum" Margin="0,-4,6,0" VerticalAlignment="Top" Opacity="0.8"/>
+                                                        <TextBlock Grid.Column="1"
+                                                                   Text="{Binding Text}"
+                                                                   Tag="body"
+                                                                   TextWrapping="WrapWholeWords"/>
+                                                    </Grid>
+                                                    <TextBlock Text="{Binding Text}"
+                                                               Tag="heading"
+                                                               Visibility="{Binding IsHeading, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                               FontSize="20"
+                                                               FontWeight="SemiBold"
+                                                               HorizontalAlignment="Center"
+                                                               TextAlignment="Center"
+                                                               Margin="0,14,0,8"
+                                                               TextWrapping="WrapWholeWords"/>
+                                                    <TextBlock Text="{Binding Text}" Tag="body" Visibility="{Binding IsPoetry, Converter={StaticResource BoolToVisibilityConverter}}" Margin="20,0,0,6" TextWrapping="WrapWholeWords"/>
+                                                    <TextBlock Text="{Binding Text}" Tag="body" Visibility="{Binding IsText, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,6" TextWrapping="WrapWholeWords"/>
+                                                    <TextBlock Text="{Binding Text}" Tag="footnote" Visibility="{Binding IsFootnote, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,4,0,0" Opacity="0.75" TextWrapping="WrapWholeWords"/>
+                                                    <Border Visibility="{Binding IsParagraphBreak, Converter={StaticResource BoolToVisibilityConverter}}" Height="8" Background="Transparent"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </muxc:ItemsRepeater.ItemTemplate>
+                                    </muxc:ItemsRepeater>
+                                </StackPanel>
+                            </Grid>
 						</DataTemplate>
 					</muxc:ItemsRepeater.ItemTemplate>
 				</muxc:ItemsRepeater>
 			</StackPanel>
         </ScrollViewer>
+
+		<!-- Blur layer behind the gradient and picker -->
+		<Border x:Name="BlurBorder" Grid.RowSpan="2" VerticalAlignment="Top"
+		        Height="65" IsHitTestVisible="False" Margin="-22,0,-22,0" />
+
+		<!-- Gradient fade behind the picker: z-order below ChooserBorder -->
+		<Border x:Name="TopFadeBorder" Grid.RowSpan="2" VerticalAlignment="Top"
+		        Height="90" IsHitTestVisible="False" Margin="-22,0,-22,0" />
+
 		<Border x:Name="ChooserBorder" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="12" Padding="6" CornerRadius="6" Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}" Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
 			<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
-				<ComboBox x:Name="BibleBookComboBox"
+                <ComboBox x:Name="BibleBookComboBox"
                           Width="200"
                           FontSize="12"
                           ItemsSource="{Binding Bible.Books}"
                           DisplayMemberPath="Title"
-                          SelectedItem="{Binding CurrentBook, Mode=TwoWay}"
                           PlaceholderText="Bible" 
                           Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
                           SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged"/>
 
-				<ComboBox x:Name="BookChapterComboBox" 
+                <ComboBox x:Name="BookChapterComboBox" 
                           Width="100"
                           FontSize="12"
-                          ItemsSource="{Binding ChapterIndices}" 
-                          SelectedItem="{Binding SelectedChapterIndex, Mode=TwoWay}"
                           PlaceholderText="Chapter" 
                           Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
+                          DropDownClosed="BookChapterComboBox_DropDownClosed"
                           SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged"/>
 			</StackPanel>
 		</Border>

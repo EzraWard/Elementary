@@ -65,8 +65,6 @@ namespace Elementary.ViewModels
                 if (value != null && _settings.Translation != value.Value)
                 {
                     _settings.Translation = value.Value;
-                    _settings.Book = EBook.Genesis;
-                    _settings.Chapter = 1;
                     SaveSettings();
                     OnPropertyChanged();
                 }

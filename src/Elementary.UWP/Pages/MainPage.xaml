@@ -11,8 +11,14 @@
 
     <Page.Resources>
         <Flyout x:Name="HistoryFlyout" Placement="Right">
-            <Grid>
-                <ListView x:Name="HistoryListView" IsItemClickEnabled="True" ItemClick="HistoryListView_ItemClick" />
+            <Grid MinWidth="200">
+                <TextBlock x:Name="HistoryEmptyText"
+                           Text="No history yet"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Opacity="0.6"
+                           Visibility="Collapsed" />
+                <ListView x:Name="HistoryListView" IsItemClickEnabled="True" ItemClick="HistoryListView_ItemClick" DisplayMemberPath="DisplayText" />
             </Grid>
         </Flyout>
     </Page.Resources>
@@ -34,7 +40,7 @@
             <Image Grid.Column="1" Height="16" Margin="12,0,0,0" Source="ms-appx:///Assets/logo.png" />
             <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Left" Margin="16,0,0,0" Spacing="4">
                 <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" VerticalAlignment="Center" Margin="0,0,0,1">Elementary</TextBlock>
-                <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" VerticalAlignment="Center" Margin="0,0,0,1">Beta</TextBlock>
+                <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" VerticalAlignment="Center" Margin="0,0,0,1">Dev</TextBlock>
             </StackPanel>
         </Grid>
         <muxc:NavigationView Name="MainNavigationView" ItemInvoked="NavigationView_ItemInvoked" Grid.Row="1" IsTitleBarAutoPaddingEnabled="false" IsBackButtonVisible="Collapsed" IsPaneOpen="False">

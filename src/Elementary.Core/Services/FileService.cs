@@ -1,6 +1,7 @@
 ﻿using Elementary.Core.Interfaces;
 using System.IO;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Elementary.Core.Services
 {
@@ -34,6 +35,17 @@ namespace Elementary.Core.Services
         public Task<bool> FileExistsAsync(string path)
         {
             return Task.FromResult(File.Exists(path));
+        }
+
+        public Task<IEnumerable<string>> ListFilesAsync(string path, string searchPattern = "*")
+        {
+            if (!Directory.Exists(path))
+            {
+                return Task.FromResult<IEnumerable<string>>(new string[0]);
+            }
+
+            var files = Directory.GetFiles(path, searchPattern);
+            return Task.FromResult<IEnumerable<string>>(files);
         }
     }
 }

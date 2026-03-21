@@ -6,10 +6,13 @@ namespace Elementary.Core.Models
     {
         public string BookTitle { get; set; }
         public int Chapter { get; set; }
+        public string BookKey { get; set; }
+
+        public string DisplayText => $"{(string.IsNullOrWhiteSpace(BookTitle) ? BookKey : BookTitle)} {Chapter}";
 
         public override string ToString()
         {
-            return $"{BookTitle} {Chapter}";
+            return DisplayText;
         }
     }
 }
