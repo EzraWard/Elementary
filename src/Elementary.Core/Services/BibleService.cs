@@ -2,7 +2,6 @@
 using Elementary.Core.Enums;
 using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
-using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -12,7 +11,6 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using VersOne.Epub;
 
 namespace Elementary.Core.Services
 {
@@ -100,58 +98,7 @@ namespace Elementary.Core.Services
             var bible = new Bible();
             var bibleFilePath = _filePathProvider.GetPathForTranslation(translation);
 
-            // If path ends with .epub keep existing behavior
-            if (!string.IsNullOrEmpty(bibleFilePath) && bibleFilePath.EndsWith(".epub", StringComparison.OrdinalIgnoreCase))
-            {
-                EpubBook epubBible;
-                using (var stream = await _fileService.ReadFileAsync(bibleFilePath))
-                {
-                    epubBible = EpubReader.ReadBook(stream);
-                }
-
-                //Enumerate Books
-                foreach (var book in epubBible.Navigation)
-                {
-                    bible.Books.Add(new Book
-                    {
-                        Title = book.Title
-                    });
-                }
-
-                //Set reading order index for each book
-                foreach (var book in bible.Books)
-                {
-                    var bookEnum = EBookToLocation.EBookTitleToEBook[book.Title];
-                    book.ReadingOrderIndex = EBookToLocation.EBookToEPubLocationNET[bookEnum];
-                }
-
-                //intialize chapters
-                for (int i = 0; i < bible.Books.Count; i++)
-                {
-                    int numberOfChapters;
-                    if (bible.Books[i].Title != "Revelation")
-                    {
-                        numberOfChapters = bible.Books[i + 1].ReadingOrderIndex - bible.Books[i].ReadingOrderIndex;
-                    }
-                    else
-                    {
-                        numberOfChapters = RevelationChapterCount + 1;
-                    }
-
-                    //Set
-                    bible.Books[i].Chapters = new ObservableCollection<Chapter>();
-                    for (int j = 1; j < numberOfChapters; j++)
-                    {
-                        var readingOrderIndex = bible.Books[i].ReadingOrderIndex + j;
-                        var text = epubBible.ReadingOrder[readingOrderIndex].Content;
-                        bible.Books[i].Chapters.Add(new Chapter { Index = j, ChapterText = CleanChapterHtml(epubBible.ReadingOrder[readingOrderIndex].Content, bible.Books[i].Title, j) });
-                    }
-                }
-
-                return bible;
-            }
-
-            // Otherwise, assume a folder path containing USFM files
+            // Assume a folder path containing USFM files
             var usfmFiles = await _fileService.ListFilesAsync(bibleFilePath, "*.usfm");
             var fileList = new List<string>(usfmFiles ?? new string[0]);
 
@@ -232,24 +179,6 @@ namespace Elementary.Core.Services
                 Debug.WriteLine($"Falling back to filename for USFM title: {filePath}. Error: {ex}");
                 return Path.GetFileNameWithoutExtension(filePath);
             }
-        }
-
-        private string CleanChapterHtml(string chapterText, string BookName, int chapterNum)
-        {
-            var htmlDoc = new HtmlDocument();
-            htmlDoc.OptionWriteEmptyNodes = true;
-            htmlDoc.LoadHtml(chapterText);
-
-            var html = htmlDoc.DocumentNode.SelectSingleNode("//body").InnerHtml;
-            
-            //remove book name at the beginning of the books
-            var booklessString = html.Replace(BookName + "<br />", "");
-
-            // Always fetch the latest settings
-            var settings = _settingsService.GetSettings();
-            return settings.ShowVerseNumbers == true ? 
-                CleanVerseMarkers(booklessString) : 
-                RemoveVerseMarkers(booklessString);
         }
 
         public static string CleanVerseMarkers(string html)
