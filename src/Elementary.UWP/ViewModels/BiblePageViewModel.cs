@@ -25,7 +25,6 @@ namespace Elementary.ViewModels
         private IBibleService _bibleService;
         private bool _isLoaded;
         private ObservableCollection<Chapter> _chapters;
-        private bool _isLoadingMore;
 
         public Bible Bible
         {
@@ -84,12 +83,6 @@ namespace Elementary.ViewModels
         {
             get => _chapters;
             set => SetProperty(ref _chapters, value);
-        }
-
-        public bool IsLoadingMore
-        {
-            get => _isLoadingMore;
-            set => SetProperty(ref _isLoadingMore, value);
         }
 
         public BiblePageViewModel()
@@ -158,16 +151,6 @@ namespace Elementary.ViewModels
         public async Task LoadInitialChaptersAsync()
         {
             await LoadCurrentBookChaptersAsync();
-        }
-
-        public Task LoadNextChapterAsync()
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task LoadPreviousChapterAsync()
-        {
-            return Task.CompletedTask;
         }
 
         public void UpdateCurrentChapterFromScroll(Chapter chapter)

@@ -17,6 +17,11 @@ namespace Elementary
 {
     public sealed partial class BiblePage : Page
     {
+        private const double ScrollAnchorY = 120d;
+        private const int LayoutSettleDelayMs = 100;
+        private const int ComboResetMaxAttempts = 5;
+        private const int ComboResetRetryDelayMs = 20;
+
         private readonly BiblePageViewModel _viewModel;
         private bool _isLoaded;
         private bool _isInitializing;
@@ -271,7 +276,7 @@ namespace Elementary
                 return _viewModel.Chapters[0];
             }
 
-            var anchorY = 120d;
+            var anchorY = ScrollAnchorY;
             Chapter closestBeforeAnchor = null;
             Chapter firstAfterAnchor = null;
 
@@ -430,7 +435,7 @@ namespace Elementary
             if (waitForLayout)
             {
                 await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => BibleScrollViewer.UpdateLayout());
-                await Task.Delay(100);
+                await Task.Delay(LayoutSettleDelayMs);
             }
 
             ScrollToCurrentChapter();
@@ -494,9 +499,9 @@ namespace Elementary
 
         private async Task ResetChapterPickerScrollAsync()
         {
-            for (int attempt = 0; attempt < 5; attempt++)
+            for (int attempt = 0; attempt < ComboResetMaxAttempts; attempt++)
             {
-                await Task.Delay(20);
+                await Task.Delay(ComboResetRetryDelayMs);
 
                 var scrollReset = false;
                 await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
