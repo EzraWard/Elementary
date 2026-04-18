@@ -39,6 +39,9 @@ namespace Elementary
             //Register the Bible service
             provider.AddSingleton<IBibleService, BibleService>();
 
+            //Register the Search service
+            provider.AddSingleton<ISearchService, SearchService>();
+
             //Register the Verse of the Day service
             provider.AddSingleton<IVerseOfTheDayService, VerseOfTheDayService>();
             provider.AddSingleton<IVerseOfTheDayDialogService, VerseOfTheDayDialogService>();

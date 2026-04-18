@@ -12,6 +12,7 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Animation;
 using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
+using Elementary.Core.Enums;
 using System.Collections.Generic;
 using System.Linq;
 using MUXC = Microsoft.UI.Xaml.Controls;
@@ -22,6 +23,7 @@ namespace Elementary
     {
         private Microsoft.UI.Xaml.Controls.NavigationViewItem _lastItem;
         private IVerseOfTheDayDialogService _verseOfTheDayDialogService;
+        private bool _isSearchPanelOpen;
 
         public MainPage()
         {
@@ -107,6 +109,13 @@ namespace Elementary
                 return;
             }
 
+            if (clickedView == "Search")
+            {
+                ToggleSearchPanel();
+                MainNavigationView.SelectedItem = _lastItem;
+                return;
+            }
+
             if (!NavigateToView(clickedView)) return;
             _lastItem = item;
         }
@@ -185,6 +194,106 @@ namespace Elementary
                 _lastItem = BiblePageNavigationViewItem;
                 MainNavigationView.SelectedItem = _lastItem;
             }
+        }
+
+        private void ToggleSearchPanel()
+        {
+            _isSearchPanelOpen = !_isSearchPanelOpen;
+            SearchPanel.Visibility = _isSearchPanelOpen ? Visibility.Visible : Visibility.Collapsed;
+            if (_isSearchPanelOpen)
+            {
+                SearchBox.Focus(FocusState.Programmatic);
+            }
+        }
+
+        private void CloseSearchPanelButton_Click(object sender, RoutedEventArgs e)
+        {
+            _isSearchPanelOpen = false;
+            SearchPanel.Visibility = Visibility.Collapsed;
+        }
+
+        private async void SearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+        {
+            var query = args.QueryText?.Trim();
+            if (string.IsNullOrWhiteSpace(query)) return;
+
+            await ExecuteSearchAsync(query);
+        }
+
+        private async Task ExecuteSearchAsync(string query)
+        {
+            SearchResultsListView.Visibility = Visibility.Collapsed;
+            SearchEmptyText.Visibility = Visibility.Collapsed;
+            SearchProgressRing.IsActive = true;
+
+            try
+            {
+                var scopeItem = SearchScopeComboBox.SelectedItem as ComboBoxItem;
+                var scopeTag = scopeItem?.Tag?.ToString() ?? "EntireBible";
+                ESearchScope scope;
+                switch (scopeTag)
+                {
+                    case "OldTestament": scope = ESearchScope.OldTestament; break;
+                    case "NewTestament": scope = ESearchScope.NewTestament; break;
+                    default: scope = ESearchScope.EntireBible; break;
+                }
+
+                var searchService = App.Services.GetRequiredService<ISearchService>();
+                var bibleService = App.Services.GetRequiredService<IBibleService>();
+                var settingsService = App.Services.GetRequiredService<ISettingsService>();
+                var settings = settingsService.GetSettings();
+                var bible = await bibleService.GetBible(settings.Translation);
+
+                var results = await searchService.SearchAsync(bible, settings.Translation, query, scope);
+
+                if (results.Count == 0)
+                {
+                    SearchEmptyText.Visibility = Visibility.Visible;
+                    SearchResultsListView.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    SearchResultsListView.ItemsSource = results;
+                    SearchResultsListView.Visibility = Visibility.Visible;
+                    SearchEmptyText.Visibility = Visibility.Collapsed;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Search failed: {ex.Message}");
+                SearchEmptyText.Text = "Search failed";
+                SearchEmptyText.Visibility = Visibility.Visible;
+            }
+            finally
+            {
+                SearchProgressRing.IsActive = false;
+            }
+        }
+
+        private async void SearchResultsListView_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            if (!(e?.ClickedItem is SearchResult result)) return;
+
+            var searchParam = new SearchNavigationParameter
+            {
+                BookTitle = result.BookTitle,
+                BookKey = result.BookKey,
+                ChapterIndex = result.ChapterIndex,
+                VerseNumber = result.VerseNumber,
+                SearchQuery = SearchBox.Text?.Trim()
+            };
+
+            if (ContentFrame.Content is BiblePage biblePage)
+            {
+                await biblePage.NavigateToFromSearchAsync(searchParam);
+            }
+            else
+            {
+                NavigateToView("BiblePage", searchParam);
+            }
+
+            _lastItem = BiblePageNavigationViewItem;
+            MainNavigationView.SelectedItem = _lastItem;
         }
     }
 }

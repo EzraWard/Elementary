@@ -33,6 +33,8 @@ namespace Elementary
         private string _pendingHistoryBook;
         private int _pendingHistoryChapter;
         private string _pendingHistoryBookKey;
+        private SearchNavigationParameter _pendingSearchParam;
+        private FrameworkElement _highlightedElement;
 
         public BiblePage()
         {
@@ -50,6 +52,18 @@ namespace Elementary
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+
+            if (e.Parameter is SearchNavigationParameter searchParam)
+            {
+                if (!_isLoaded)
+                {
+                    _pendingSearchParam = searchParam;
+                    return;
+                }
+
+                _ = NavigateToFromSearchAsync(searchParam);
+                return;
+            }
 
             if (!(e.Parameter is NavigationHistoryItem historyItem)) return;
 
@@ -77,6 +91,23 @@ namespace Elementary
                 await _viewModel.Initialize();
                 _chooserTranslate.Y = 0;
                 SetupTopFadeGradient();
+
+                if (_pendingSearchParam != null)
+                {
+                    var pendingSearch = _pendingSearchParam;
+                    _pendingSearchParam = null;
+
+                    await _viewModel.UpdateNavigationSettingsAsync(pendingSearch.BookTitle, pendingSearch.ChapterIndex, pendingSearch.BookKey);
+                    SynchronizePickerSelection();
+                    await PositionReaderAsync(waitForLayout: true);
+
+                    _viewModel.IsLoaded = true;
+                    _isLoaded = true;
+                    BibleScrollViewer.Opacity = 1;
+
+                    await HighlightVerseAsync(pendingSearch.ChapterIndex, pendingSearch.VerseNumber);
+                    return;
+                }
 
                 if (_pendingHistoryBook != null)
                 {
@@ -387,6 +418,150 @@ namespace Elementary
             await _viewModel.UpdateNavigationSettingsAsync(bookTitle, chapter, bookKey);
             SynchronizePickerSelection();
             await PositionReaderAsync(waitForLayout: true);
+        }
+
+        public async Task NavigateToFromSearchAsync(SearchNavigationParameter searchParam)
+        {
+            if (!_isLoaded)
+            {
+                _pendingSearchParam = searchParam;
+                return;
+            }
+
+            ClearVerseHighlight();
+            _isAwaitingChapterSelection = false;
+            SuppressScrollSyncFor(TimeSpan.FromSeconds(2));
+            BookChapterComboBox.IsDropDownOpen = false;
+            await _viewModel.UpdateNavigationSettingsAsync(searchParam.BookTitle, searchParam.ChapterIndex, searchParam.BookKey);
+            SynchronizePickerSelection();
+            await PositionReaderAsync(waitForLayout: true);
+            await HighlightVerseAsync(searchParam.ChapterIndex, searchParam.VerseNumber);
+        }
+
+        private async Task HighlightVerseAsync(int chapterIndex, int verseNumber)
+        {
+            // Allow layout to settle before walking the visual tree
+            await Task.Delay(200);
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+                ClearVerseHighlight();
+                var verseElement = FindVerseElement(chapterIndex, verseNumber);
+                if (verseElement != null)
+                {
+                    var isDark = ActualTheme == ElementTheme.Dark ||
+                                 (ActualTheme == ElementTheme.Default && Application.Current.RequestedTheme == ApplicationTheme.Dark);
+                    var highlightColor = isDark
+                        ? Color.FromArgb(80, 255, 200, 50)
+                        : Color.FromArgb(80, 255, 230, 100);
+
+                    verseElement.Background = new SolidColorBrush(highlightColor);
+                    _highlightedElement = verseElement;
+
+                    ScrollVerseIntoView(verseElement);
+                }
+            });
+        }
+
+        private void ClearVerseHighlight()
+        {
+            if (_highlightedElement != null)
+            {
+                if (_highlightedElement is Panel panel)
+                {
+                    panel.Background = null;
+                }
+                else if (_highlightedElement is Border border)
+                {
+                    border.Background = null;
+                }
+                _highlightedElement = null;
+            }
+        }
+
+        private StackPanel FindVerseElement(int chapterIndex, int verseNumber)
+        {
+            if (_viewModel?.Chapters == null) return null;
+
+            var chapterIdx = -1;
+            for (int i = 0; i < _viewModel.Chapters.Count; i++)
+            {
+                if (_viewModel.Chapters[i].Index == chapterIndex)
+                {
+                    chapterIdx = i;
+                    break;
+                }
+            }
+
+            if (chapterIdx < 0) return null;
+
+            var chapterElement = ChaptersRepeater.TryGetElement(chapterIdx) as FrameworkElement;
+            if (chapterElement == null) return null;
+
+            // Walk the visual tree to find the verse's StackPanel container
+            return FindVerseInTree(chapterElement, verseNumber);
+        }
+
+        private static StackPanel FindVerseInTree(DependencyObject root, int verseNumber)
+        {
+            if (root == null) return null;
+
+            // Look for a StackPanel with a child Grid that contains a TextBlock with the verse number
+            if (root is StackPanel sp)
+            {
+                var childCount = VisualTreeHelper.GetChildrenCount(sp);
+                for (int i = 0; i < childCount; i++)
+                {
+                    var child = VisualTreeHelper.GetChild(sp, i);
+                    if (child is Grid grid)
+                    {
+                        var verseNumBlock = FindDescendantWithTag<TextBlock>(grid, "versenum");
+                        if (verseNumBlock != null && verseNumBlock.Text == verseNumber.ToString())
+                        {
+                            return sp;
+                        }
+                    }
+                }
+            }
+
+            var count = VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < count; i++)
+            {
+                var result = FindVerseInTree(VisualTreeHelper.GetChild(root, i), verseNumber);
+                if (result != null) return result;
+            }
+
+            return null;
+        }
+
+        private static T FindDescendantWithTag<T>(DependencyObject root, string tag) where T : FrameworkElement
+        {
+            if (root == null) return null;
+            if (root is T typed && (typed.Tag as string) == tag) return typed;
+
+            var childCount = VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < childCount; i++)
+            {
+                var result = FindDescendantWithTag<T>(VisualTreeHelper.GetChild(root, i), tag);
+                if (result != null) return result;
+            }
+
+            return null;
+        }
+
+        private void ScrollVerseIntoView(FrameworkElement element)
+        {
+            try
+            {
+                var transform = element.TransformToVisual(BibleScrollViewer);
+                var position = transform.TransformPoint(new Windows.Foundation.Point(0, 0));
+                var targetY = BibleScrollViewer.VerticalOffset + position.Y - (BibleScrollViewer.ViewportHeight / 3);
+                targetY = Math.Max(0, targetY);
+                BibleScrollViewer.ChangeView(null, targetY, null, false);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error scrolling verse into view: {ex.Message}");
+            }
         }
 
         private async Task BeginPendingBookSelectionAsync(Book selectedBook)
