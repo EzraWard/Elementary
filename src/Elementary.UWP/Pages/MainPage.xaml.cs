@@ -59,38 +59,28 @@ namespace Elementary
 
         private async void NavigationView_ItemInvoked(MUXC.NavigationView sender, MUXC.NavigationViewItemInvokedEventArgs args)
         {
-            //if _lastItem is null, it means this is the first time the user has navigated away
-            //from the BiblePage, so we want to set it to the current page
-            if (_lastItem == null)
-            {
-                _lastItem = BiblePageNavigationViewItem;
-            }
-
             var item = args.InvokedItemContainer as Microsoft.UI.Xaml.Controls.NavigationViewItem;
-            if (item == null || item == _lastItem) return;
+            if (item == null) return;
 
-            var clickedView = item.Tag.ToString();
-            if (clickedView == null || clickedView == "Settings") clickedView = "SettingsPage";
+            var clickedView = item.Tag?.ToString();
+            if (string.IsNullOrEmpty(clickedView)) return;
 
+            // Handle action items first — these are not page navigations
+            // and should always respond regardless of _lastItem state.
             if (clickedView == "VerseOfTheDay")
             {
                 await _verseOfTheDayDialogService.ShowAsync();
-
-                // Reset selection back to the currently displayed page
-                MainNavigationView.SelectedItem = _lastItem;
+                MainNavigationView.SelectedItem = _lastItem ?? BiblePageNavigationViewItem;
                 return;
             }
 
             if (clickedView == "History")
             {
-                // Populate history flyout from settings service and show it anchored to the invoked item
                 var settingsService = App.Services.GetRequiredService<ISettingsService>();
                 var history = settingsService.GetNavigationHistory() ?? new List<NavigationHistoryItem>();
-                // Display newest items first (reverse chronological)
                 var displayHistory = history.AsEnumerable().Reverse().ToList();
                 HistoryListView.ItemsSource = displayHistory;
 
-                // Show empty state or list
                 if (displayHistory.Count == 0)
                 {
                     HistoryEmptyText.Visibility = Windows.UI.Xaml.Visibility.Visible;
@@ -103,19 +93,26 @@ namespace Elementary
                 }
 
                 HistoryFlyout.ShowAt(item);
-
-                // Reset selection back to the currently displayed page
-                MainNavigationView.SelectedItem = _lastItem;
+                MainNavigationView.SelectedItem = _lastItem ?? BiblePageNavigationViewItem;
                 return;
             }
 
             if (clickedView == "Search")
             {
                 ToggleSearchPanel();
-                MainNavigationView.SelectedItem = _lastItem;
+                MainNavigationView.SelectedItem = _lastItem ?? BiblePageNavigationViewItem;
                 return;
             }
 
+            // For page navigations, prevent re-navigating to same page
+            if (_lastItem == null)
+            {
+                _lastItem = BiblePageNavigationViewItem;
+            }
+
+            if (item == _lastItem) return;
+
+            if (clickedView == "Settings") clickedView = "SettingsPage";
             if (!NavigateToView(clickedView)) return;
             _lastItem = item;
         }
