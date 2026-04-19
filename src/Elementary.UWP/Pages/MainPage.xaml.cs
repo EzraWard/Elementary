@@ -70,7 +70,6 @@ namespace Elementary
             if (clickedView == "VerseOfTheDay")
             {
                 await _verseOfTheDayDialogService.ShowAsync();
-                MainNavigationView.SelectedItem = _lastItem ?? BiblePageNavigationViewItem;
                 return;
             }
 
@@ -93,14 +92,12 @@ namespace Elementary
                 }
 
                 HistoryFlyout.ShowAt(item);
-                MainNavigationView.SelectedItem = _lastItem ?? BiblePageNavigationViewItem;
                 return;
             }
 
             if (clickedView == "Search")
             {
                 ToggleSearchPanel();
-                MainNavigationView.SelectedItem = _lastItem ?? BiblePageNavigationViewItem;
                 return;
             }
 
