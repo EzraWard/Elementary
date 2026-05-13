@@ -18,6 +18,7 @@ namespace Elementary
     public sealed partial class BiblePage : Page
     {
         private const double ScrollAnchorY = 120d;
+        private const double ChapterTopOffset = 96d;
         private const int LayoutSettleDelayMs = 100;
         private const int ComboResetMaxAttempts = 5;
         private const int ComboResetRetryDelayMs = 20;
@@ -27,9 +28,11 @@ namespace Elementary
         private bool _isInitializing;
         private bool _isUpdatingFromScroll;
         private bool _isAwaitingChapterSelection;
+        private bool _isAdjustingChapterWindow;
         private bool _suppressComboHandling;
         private DateTimeOffset _ignoreScrollSyncUntil = DateTimeOffset.MinValue;
         private readonly TranslateTransform _chooserTranslate = new TranslateTransform();
+        private readonly Dictionary<Chapter, FrameworkElement> _chapterElements = new Dictionary<Chapter, FrameworkElement>();
         private string _pendingHistoryBook;
         private int _pendingHistoryChapter;
         private string _pendingHistoryBookKey;
@@ -75,6 +78,7 @@ namespace Elementary
                 BibleScrollViewer.Opacity = 0;
 
                 await _viewModel.Initialize();
+                ResetChapterElementTracking();
                 _chooserTranslate.Y = 0;
                 SetupTopFadeGradient();
 
@@ -85,7 +89,11 @@ namespace Elementary
                     var pendingBookKey = _pendingHistoryBookKey;
                     ClearPendingHistory();
 
-                    await _viewModel.UpdateNavigationSettingsAsync(pendingBook, pendingChapter, pendingBookKey);
+                    var pendingWindowChanged = await _viewModel.UpdateNavigationSettingsAsync(pendingBook, pendingChapter, pendingBookKey);
+                    if (pendingWindowChanged)
+                    {
+                        ResetChapterElementTracking();
+                    }
                 }
 
                 SynchronizePickerSelection();
@@ -119,14 +127,11 @@ namespace Elementary
             }
             else
             {
-                var element = ChaptersRepeater.GetOrCreateElement(currentChapterIndex) as FrameworkElement;
-                BibleScrollViewer.UpdateLayout();
-
+                var element = GetChapterElement(currentChapterIndex);
                 if (element != null)
                 {
-                    var transform = element.TransformToVisual(BibleScrollViewer);
-                    var elementPosition = transform.TransformPoint(new Windows.Foundation.Point(0, 0));
-                    var targetOffset = Math.Max(0, BibleScrollViewer.VerticalOffset + elementPosition.Y);
+                    var targetOffset = GetChapterOffsetInContent(element);
+                    targetOffset = Math.Max(0, targetOffset - ChapterTopOffset);
                     BibleScrollViewer.ChangeView(null, targetOffset, null, true);
                 }
             }
@@ -139,7 +144,7 @@ namespace Elementary
         {
             try
             {
-                var firstElement = ChaptersRepeater.TryGetElement(0) as Grid;
+                var firstElement = GetChapterElement(0);
                 if (firstElement == null) return;
                 firstElement.Margin = new Thickness(0);
             }
@@ -237,9 +242,9 @@ namespace Elementary
             }
         }
 
-        private void UpdateCurrentChapterFromScroll()
+        private async Task UpdateCurrentChapterFromScrollAsync()
         {
-            if (!_isLoaded || _isAwaitingChapterSelection || _viewModel.Chapters.Count == 0) return;
+            if (!_isLoaded || _isAwaitingChapterSelection || _viewModel.Chapters.Count == 0 || _isAdjustingChapterWindow) return;
 
             try
             {
@@ -251,6 +256,7 @@ namespace Elementary
                     {
                         _viewModel.UpdateCurrentChapterFromScroll(chapterAtAnchor);
                         SynchronizePickerSelection();
+                        await EnsureCurrentChapterWindowAsync(preserveViewport: true);
                     }
                     finally
                     {
@@ -282,7 +288,7 @@ namespace Elementary
 
             for (int i = 0; i < _viewModel.Chapters.Count; i++)
             {
-                var element = ChaptersRepeater.TryGetElement(i);
+                var element = GetChapterElement(i);
                 if (!(element is FrameworkElement frameworkElement))
                 {
                     continue;
@@ -311,7 +317,7 @@ namespace Elementary
             return closestBeforeAnchor ?? firstAfterAnchor ?? _viewModel.Chapters[0];
         }
 
-        private void BibleScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
+        private async void BibleScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
         {
             if (!_isLoaded) return;
 
@@ -324,7 +330,7 @@ namespace Elementary
                     return;
                 }
 
-                UpdateCurrentChapterFromScroll();
+                await UpdateCurrentChapterFromScrollAsync();
             }
         }
 
@@ -384,7 +390,11 @@ namespace Elementary
             _isAwaitingChapterSelection = false;
             SuppressScrollSyncFor(TimeSpan.FromSeconds(2));
             BookChapterComboBox.IsDropDownOpen = false;
-            await _viewModel.UpdateNavigationSettingsAsync(bookTitle, chapter, bookKey);
+            var windowChanged = await _viewModel.UpdateNavigationSettingsAsync(bookTitle, chapter, bookKey);
+            if (windowChanged)
+            {
+                ResetChapterElementTracking();
+            }
             SynchronizePickerSelection();
             await PositionReaderAsync(waitForLayout: true);
         }
@@ -418,7 +428,11 @@ namespace Elementary
 
             SuppressScrollSyncFor(TimeSpan.FromSeconds(2));
             BookChapterComboBox.IsDropDownOpen = false;
-            await _viewModel.SetCurrentLocationAsync(book, chapterIndex);
+            var windowChanged = await _viewModel.SetCurrentLocationAsync(book, chapterIndex);
+            if (windowChanged)
+            {
+                ResetChapterElementTracking();
+            }
             SynchronizePickerSelection();
             await PositionReaderAsync(waitForLayout: true);
 
@@ -441,14 +455,133 @@ namespace Elementary
             ScrollToCurrentChapter();
         }
 
+        private FrameworkElement GetChapterElement(int chapterIndex)
+        {
+            var chapter = _viewModel?.Chapters?.ElementAtOrDefault(chapterIndex);
+            if (chapter == null)
+            {
+                return null;
+            }
+
+            return _chapterElements.TryGetValue(chapter, out var element) ? element : null;
+        }
+
+        private async Task EnsureCurrentChapterWindowAsync(bool preserveViewport)
+        {
+            if (_viewModel.CurrentChapter == null)
+            {
+                return;
+            }
+
+            _isAdjustingChapterWindow = true;
+            try
+            {
+                var currentChapter = _viewModel.CurrentChapter;
+                var currentChapterIndex = _viewModel.Chapters.IndexOf(currentChapter);
+                var currentChapterElement = currentChapterIndex >= 0 ? GetChapterElement(currentChapterIndex) : null;
+                var currentChapterTopBefore = currentChapterElement != null
+                    ? GetChapterTopInViewport(currentChapterElement)
+                    : (double?)null;
+                var currentOffsetBefore = BibleScrollViewer.VerticalOffset;
+
+                var chapterWindowChanged = await _viewModel.EnsureCurrentChapterWindowAsync();
+                if (!chapterWindowChanged)
+                {
+                    return;
+                }
+
+                await Dispatcher.RunAsync(CoreDispatcherPriority.Low, () => BibleScrollViewer.UpdateLayout());
+
+                if (!preserveViewport)
+                {
+                    return;
+                }
+
+                var refreshedChapterIndex = _viewModel.Chapters.IndexOf(currentChapter);
+                var refreshedChapterElement = refreshedChapterIndex >= 0 ? GetChapterElement(refreshedChapterIndex) : null;
+                if (currentChapterTopBefore.HasValue && refreshedChapterElement != null)
+                {
+                    var currentChapterTopAfter = GetChapterTopInViewport(refreshedChapterElement);
+                    var adjustedOffset = Math.Max(0, currentOffsetBefore + (currentChapterTopAfter - currentChapterTopBefore.Value));
+                    SuppressScrollSyncFor(TimeSpan.FromMilliseconds(250));
+                    BibleScrollViewer.ChangeView(null, adjustedOffset, null, true);
+                }
+            }
+            finally
+            {
+                _isAdjustingChapterWindow = false;
+            }
+        }
+
+        private double GetChapterOffsetInContent(FrameworkElement chapterElement)
+        {
+            if (chapterElement == null)
+            {
+                return 0d;
+            }
+
+            var transform = chapterElement.TransformToVisual(ChaptersContainer);
+            var chapterPosition = transform.TransformPoint(new Windows.Foundation.Point(0, 0));
+            return chapterPosition.Y;
+        }
+
+        private double GetChapterTopInViewport(FrameworkElement chapterElement)
+        {
+            if (chapterElement == null)
+            {
+                return 0d;
+            }
+
+            var transform = chapterElement.TransformToVisual(BibleScrollViewer);
+            var chapterPosition = transform.TransformPoint(new Windows.Foundation.Point(0, 0));
+            return chapterPosition.Y;
+        }
+
+        private void ChapterItemGrid_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement element && element.DataContext is Chapter chapter)
+            {
+                _chapterElements[chapter] = element;
+            }
+        }
+
+        private void ChapterItemGrid_Unloaded(object sender, RoutedEventArgs e)
+        {
+            if (!(sender is FrameworkElement element) || !(element.DataContext is Chapter chapter))
+            {
+                return;
+            }
+
+            if (_chapterElements.TryGetValue(chapter, out var loadedElement) && ReferenceEquals(loadedElement, element))
+            {
+                _chapterElements.Remove(chapter);
+            }
+        }
+
+        private void ResetChapterElementTracking()
+        {
+            _chapterElements.Clear();
+        }
+
         private void SynchronizePickerSelection()
         {
             _suppressComboHandling = true;
             try
             {
-                BibleBookComboBox.SelectedItem = _viewModel.CurrentBook;
-                BookChapterComboBox.ItemsSource = _viewModel.ChapterIndices;
-                BookChapterComboBox.SelectedItem = _viewModel.SelectedChapterIndex;
+                if (!ReferenceEquals(BibleBookComboBox.SelectedItem, _viewModel.CurrentBook))
+                {
+                    BibleBookComboBox.SelectedItem = _viewModel.CurrentBook;
+                }
+
+                if (!ReferenceEquals(BookChapterComboBox.ItemsSource, _viewModel.ChapterIndices))
+                {
+                    BookChapterComboBox.ItemsSource = _viewModel.ChapterIndices;
+                }
+
+                if (!(BookChapterComboBox.SelectedItem is int selectedChapterIndex) || selectedChapterIndex != _viewModel.SelectedChapterIndex)
+                {
+                    BookChapterComboBox.SelectedItem = _viewModel.SelectedChapterIndex;
+                }
             }
             finally
             {

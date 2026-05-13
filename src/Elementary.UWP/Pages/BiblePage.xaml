@@ -24,7 +24,12 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <ScrollViewer x:Name="BibleScrollViewer" Grid.RowSpan="2" VerticalScrollBarVisibility="Hidden" ViewChanged="BibleScrollViewer_ViewChanged" Opacity="0">
+        <ScrollViewer x:Name="BibleScrollViewer"
+                      Grid.RowSpan="2"
+                      VerticalScrollBarVisibility="Hidden"
+                      HorizontalScrollBarVisibility="Disabled"
+                      ViewChanged="BibleScrollViewer_ViewChanged"
+                      Opacity="0">
             <StackPanel x:Name="ChaptersContainer">
                 <TextBlock Text="{Binding CurrentBook.Title}"
                            FontSize="34"
@@ -32,12 +37,16 @@
                            HorizontalAlignment="Center"
                            TextAlignment="Center"
                            Margin="0,68,0,10"/>
-				<muxc:ItemsRepeater x:Name="ChaptersRepeater" ItemsSource="{Binding Chapters}">
-					<muxc:ItemsRepeater.ItemTemplate>
-						<DataTemplate>
-                            <Grid x:Name="ChapterItemGrid" Margin="0,0,0,20">
+                <ItemsControl x:Name="ChaptersItemsControl"
+                              ItemsSource="{Binding Chapters}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid x:Name="ChapterItemGrid"
+                                  Margin="0,0,0,20"
+                                  Loaded="ChapterItemGrid_Loaded"
+                                  Unloaded="ChapterItemGrid_Unloaded">
                                 <StackPanel MaxWidth="700"
-                                             HorizontalAlignment="Center">
+                                            HorizontalAlignment="Center">
                                     <TextBlock FontSize="28"
                                                 FontWeight="Bold"
                                                 HorizontalAlignment="Center"
@@ -46,8 +55,8 @@
                                         <Run Text="Chapter " />
                                         <Run Text="{Binding Index}" />
                                     </TextBlock>
-                                    <muxc:ItemsRepeater ItemsSource="{Binding DisplayLines}">
-                                        <muxc:ItemsRepeater.ItemTemplate>
+                                    <ItemsControl ItemsSource="{Binding DisplayLines}">
+                                        <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <StackPanel Loaded="DisplayLineContainer_Loaded">
                                                     <Grid Visibility="{Binding IsVerse, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,6">
@@ -76,14 +85,14 @@
                                                     <Border Visibility="{Binding IsParagraphBreak, Converter={StaticResource BoolToVisibilityConverter}}" Height="8" Background="Transparent"/>
                                                 </StackPanel>
                                             </DataTemplate>
-                                        </muxc:ItemsRepeater.ItemTemplate>
-                                    </muxc:ItemsRepeater>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                 </StackPanel>
                             </Grid>
-						</DataTemplate>
-					</muxc:ItemsRepeater.ItemTemplate>
-				</muxc:ItemsRepeater>
-			</StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
         </ScrollViewer>
 
 		<!-- Blur layer behind the gradient and picker -->

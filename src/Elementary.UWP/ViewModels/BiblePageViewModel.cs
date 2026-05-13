@@ -15,6 +15,9 @@ namespace Elementary.ViewModels
 {
     public partial class BiblePageViewModel : ObservableObject
     {
+        private const int ChapterWindowRadius = 2;
+        private const int ChapterWindowShiftThreshold = 0;
+
         private Bible _bible;
         private Book _currentBook;
         private Chapter _currentChapter;
@@ -25,6 +28,9 @@ namespace Elementary.ViewModels
         private IBibleService _bibleService;
         private bool _isLoaded;
         private ObservableCollection<Chapter> _chapters;
+        private Book _chapterIndicesBook;
+        private int _displayedChapterStartIndex;
+        private int _displayedChapterEndIndex = -1;
 
         public Bible Bible
         {
@@ -101,6 +107,7 @@ namespace Elementary.ViewModels
             IsLoaded = false;
             Chapters.Clear();
             ChapterIndices = new List<int>();
+            _chapterIndicesBook = null;
 
             var initialBook = ResolveBook(AppSettings.Book) ?? Bible?.Books?.FirstOrDefault();
             if (initialBook == null)
@@ -114,21 +121,24 @@ namespace Elementary.ViewModels
             await SetCurrentLocationAsync(initialBook, AppSettings.Chapter, persistSettings: false);
         }
 
-        public async Task SetCurrentLocationAsync(Book book, int chapterIndex, bool persistSettings = true)
+        public async Task<bool> SetCurrentLocationAsync(Book book, int chapterIndex, bool persistSettings = true)
         {
-            if (book == null) return;
+            if (book == null) return false;
 
+            var shouldForceWindowRefresh = !ReferenceEquals(CurrentBook, book) || Chapters.Count == 0;
             await EnsureBookLoadedAsync(book);
             var chapter = ResolveChapter(book, chapterIndex);
-            if (chapter == null) return;
+            if (chapter == null) return false;
 
             ApplyCommittedLocation(book, chapter);
-            await LoadCurrentBookChaptersAsync();
+            var chapterWindowChanged = UpdateDisplayedChapterWindow(book, chapter, shouldForceWindowRefresh);
 
             if (persistSettings)
             {
                 SaveCurrentLocation();
             }
+
+            return chapterWindowChanged;
         }
 
         public async Task PrepareChapterPickerAsync(Book book)
@@ -136,21 +146,22 @@ namespace Elementary.ViewModels
             if (book == null)
             {
                 ChapterIndices = new List<int>();
+                _chapterIndicesBook = null;
                 return;
             }
 
             await EnsureBookLoadedAsync(book);
-            ChapterIndices = CreateChapterIndices(book);
+            EnsureChapterIndicesForBook(book);
         }
 
         public void RestoreChapterPickerToCurrentBook()
         {
-            ChapterIndices = CreateChapterIndices(CurrentBook);
+            EnsureChapterIndicesForBook(CurrentBook);
         }
 
-        public async Task LoadInitialChaptersAsync()
+        public async Task<bool> LoadInitialChaptersAsync()
         {
-            await LoadCurrentBookChaptersAsync();
+            return await EnsureCurrentChapterWindowAsync(forceRefresh: true);
         }
 
         public void UpdateCurrentChapterFromScroll(Chapter chapter)
@@ -168,14 +179,14 @@ namespace Elementary.ViewModels
             }
         }
 
-        public async Task UpdateNavigationSettingsAsync(string bookTitle, int chapterIndex, string bookKey = null)
+        public async Task<bool> UpdateNavigationSettingsAsync(string bookTitle, int chapterIndex, string bookKey = null)
         {
-            if (Bible?.Books == null) return;
+            if (Bible?.Books == null) return false;
 
             var book = ResolveBook(bookKey, bookTitle);
-            if (book == null) return;
+            if (book == null) return false;
 
-            await SetCurrentLocationAsync(book, chapterIndex);
+            return await SetCurrentLocationAsync(book, chapterIndex);
         }
 
         public async Task EnsureBookLoadedAsync(Book book)
@@ -185,20 +196,12 @@ namespace Elementary.ViewModels
             await _bibleService.EnsureBookLoaded(AppSettings.Translation, book);
         }
 
-        private async Task LoadCurrentBookChaptersAsync()
+        public async Task<bool> EnsureCurrentChapterWindowAsync(bool forceRefresh = false)
         {
-            Chapters.Clear();
-            if (CurrentBook == null) return;
+            if (CurrentBook == null || CurrentChapter == null) return false;
 
             await EnsureBookLoadedAsync(CurrentBook);
-            if (CurrentBook.Chapters == null || CurrentBook.Chapters.Count == 0) return;
-
-            foreach (var chapter in CurrentBook.Chapters.OrderBy(c => c.Index))
-            {
-                Chapters.Add(chapter);
-            }
-
-            RestoreChapterPickerToCurrentBook();
+            return UpdateDisplayedChapterWindow(CurrentBook, CurrentChapter, forceRefresh);
         }
 
         private void ApplyCommittedLocation(Book book, Chapter chapter)
@@ -206,7 +209,7 @@ namespace Elementary.ViewModels
             SetProperty(ref _currentBook, book, nameof(CurrentBook));
             SetProperty(ref _currentChapter, chapter, nameof(CurrentChapter));
             SetProperty(ref _selectedChapterIndex, chapter.Index, nameof(SelectedChapterIndex));
-            RestoreChapterPickerToCurrentBook();
+            EnsureChapterIndicesForBook(book);
         }
 
         private Book ResolveBook(EBook bookEnum)
@@ -254,6 +257,29 @@ namespace Elementary.ViewModels
                 : new List<int>();
         }
 
+        private void EnsureChapterIndicesForBook(Book book)
+        {
+            if (book == null)
+            {
+                if (ChapterIndices.Count > 0)
+                {
+                    ChapterIndices = new List<int>();
+                }
+
+                _chapterIndicesBook = null;
+                return;
+            }
+
+            var expectedChapterCount = book.Chapters?.Count ?? 0;
+            if (ReferenceEquals(_chapterIndicesBook, book) && ChapterIndices.Count == expectedChapterCount)
+            {
+                return;
+            }
+
+            ChapterIndices = CreateChapterIndices(book);
+            _chapterIndicesBook = book;
+        }
+
         private void SaveCurrentLocation()
         {
             if (AppSettings == null || CurrentBook == null || CurrentChapter == null || _settingsService == null) return;
@@ -263,6 +289,165 @@ namespace Elementary.ViewModels
             AppSettings.Book = bookEnum;
             AppSettings.Chapter = CurrentChapter.Index;
             _settingsService.SaveSettings(AppSettings);
+        }
+
+        private bool UpdateDisplayedChapterWindow(Book book, Chapter chapter, bool forceRefresh)
+        {
+            if (book?.Chapters == null || book.Chapters.Count == 0 || chapter == null)
+            {
+                if (Chapters.Count > 0)
+                {
+                    Chapters.Clear();
+                }
+
+                _displayedChapterStartIndex = 0;
+                _displayedChapterEndIndex = -1;
+                RestoreChapterPickerToCurrentBook();
+                return true;
+            }
+
+            var targetChapterIndex = book.Chapters.IndexOf(chapter);
+            if (targetChapterIndex < 0)
+            {
+                targetChapterIndex = 0;
+            }
+
+            var (startIndex, endIndex) = GetDesiredDisplayedChapterRange(book.Chapters.Count, targetChapterIndex, forceRefresh);
+            if (!forceRefresh
+                && startIndex == _displayedChapterStartIndex
+                && endIndex == _displayedChapterEndIndex
+                && ChaptersMatchWindow(book, startIndex, endIndex))
+            {
+                return false;
+            }
+
+            if (!TrySynchronizeDisplayedChaptersIncrementally(book, startIndex, endIndex))
+            {
+                Chapters.Clear();
+                for (int i = startIndex; i <= endIndex; i++)
+                {
+                    Chapters.Add(book.Chapters[i]);
+                }
+            }
+
+            _displayedChapterStartIndex = startIndex;
+            _displayedChapterEndIndex = endIndex;
+            RestoreChapterPickerToCurrentBook();
+            return true;
+        }
+
+        private (int startIndex, int endIndex) GetDesiredDisplayedChapterRange(int totalChapterCount, int targetChapterIndex, bool forceRefresh)
+        {
+            if (totalChapterCount <= 0)
+            {
+                return (0, -1);
+            }
+
+            var maximumWindowSize = (ChapterWindowRadius * 2) + 1;
+            if (forceRefresh || _displayedChapterEndIndex < _displayedChapterStartIndex)
+            {
+                return CreateCenteredDisplayedRange(totalChapterCount, targetChapterIndex, maximumWindowSize);
+            }
+
+            if (targetChapterIndex < _displayedChapterStartIndex || targetChapterIndex > _displayedChapterEndIndex)
+            {
+                return CreateCenteredDisplayedRange(totalChapterCount, targetChapterIndex, maximumWindowSize);
+            }
+
+            var shouldShiftBackward = targetChapterIndex <= _displayedChapterStartIndex + ChapterWindowShiftThreshold;
+            var shouldShiftForward = targetChapterIndex >= _displayedChapterEndIndex - ChapterWindowShiftThreshold;
+            if (!shouldShiftBackward && !shouldShiftForward)
+            {
+                return (_displayedChapterStartIndex, _displayedChapterEndIndex);
+            }
+
+            return CreateCenteredDisplayedRange(totalChapterCount, targetChapterIndex, maximumWindowSize);
+        }
+
+        private static (int startIndex, int endIndex) CreateCenteredDisplayedRange(int totalChapterCount, int targetChapterIndex, int maximumWindowSize)
+        {
+            if (totalChapterCount <= maximumWindowSize)
+            {
+                return (0, totalChapterCount - 1);
+            }
+
+            var startIndex = Math.Max(0, targetChapterIndex - ChapterWindowRadius);
+            var endIndex = Math.Min(totalChapterCount - 1, startIndex + maximumWindowSize - 1);
+            startIndex = Math.Max(0, endIndex - maximumWindowSize + 1);
+            return (startIndex, endIndex);
+        }
+
+        private bool ChaptersMatchWindow(Book book, int startIndex, int endIndex)
+        {
+            var expectedCount = endIndex - startIndex + 1;
+            if (expectedCount != Chapters.Count)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < expectedCount; i++)
+            {
+                if (!ReferenceEquals(Chapters[i], book.Chapters[startIndex + i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private bool TrySynchronizeDisplayedChaptersIncrementally(Book book, int startIndex, int endIndex)
+        {
+            if (Chapters.Count == 0 || !DisplayedChaptersBelongToBook(book))
+            {
+                return false;
+            }
+
+            while (_displayedChapterStartIndex < startIndex && Chapters.Count > 0)
+            {
+                Chapters.RemoveAt(0);
+                _displayedChapterStartIndex++;
+            }
+
+            while (_displayedChapterStartIndex > startIndex)
+            {
+                var insertIndex = _displayedChapterStartIndex - 1;
+                Chapters.Insert(0, book.Chapters[insertIndex]);
+                _displayedChapterStartIndex--;
+            }
+
+            while (_displayedChapterEndIndex > endIndex && Chapters.Count > 0)
+            {
+                Chapters.RemoveAt(Chapters.Count - 1);
+                _displayedChapterEndIndex--;
+            }
+
+            while (_displayedChapterEndIndex < endIndex)
+            {
+                var appendIndex = _displayedChapterEndIndex + 1;
+                Chapters.Add(book.Chapters[appendIndex]);
+                _displayedChapterEndIndex++;
+            }
+
+            return ChaptersMatchWindow(book, startIndex, endIndex);
+        }
+
+        private bool DisplayedChaptersBelongToBook(Book book)
+        {
+            if (book?.Chapters == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < Chapters.Count; i++)
+            {
+                if (!book.Chapters.Contains(Chapters[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }
