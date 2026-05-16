@@ -1,4 +1,5 @@
-using Elementary.Services;
+using Elementary.VerseOfTheDay.Services;
+using System;
 
 namespace Elementary.Tests.Services
 {
@@ -6,32 +7,31 @@ namespace Elementary.Tests.Services
     public class VerseOfTheDayServiceTests
     {
         [TestMethod]
-        public void GetVerseOfTheDay_ShouldUseProvidedDateInUrl()
+        public void NormalizeWhitespace_ShouldCollapseMultipleSpaces()
         {
-            // Arrange
-            var service = new VerseOfTheDayService();
-            var date = new DateTime(2026, 2, 7);
-
-            // Act
-            var result = service.GetVerseOfTheDay(date);
-
-            // Assert
-            Assert.AreEqual(date, result.Date);
-            Assert.AreEqual("https://votd.olivetree.com/02_07_NKJV.jpg", result.ImageUrl);
+            var result = VerseFetchService.NormalizeWhitespace("For  God   so  loved");
+            Assert.AreEqual("For God so loved", result);
         }
 
         [TestMethod]
-        public void GetVerseOfTheDay_ShouldBuildTitleFromDate()
+        public void NormalizeWhitespace_ShouldStripHtmlTags()
         {
-            // Arrange
-            var service = new VerseOfTheDayService();
-            var date = new DateTime(2026, 12, 25);
+            var result = VerseFetchService.NormalizeWhitespace("For <b>God</b> so loved");
+            Assert.AreEqual("For God so loved", result);
+        }
 
-            // Act
-            var result = service.GetVerseOfTheDay(date);
+        [TestMethod]
+        public void NormalizeWhitespace_ShouldTrimLeadingAndTrailingWhitespace()
+        {
+            var result = VerseFetchService.NormalizeWhitespace("  For God so loved  ");
+            Assert.AreEqual("For God so loved", result);
+        }
 
-            // Assert
-            Assert.AreEqual($"Verse of the Day for {date.ToShortDateString()}", result.Title);
+        [TestMethod]
+        public void NormalizeWhitespace_ShouldReturnEmptyStringUnchanged()
+        {
+            var result = VerseFetchService.NormalizeWhitespace(string.Empty);
+            Assert.AreEqual(string.Empty, result);
         }
     }
 }

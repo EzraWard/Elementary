@@ -41,6 +41,7 @@ namespace Elementary.Core.Models
     {
         public string Title { get; set; }
         public int ReadingOrderIndex { get; set; }
+        public int ChapterCount { get; set; }
         public string SourcePath { get; set; }
         public bool IsChaptersLoaded { get; set; }
         public ObservableCollection<Chapter> Chapters { get; set; }

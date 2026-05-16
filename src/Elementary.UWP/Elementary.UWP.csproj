@@ -120,13 +120,19 @@
     <Compile Include="Pages\MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Pages\VerseOfTheDayPage.xaml.cs">
+      <DependentUpon>VerseOfTheDayPage.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Pages\SettingsPage.xaml.cs">
       <DependentUpon>SettingsPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Services\UWPFileService.cs" />
+    <Compile Include="Services\ITileUpdateService.cs" />
+    <Compile Include="Services\TileUpdateService.cs" />
     <Compile Include="Services\IVerseOfTheDayDialogService.cs" />
     <Compile Include="Services\VerseOfTheDayDialogService.cs" />
+    <Compile Include="Services\UWPFileService.cs" />
+    <Compile Include="Services\UwpVotdStorageService.cs" />
     <Compile Include="Services\WindowsFilePathProvider.cs" />
     <Compile Include="Services\WindowsSettingsProvider.cs" />
     <Compile Include="ViewModels\BiblePageViewModel.cs" />
@@ -212,8 +218,18 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Pages\VerseOfTheDayPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="SkiaSharp">
+      <Version>2.88.9</Version>
+    </PackageReference>
+    <PackageReference Include="SkiaSharp.NativeAssets.UWP">
+      <Version>2.88.9</Version>
+    </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm">
       <Version>8.4.2</Version>
     </PackageReference>
@@ -224,7 +240,7 @@
       <Version>8.2.251219</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection">
-      <Version>10.0.5</Version>
+      <Version>10.0.8</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.14</Version>
@@ -249,6 +265,7 @@
       <Project>{ffc22eb9-4a5f-4eb2-85e3-071f63dbb4e3}</Project>
       <Name>Elementary.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Elementary.VerseOfTheDay\Elementary.VerseOfTheDay.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />

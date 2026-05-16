@@ -1,14 +1,13 @@
-﻿using Elementary.Core.Dictionaries;
+using Elementary.Core.Dictionaries;
 using Elementary.Core.Enums;
+using Elementary.Core.Extensions;
 using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -16,11 +15,10 @@ namespace Elementary.Core.Services
 {
     public class BibleService : IBibleService
     {
-        private const int RevelationChapterCount = 22;
-
         private readonly ISettingsService _settingsService;
         private readonly IFileService _fileService;
         private readonly IFilePathProvider _filePathProvider;
+        private readonly Dictionary<ETranslation, Bible> _bibleCache = new Dictionary<ETranslation, Bible>();
 
         public BibleService(ISettingsService settingsService, IFileService fileService, IFilePathProvider filePathProvider)
         {
@@ -31,17 +29,29 @@ namespace Elementary.Core.Services
 
         public async Task<Bible> GetBible(ETranslation translation)
         {
+            if (_bibleCache.TryGetValue(translation, out var cachedBible))
+            {
+                return cachedBible;
+            }
+
+            Bible bible;
             switch (translation)
             {
                 case ETranslation.ASV:
-                    return await GetBibleFromTranslation(translation);
+                    bible = await GetBibleFromTranslation(translation);
+                    break;
                 case ETranslation.KJV:
-                    return await GetBibleFromTranslation(translation);
+                    bible = await GetBibleFromTranslation(translation);
+                    break;
                 case ETranslation.NET:
-                    return await GetBibleFromTranslation(translation);
+                    bible = await GetBibleFromTranslation(translation);
+                    break;
                 default:
                     return null;
             }
+
+            _bibleCache[translation] = bible;
+            return bible;
         }
 
         public async Task EnsureBookLoaded(ETranslation translation, Book book)
@@ -90,6 +100,7 @@ namespace Elementary.Core.Services
             }
 
             book.Chapters = chapters;
+            book.ChapterCount = chapters.Count;
             book.IsChaptersLoaded = true;
         }
 
@@ -109,14 +120,8 @@ namespace Elementary.Core.Services
             {
                 try
                 {
-                    var bookTitle = await ReadUsfmBookTitleAsync(filePath);
-                    bible.Books.Add(new Book
-                    {
-                        Title = bookTitle,
-                        SourcePath = filePath,
-                        Chapters = new ObservableCollection<Chapter>(),
-                        IsChaptersLoaded = false
-                    });
+                    var book = await CreateBookAsync(filePath);
+                    bible.Books.Add(book);
                 }
                 catch (Exception ex)
                 {
@@ -124,16 +129,70 @@ namespace Elementary.Core.Services
                 }
             }
 
-            // Set reading order index using the mapping when possible
-            foreach (var book in bible.Books)
+            return bible;
+        }
+
+        private async Task<Book> CreateBookAsync(string filePath)
+        {
+            var metadata = GetCanonicalMetadata(filePath);
+            if (metadata != null)
             {
-                if (EBookToLocation.EBookTitleToEBook.TryGetValue(book.Title, out var bookEnum))
+                return new Book
                 {
-                    book.ReadingOrderIndex = EBookToLocation.EBookToEPubLocationNET[bookEnum];
-                }
+                    Title = metadata.Title,
+                    ReadingOrderIndex = metadata.ReadingOrderIndex,
+                    ChapterCount = metadata.ChapterCount,
+                    SourcePath = filePath,
+                    Chapters = new ObservableCollection<Chapter>(),
+                    IsChaptersLoaded = false
+                };
             }
 
-            return bible;
+            var bookTitle = await ReadUsfmBookTitleAsync(filePath);
+            return new Book
+            {
+                Title = bookTitle,
+                SourcePath = filePath,
+                Chapters = new ObservableCollection<Chapter>(),
+                IsChaptersLoaded = false
+            };
+        }
+
+        private static CanonicalBookMetadata GetCanonicalMetadata(string filePath)
+        {
+            var fileName = Path.GetFileNameWithoutExtension(filePath);
+            if (string.IsNullOrWhiteSpace(fileName))
+            {
+                return null;
+            }
+
+            var codeMatch = Regex.Match(fileName, @"^\d{2}-(?<code>[1-3]?[A-Z]{3})", RegexOptions.IgnoreCase);
+            if (!codeMatch.Success)
+            {
+                return null;
+            }
+
+            var usfmCode = codeMatch.Groups["code"].Value;
+            if (!EBookToLocation.UsfmCodeToEBook.TryGetValue(usfmCode, out var canonicalBook)
+                || !EBookToLocation.EBookToEPubLocationNET.TryGetValue(canonicalBook, out var readingOrderIndex)
+                || !EBookToLocation.EBookToChapterCount.TryGetValue(canonicalBook, out var chapterCount))
+            {
+                return null;
+            }
+
+            return new CanonicalBookMetadata
+            {
+                Title = canonicalBook.GetDisplayName(),
+                ReadingOrderIndex = readingOrderIndex,
+                ChapterCount = chapterCount
+            };
+        }
+
+        private sealed class CanonicalBookMetadata
+        {
+            public string Title { get; set; }
+            public int ReadingOrderIndex { get; set; }
+            public int ChapterCount { get; set; }
         }
 
         private async Task<string> ReadUsfmBookTitleAsync(string filePath)

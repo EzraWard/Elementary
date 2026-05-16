@@ -141,17 +141,17 @@ namespace Elementary.ViewModels
             return chapterWindowChanged;
         }
 
-        public async Task PrepareChapterPickerAsync(Book book)
+        public Task PrepareChapterPickerAsync(Book book)
         {
             if (book == null)
             {
                 ChapterIndices = new List<int>();
                 _chapterIndicesBook = null;
-                return;
+                return Task.CompletedTask;
             }
 
-            await EnsureBookLoadedAsync(book);
             EnsureChapterIndicesForBook(book);
+            return Task.CompletedTask;
         }
 
         public void RestoreChapterPickerToCurrentBook()
@@ -252,8 +252,13 @@ namespace Elementary.ViewModels
 
         private static List<int> CreateChapterIndices(Book book)
         {
-            return book?.Chapters != null
-                ? book.Chapters.OrderBy(c => c.Index).Select(c => c.Index).ToList()
+            if (book?.Chapters != null && book.Chapters.Count > 0)
+            {
+                return book.Chapters.OrderBy(c => c.Index).Select(c => c.Index).ToList();
+            }
+
+            return book?.ChapterCount > 0
+                ? Enumerable.Range(1, book.ChapterCount).ToList()
                 : new List<int>();
         }
 
@@ -270,7 +275,7 @@ namespace Elementary.ViewModels
                 return;
             }
 
-            var expectedChapterCount = book.Chapters?.Count ?? 0;
+            var expectedChapterCount = book.Chapters?.Count > 0 ? book.Chapters.Count : book.ChapterCount;
             if (ReferenceEquals(_chapterIndicesBook, book) && ChapterIndices.Count == expectedChapterCount)
             {
                 return;
