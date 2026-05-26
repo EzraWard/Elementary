@@ -1,5 +1,34 @@
 # Changelog
 
+### v0.8.0
+
+### Added or Changed
+
+* Added KJV and ASV Bible translations.
+* Added navigation history with flyout and ability to jump back to previous locations.
+* Improved top-of-reader blur with a more progressive fade using the Composition API.
+
+### v0.7.0
+
+### Added or Changed
+
+* Refactored Bible loading to use USFM format across all translations.
+* Improved settings persistence and reliability.
+* Minor UI polish and stability improvements.
+
+### v0.6.0
+
+### Added or Changed
+
+* Navigation history tracking — the app now remembers the last 10 locations visited.
+
+### v0.5.0
+
+### Added or Changed
+
+* Added KJV translation support.
+* Added ASV translation support.
+
 ### v0.4.0
 
 ### Added or Changed

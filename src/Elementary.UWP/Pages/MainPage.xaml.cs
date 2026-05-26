@@ -29,6 +29,8 @@ namespace Elementary
 
             this.InitializeComponent();
 
+            Loaded += RedirectInitialFocus;
+
             Window.Current.SizeChanged += WindowSizeChanged;
             WindowSizeChanged(this, null);
 
@@ -46,6 +48,11 @@ namespace Elementary
                 await Task.Delay(100); // Adjust delay as needed (100ms is usually enough)
                 NavigateToView("BiblePage");
             };
+        }
+
+        private void RedirectInitialFocus(object sender, RoutedEventArgs e)
+        {
+            InitialFocusStealer.Focus(FocusState.Programmatic);
         }
 
         private async void NavigationView_ItemInvoked(MUXC.NavigationView sender, MUXC.NavigationViewItemInvokedEventArgs args)

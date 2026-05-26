@@ -1,4 +1,7 @@
+using Elementary.VerseOfTheDay.Interfaces;
+using Elementary.VerseOfTheDay.Models;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -18,11 +21,9 @@ namespace Elementary.Services
 
         public async Task ShowAsync()
         {
-            var verse = _verseOfTheDayService.GetVerseOfTheDay();
-
             var dialog = new ContentDialog
             {
-                Title = verse.Title,
+                Title = $"Verse of the Day for {DateTime.Now.ToShortDateString()}",
                 CloseButtonText = "Close",
                 DefaultButton = ContentDialogButton.Close,
                 RequestedTheme = ((FrameworkElement)Window.Current.Content).RequestedTheme
@@ -55,26 +56,6 @@ namespace Elementary.Services
                 Visibility = Visibility.Collapsed
             };
 
-            image.ImageOpened += (s, e) =>
-            {
-                loadingRing.IsActive = false;
-                loadingRing.Visibility = Visibility.Collapsed;
-                failureText.Visibility = Visibility.Collapsed;
-                image.Visibility = Visibility.Visible;
-            };
-
-            image.ImageFailed += (s, e) =>
-            {
-                loadingRing.IsActive = false;
-                loadingRing.Visibility = Visibility.Collapsed;
-                image.Visibility = Visibility.Collapsed;
-                failureText.Visibility = Visibility.Visible;
-            };
-
-            var bitmap = new BitmapImage();
-            image.Source = bitmap;
-            bitmap.UriSource = new Uri(verse.ImageUrl);
-
             var container = new Grid
             {
                 MinWidth = 500,
@@ -85,7 +66,47 @@ namespace Elementary.Services
             container.Children.Add(failureText);
 
             dialog.Content = container;
+
+            // Fetch and display composited image without blocking the dialog opening
+            _ = LoadImageAsync(image, loadingRing, failureText);
+
             await dialog.ShowAsync();
+        }
+
+        private async Task LoadImageAsync(Image image, ProgressRing loadingRing, TextBlock failureText)
+        {
+            try
+            {
+                var result = await _verseOfTheDayService.GetAsync(VotdImageSize.InApp);
+
+                if (result.ImageBytes != null && result.ImageBytes.Length > 0)
+                {
+                    var bitmap = new BitmapImage();
+                    using var ms = new MemoryStream(result.ImageBytes);
+                    using var ras = ms.AsRandomAccessStream();
+                    await bitmap.SetSourceAsync(ras);
+
+                    image.Source = bitmap;
+                    loadingRing.IsActive = false;
+                    loadingRing.Visibility = Visibility.Collapsed;
+                    image.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    ShowFailure(loadingRing, failureText);
+                }
+            }
+            catch (Exception)
+            {
+                ShowFailure(loadingRing, failureText);
+            }
+        }
+
+        private static void ShowFailure(ProgressRing loadingRing, TextBlock failureText)
+        {
+            loadingRing.IsActive = false;
+            loadingRing.Visibility = Visibility.Collapsed;
+            failureText.Visibility = Visibility.Visible;
         }
     }
 }

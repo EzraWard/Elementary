@@ -65,10 +65,10 @@ To run Elementary, you'll need:
 
 ## Roadmap
 
+- [x] KJV, ASV translations
+- [x] Bible reading history
 - [ ] Infinite scrolling
-- [ ] Bible reading history
 - [ ] Integrated Bible reading plans
-- [ ] KJV, ASV translations
 - [ ] ...and more!
 
 See the [open issues](https://github.com/EzraWard/Elementary/issues) for a full list of proposed features (and known issues).

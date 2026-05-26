@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 
@@ -10,7 +11,13 @@ namespace Elementary.Core.Extensions
         {
             var field = value.GetType().GetField(value.ToString());
             var attribute = field?.GetCustomAttribute<DisplayAttribute>();
-            return attribute?.Name ?? value.ToString();
+            if (!string.IsNullOrWhiteSpace(attribute?.Name))
+            {
+                return attribute.Name;
+            }
+
+            var description = field?.GetCustomAttribute<DescriptionAttribute>();
+            return description?.Description ?? value.ToString();
         }
     }
 }

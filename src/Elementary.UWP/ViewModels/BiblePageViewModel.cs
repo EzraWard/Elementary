@@ -25,7 +25,7 @@ namespace Elementary.ViewModels
         private IBibleService _bibleService;
         private bool _isLoaded;
         private ObservableCollection<Chapter> _chapters;
-        private bool _isLoadingMore;
+        private Book _chapterIndicesBook;
 
         public Bible Bible
         {
@@ -86,12 +86,6 @@ namespace Elementary.ViewModels
             set => SetProperty(ref _chapters, value);
         }
 
-        public bool IsLoadingMore
-        {
-            get => _isLoadingMore;
-            set => SetProperty(ref _isLoadingMore, value);
-        }
-
         public BiblePageViewModel()
         {
             Chapters = new ObservableCollection<Chapter>();
@@ -108,6 +102,7 @@ namespace Elementary.ViewModels
             IsLoaded = false;
             Chapters.Clear();
             ChapterIndices = new List<int>();
+            _chapterIndicesBook = null;
 
             var initialBook = ResolveBook(AppSettings.Book) ?? Bible?.Books?.FirstOrDefault();
             if (initialBook == null)
@@ -121,21 +116,27 @@ namespace Elementary.ViewModels
             await SetCurrentLocationAsync(initialBook, AppSettings.Chapter, persistSettings: false);
         }
 
-        public async Task SetCurrentLocationAsync(Book book, int chapterIndex, bool persistSettings = true)
+        public async Task<bool> SetCurrentLocationAsync(Book book, int chapterIndex, bool persistSettings = true)
         {
-            if (book == null) return;
+            if (book == null) return false;
 
+            var chaptersChanged = !ReferenceEquals(CurrentBook, book) || !DoDisplayedChaptersMatchBook(book);
             await EnsureBookLoadedAsync(book);
             var chapter = ResolveChapter(book, chapterIndex);
-            if (chapter == null) return;
+            if (chapter == null) return false;
 
             ApplyCommittedLocation(book, chapter);
-            await LoadCurrentBookChaptersAsync();
+            if (chaptersChanged)
+            {
+                ReplaceDisplayedChapters(book);
+            }
 
             if (persistSettings)
             {
                 SaveCurrentLocation();
             }
+
+            return chaptersChanged;
         }
 
         public async Task PrepareChapterPickerAsync(Book book)
@@ -143,31 +144,34 @@ namespace Elementary.ViewModels
             if (book == null)
             {
                 ChapterIndices = new List<int>();
+                _chapterIndicesBook = null;
                 return;
             }
 
             await EnsureBookLoadedAsync(book);
-            ChapterIndices = CreateChapterIndices(book);
+            EnsureChapterIndicesForBook(book);
         }
 
         public void RestoreChapterPickerToCurrentBook()
         {
-            ChapterIndices = CreateChapterIndices(CurrentBook);
+            EnsureChapterIndicesForBook(CurrentBook);
         }
 
-        public async Task LoadInitialChaptersAsync()
+        public async Task<bool> LoadInitialChaptersAsync()
         {
-            await LoadCurrentBookChaptersAsync();
-        }
+            if (CurrentBook == null)
+            {
+                return false;
+            }
 
-        public Task LoadNextChapterAsync()
-        {
-            return Task.CompletedTask;
-        }
+            await EnsureBookLoadedAsync(CurrentBook);
+            var chaptersChanged = !DoDisplayedChaptersMatchBook(CurrentBook);
+            if (chaptersChanged)
+            {
+                ReplaceDisplayedChapters(CurrentBook);
+            }
 
-        public Task LoadPreviousChapterAsync()
-        {
-            return Task.CompletedTask;
+            return chaptersChanged;
         }
 
         public void UpdateCurrentChapterFromScroll(Chapter chapter)
@@ -178,21 +182,21 @@ namespace Elementary.ViewModels
             if (book == null) return;
 
             ApplyCommittedLocation(book, chapter);
-
-            if (IsLoaded)
-            {
-                SaveCurrentLocation();
-            }
         }
 
-        public async Task UpdateNavigationSettingsAsync(string bookTitle, int chapterIndex, string bookKey = null)
+        public void PersistCurrentLocation()
         {
-            if (Bible?.Books == null) return;
+            SaveCurrentLocation();
+        }
+
+        public async Task<bool> UpdateNavigationSettingsAsync(string bookTitle, int chapterIndex, string bookKey = null)
+        {
+            if (Bible?.Books == null) return false;
 
             var book = ResolveBook(bookKey, bookTitle);
-            if (book == null) return;
+            if (book == null) return false;
 
-            await SetCurrentLocationAsync(book, chapterIndex);
+            return await SetCurrentLocationAsync(book, chapterIndex);
         }
 
         public async Task EnsureBookLoadedAsync(Book book)
@@ -202,28 +206,12 @@ namespace Elementary.ViewModels
             await _bibleService.EnsureBookLoaded(AppSettings.Translation, book);
         }
 
-        private async Task LoadCurrentBookChaptersAsync()
-        {
-            Chapters.Clear();
-            if (CurrentBook == null) return;
-
-            await EnsureBookLoadedAsync(CurrentBook);
-            if (CurrentBook.Chapters == null || CurrentBook.Chapters.Count == 0) return;
-
-            foreach (var chapter in CurrentBook.Chapters.OrderBy(c => c.Index))
-            {
-                Chapters.Add(chapter);
-            }
-
-            RestoreChapterPickerToCurrentBook();
-        }
-
         private void ApplyCommittedLocation(Book book, Chapter chapter)
         {
             SetProperty(ref _currentBook, book, nameof(CurrentBook));
             SetProperty(ref _currentChapter, chapter, nameof(CurrentChapter));
             SetProperty(ref _selectedChapterIndex, chapter.Index, nameof(SelectedChapterIndex));
-            RestoreChapterPickerToCurrentBook();
+            EnsureChapterIndicesForBook(book);
         }
 
         private Book ResolveBook(EBook bookEnum)
@@ -266,9 +254,37 @@ namespace Elementary.ViewModels
 
         private static List<int> CreateChapterIndices(Book book)
         {
-            return book?.Chapters != null
-                ? book.Chapters.OrderBy(c => c.Index).Select(c => c.Index).ToList()
+            if (book?.Chapters != null && book.Chapters.Count > 0)
+            {
+                return book.Chapters.OrderBy(c => c.Index).Select(c => c.Index).ToList();
+            }
+
+            return book?.ChapterCount > 0
+                ? Enumerable.Range(1, book.ChapterCount).ToList()
                 : new List<int>();
+        }
+
+        private void EnsureChapterIndicesForBook(Book book)
+        {
+            if (book == null)
+            {
+                if (ChapterIndices.Count > 0)
+                {
+                    ChapterIndices = new List<int>();
+                }
+
+                _chapterIndicesBook = null;
+                return;
+            }
+
+            var expectedChapterCount = book.Chapters?.Count > 0 ? book.Chapters.Count : book.ChapterCount;
+            if (ReferenceEquals(_chapterIndicesBook, book) && ChapterIndices.Count == expectedChapterCount)
+            {
+                return;
+            }
+
+            ChapterIndices = CreateChapterIndices(book);
+            _chapterIndicesBook = book;
         }
 
         private void SaveCurrentLocation()
@@ -280,6 +296,46 @@ namespace Elementary.ViewModels
             AppSettings.Book = bookEnum;
             AppSettings.Chapter = CurrentChapter.Index;
             _settingsService.SaveSettings(AppSettings);
+        }
+
+        private bool DoDisplayedChaptersMatchBook(Book book)
+        {
+            if (book?.Chapters == null)
+            {
+                return Chapters.Count == 0;
+            }
+
+            if (Chapters.Count != book.Chapters.Count)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < book.Chapters.Count; i++)
+            {
+                if (!ReferenceEquals(Chapters[i], book.Chapters[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private void ReplaceDisplayedChapters(Book book)
+        {
+            Chapters.Clear();
+            if (book?.Chapters == null)
+            {
+                RestoreChapterPickerToCurrentBook();
+                return;
+            }
+
+            for (int i = 0; i < book.Chapters.Count; i++)
+            {
+                Chapters.Add(book.Chapters[i]);
+            }
+
+            RestoreChapterPickerToCurrentBook();
         }
     }
 }

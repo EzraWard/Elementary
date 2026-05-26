@@ -38,31 +38,35 @@
             </Grid.ColumnDefinitions>
             
             <Image Grid.Column="1" Height="16" Margin="12,0,0,0" Source="ms-appx:///Assets/logo.png" />
-            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Left" Margin="16,0,0,0" Spacing="4">
-                <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" VerticalAlignment="Center" Margin="0,0,0,1">Elementary</TextBlock>
-                <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" VerticalAlignment="Center" Margin="0,0,0,1">Dev</TextBlock>
-            </StackPanel>
+            <TextBlock Grid.Column="2" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" VerticalAlignment="Center" Margin="16,0,0,1">Elementary</TextBlock>
         </Grid>
-        <muxc:NavigationView Name="MainNavigationView" ItemInvoked="NavigationView_ItemInvoked" Grid.Row="1" IsTitleBarAutoPaddingEnabled="false" IsBackButtonVisible="Collapsed" IsPaneOpen="False">
-            <muxc:NavigationView.MenuItems>
-                <muxc:NavigationViewItem x:Name="BiblePageNavigationViewItem" Content="Bible" Tag="BiblePage">
-                    <muxc:NavigationViewItem.Icon>
-                        <!--Including the font file for Segoe Fluent Icons in project ensures that the font properly displays on Windows 10-->
-                        <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE736;"/>
-                    </muxc:NavigationViewItem.Icon>
-                </muxc:NavigationViewItem>
-                <muxc:NavigationViewItem x:Name="VerseOfTheDayNavigationViewItem" Content="Verse of the Day" Tag="VerseOfTheDay">
-                    <muxc:NavigationViewItem.Icon>
-                        <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE787;"/>
-                    </muxc:NavigationViewItem.Icon>
-                </muxc:NavigationViewItem>
-				<muxc:NavigationViewItem x:Name="HistoryNavigationViewItem" Content="History" Tag="History">
-					<muxc:NavigationViewItem.Icon>
-						<FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE81C;"/>
-					</muxc:NavigationViewItem.Icon>
-				</muxc:NavigationViewItem>
-			</muxc:NavigationView.MenuItems>
-            <Frame Name="ContentFrame" NavigationFailed="ContentFrame_NavigationFailed" />
-        </muxc:NavigationView>
+        <Grid Grid.Row="1">
+            <Button x:Name="InitialFocusStealer"
+                    IsTabStop="True"
+                    Opacity="0"
+                    Width="1"
+                    Height="1" />
+            <muxc:NavigationView Name="MainNavigationView" ItemInvoked="NavigationView_ItemInvoked" IsTitleBarAutoPaddingEnabled="false" IsBackButtonVisible="Collapsed" IsPaneOpen="False">
+                <muxc:NavigationView.MenuItems>
+                    <muxc:NavigationViewItem x:Name="BiblePageNavigationViewItem" Content="Bible" Tag="BiblePage">
+                        <muxc:NavigationViewItem.Icon>
+                            <!--Including the font file for Segoe Fluent Icons in project ensures that the font properly displays on Windows 10-->
+                            <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE736;"/>
+                        </muxc:NavigationViewItem.Icon>
+                    </muxc:NavigationViewItem>
+                    <muxc:NavigationViewItem x:Name="VerseOfTheDayNavigationViewItem" Content="Verse of the Day" Tag="VerseOfTheDay">
+                        <muxc:NavigationViewItem.Icon>
+                            <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE787;"/>
+                        </muxc:NavigationViewItem.Icon>
+                    </muxc:NavigationViewItem>
+    				<muxc:NavigationViewItem x:Name="HistoryNavigationViewItem" Content="History" Tag="History">
+    					<muxc:NavigationViewItem.Icon>
+    						<FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE81C;"/>
+    					</muxc:NavigationViewItem.Icon>
+    				</muxc:NavigationViewItem>
+    			</muxc:NavigationView.MenuItems>
+                <Frame Name="ContentFrame" NavigationFailed="ContentFrame_NavigationFailed" />
+            </muxc:NavigationView>
+        </Grid>
     </Grid>
 </Page>
