@@ -24,76 +24,94 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <ScrollViewer x:Name="BibleScrollViewer"
-                      Grid.RowSpan="2"
-                      VerticalScrollBarVisibility="Hidden"
-                      HorizontalScrollBarVisibility="Disabled"
-                      ViewChanged="BibleScrollViewer_ViewChanged"
-                      Opacity="0">
-            <StackPanel x:Name="ChaptersContainer">
+        <ListView x:Name="BibleChaptersListView"
+                  Grid.RowSpan="2"
+                  ItemsSource="{Binding Chapters}"
+                  SelectionMode="None"
+                  IsItemClickEnabled="False"
+                  IsTabStop="False"
+                  Opacity="0"
+                  Padding="0"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                  ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                  ScrollViewer.IsVerticalScrollChainingEnabled="False"
+                  ScrollViewer.IsVerticalRailEnabled="True">
+            <ListView.Header>
                 <TextBlock Text="{Binding CurrentBook.Title}"
                            FontSize="34"
                            FontWeight="Bold"
                            HorizontalAlignment="Center"
                            TextAlignment="Center"
                            Margin="0,68,0,10"/>
-                <ItemsControl x:Name="ChaptersItemsControl"
-                              ItemsSource="{Binding Chapters}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Grid x:Name="ChapterItemGrid"
-                                  Margin="0,0,0,20"
-                                  Loaded="ChapterItemGrid_Loaded"
-                                  Unloaded="ChapterItemGrid_Unloaded">
-                                <StackPanel MaxWidth="700"
-                                            HorizontalAlignment="Center">
-                                    <TextBlock FontSize="28"
-                                                FontWeight="Bold"
-                                                HorizontalAlignment="Center"
-                                                TextAlignment="Center"
-                                                Margin="0,24,0,8">
-                                        <Run Text="Chapter " />
-                                        <Run Text="{Binding Index}" />
-                                    </TextBlock>
-                                    <ItemsControl ItemsSource="{Binding DisplayLines}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <StackPanel Loaded="DisplayLineContainer_Loaded">
-                                                    <Grid Visibility="{Binding IsVerse, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,6">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                            <ColumnDefinition Width="*"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <TextBlock Text="{Binding VerseNumberText}" Tag="versenum" Margin="0,-4,6,0" VerticalAlignment="Top" Opacity="0.8"/>
-                                                        <TextBlock Grid.Column="1"
-                                                                   Text="{Binding Text}"
-                                                                   Tag="body"
-                                                                   TextWrapping="WrapWholeWords"/>
-                                                    </Grid>
-                                                    <TextBlock Text="{Binding Text}"
-                                                               Tag="heading"
-                                                               Visibility="{Binding IsHeading, Converter={StaticResource BoolToVisibilityConverter}}"
-                                                               FontSize="20"
-                                                               FontWeight="SemiBold"
-                                                               HorizontalAlignment="Center"
-                                                               TextAlignment="Center"
-                                                               Margin="0,14,0,8"
-                                                               TextWrapping="WrapWholeWords"/>
-                                                    <TextBlock Text="{Binding Text}" Tag="body" Visibility="{Binding IsPoetry, Converter={StaticResource BoolToVisibilityConverter}}" Margin="20,0,0,6" TextWrapping="WrapWholeWords"/>
-                                                    <TextBlock Text="{Binding Text}" Tag="body" Visibility="{Binding IsText, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,6" TextWrapping="WrapWholeWords"/>
-                                                    <TextBlock Text="{Binding Text}" Tag="footnote" Visibility="{Binding IsFootnote, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,4,0,0" Opacity="0.75" TextWrapping="WrapWholeWords"/>
-                                                    <Border Visibility="{Binding IsParagraphBreak, Converter={StaticResource BoolToVisibilityConverter}}" Height="8" Background="Transparent"/>
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
-        </ScrollViewer>
+            </ListView.Header>
+            <ListView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <ItemsStackPanel Orientation="Vertical"/>
+                </ItemsPanelTemplate>
+            </ListView.ItemsPanel>
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="Margin" Value="0" />
+                    <Setter Property="MinHeight" Value="0" />
+                    <Setter Property="UseSystemFocusVisuals" Value="False" />
+                    <Setter Property="IsTabStop" Value="False" />
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid x:Name="ChapterItemGrid"
+                          Margin="0,0,0,20"
+                          Loaded="ChapterItemGrid_Loaded"
+                          Unloaded="ChapterItemGrid_Unloaded">
+                        <StackPanel MaxWidth="700"
+                                    HorizontalAlignment="Center">
+                            <TextBlock FontSize="28"
+                                        FontWeight="Bold"
+                                        HorizontalAlignment="Center"
+                                        TextAlignment="Center"
+                                        Margin="0,24,0,8">
+                                <Run Text="Chapter " />
+                                <Run Text="{Binding Index}" />
+                            </TextBlock>
+                            <ItemsControl ItemsSource="{Binding DisplayLines}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Loaded="DisplayLineContainer_Loaded">
+                                            <Grid Visibility="{Binding IsVerse, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,6">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding VerseNumberText}" Tag="versenum" Margin="0,-4,6,0" VerticalAlignment="Top" Opacity="0.8"/>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding Text}"
+                                                           Tag="body"
+                                                           TextWrapping="WrapWholeWords"/>
+                                            </Grid>
+                                            <TextBlock Text="{Binding Text}"
+                                                       Tag="heading"
+                                                       Visibility="{Binding IsHeading, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                       FontSize="20"
+                                                       FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center"
+                                                       TextAlignment="Center"
+                                                       Margin="0,14,0,8"
+                                                       TextWrapping="WrapWholeWords"/>
+                                            <TextBlock Text="{Binding Text}" Tag="body" Visibility="{Binding IsPoetry, Converter={StaticResource BoolToVisibilityConverter}}" Margin="20,0,0,6" TextWrapping="WrapWholeWords"/>
+                                            <TextBlock Text="{Binding Text}" Tag="body" Visibility="{Binding IsText, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,6" TextWrapping="WrapWholeWords"/>
+                                            <TextBlock Text="{Binding Text}" Tag="footnote" Visibility="{Binding IsFootnote, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,4,0,0" Opacity="0.75" TextWrapping="WrapWholeWords"/>
+                                            <Border Visibility="{Binding IsParagraphBreak, Converter={StaticResource BoolToVisibilityConverter}}" Height="8" Background="Transparent"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
 
 		<!-- Blur layer behind the gradient and picker -->
 		<Border x:Name="BlurBorder" Grid.RowSpan="2" VerticalAlignment="Top"

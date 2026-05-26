@@ -9,8 +9,8 @@ namespace Elementary.Core.Tests.Services
     [TestClass]
     public class SettingsServiceTests
     {
-        private Mock<ISettingsProvider> _settingsProviderMock;
-        private SettingsService _settingsService;
+        private Mock<ISettingsProvider> _settingsProviderMock = null!;
+        private SettingsService _settingsService = null!;
 
         [TestInitialize]
         public void Setup()

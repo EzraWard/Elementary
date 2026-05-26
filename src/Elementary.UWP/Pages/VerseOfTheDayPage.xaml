@@ -41,9 +41,9 @@
         <!-- Image -->
         <Image x:Name="VerseImage"
                Visibility="Collapsed"
-               Stretch="Uniform"
-               HorizontalAlignment="Stretch"
-               VerticalAlignment="Stretch"
+                Stretch="Uniform"
+               HorizontalAlignment="Center"
+               VerticalAlignment="Center"
                Grid.Row="0" />
 
         <!-- Attribution footer -->

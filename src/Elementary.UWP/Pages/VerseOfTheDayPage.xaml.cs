@@ -3,6 +3,7 @@ using Elementary.VerseOfTheDay.Interfaces;
 using Elementary.VerseOfTheDay.Models;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Windows.UI.Xaml;
@@ -38,19 +39,21 @@ namespace Elementary
             SetLoadingState();
             try
             {
+                Debug.WriteLine("[VerseOfTheDayPage] Loading Verse of the Day.");
                 var result = await _votdService.GetAsync(VotdImageSize.InApp);
-                ShowResult(result);
+                await ShowResultAsync(result);
 
                 // Update live tiles whenever the VOTD page is shown
                 await _tileService.UpdateAsync(result);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Debug.WriteLine($"[VerseOfTheDayPage] Load failed: {ex}");
                 SetErrorState();
             }
         }
 
-        private void ShowResult(VerseOfTheDayResult result)
+        private async Task ShowResultAsync(VerseOfTheDayResult result)
         {
             LoadingRing.IsActive = false;
             LoadingRing.Visibility = Visibility.Collapsed;
@@ -61,11 +64,12 @@ namespace Elementary
                 var bitmap = new BitmapImage();
                 using var ms = new MemoryStream(result.ImageBytes);
                 using var ras = ms.AsRandomAccessStream();
-                // BitmapImage.SetSourceAsync must be awaited, but page code-behind uses fire-and-forget
-                _ = bitmap.SetSourceAsync(ras);
+                await bitmap.SetSourceAsync(ras);
                 VerseImage.Source = bitmap;
                 VerseImage.Visibility = Visibility.Visible;
             }
+
+            Debug.WriteLine($"[VerseOfTheDayPage] Showing VOTD image. Bytes={result.ImageBytes?.Length ?? 0}, Fallback={result.UsedFallbackBackground}, Attribution='{result.UnsplashAttribution ?? "<none>"}'.");
 
             if (!string.IsNullOrEmpty(result.UnsplashAttribution))
             {
@@ -94,6 +98,8 @@ namespace Elementary
 #if DEBUG
         private async void RefreshButton_Click(object sender, RoutedEventArgs e)
         {
+            Debug.WriteLine("[VerseOfTheDayPage] Debug refresh requested. Clearing today's VOTD cache.");
+            _votdService.InvalidateToday();
             await LoadVerseAsync();
         }
 #else

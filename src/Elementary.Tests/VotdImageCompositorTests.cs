@@ -1,5 +1,6 @@
 using Elementary.VerseOfTheDay.Models;
 using Elementary.VerseOfTheDay.Services;
+using SkiaSharp;
 
 namespace Elementary.Tests.Services
 {
@@ -72,6 +73,42 @@ namespace Elementary.Tests.Services
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Length > 0);
+        }
+
+        [TestMethod]
+        public void Compose_InApp_ShouldReturnSquareImage()
+        {
+            var compositor = new VotdImageCompositor();
+            var photo = UnsplashService.GenerateFallback();
+
+            var result = compositor.Compose(photo, SampleVerse, VotdImageSize.InApp);
+
+            using var codec = SKCodec.Create(new System.IO.MemoryStream(result));
+            Assert.IsNotNull(codec);
+            Assert.AreEqual(800, codec.Info.Width);
+            Assert.AreEqual(800, codec.Info.Height);
+        }
+
+        [TestMethod]
+        public void CalculateFontSize_ShouldReturnLargerFontForShorterVerse()
+        {
+            const float textAreaWidth = 600f;
+            const float textAreaHeight = 420f;
+            const int imageWidth = 800;
+
+            var shortFontSize = VotdImageCompositor.CalculateFontSize(
+                "Jesus wept.",
+                textAreaWidth,
+                textAreaHeight,
+                imageWidth);
+
+            var longFontSize = VotdImageCompositor.CalculateFontSize(
+                "Blessed be the God and Father of our Lord Jesus Christ, who has blessed us with every spiritual blessing in the heavenly realms in Christ.",
+                textAreaWidth,
+                textAreaHeight,
+                imageWidth);
+
+            Assert.IsTrue(shortFontSize > longFontSize);
         }
 
         [TestMethod]

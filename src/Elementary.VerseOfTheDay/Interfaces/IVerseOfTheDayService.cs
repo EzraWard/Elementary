@@ -6,5 +6,6 @@ namespace Elementary.VerseOfTheDay.Interfaces
     public interface IVerseOfTheDayService
     {
         Task<VerseOfTheDayResult> GetAsync(VotdImageSize size);
+        void InvalidateToday();
     }
 }

@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
-  Merged package manifest for Elementary.Packaging.
-  Bundles both Elementary.UWP (main app) and Elementary.WidgetApp (Windows 11 widget).
+  Package manifest for Elementary.Packaging.
+  Packages the Elementary.UWP main app.
 
   IMPORTANT: Preserve the package Identity Name so existing installs are upgraded in place.
 -->
@@ -9,11 +9,7 @@
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
-  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
-  xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
-  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
-  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  IgnorableNamespaces="uap mp uap3 com desktop rescap">
+  IgnorableNamespaces="uap mp">
 
   <!-- Retain the exact same Identity so Store upgrades and package family name stay the same -->
   <Identity
@@ -59,63 +55,18 @@
         <uap:SplashScreen Image="Assets\SplashScreen.png" BackgroundColor="transparent"/>
       </uap:VisualElements>
 
-      <!-- Protocol activation so the widget can launch the main app -->
+      <!-- Protocol activation -->
       <Extensions>
         <uap:Extension Category="windows.protocol">
           <uap:Protocol Name="elementary" />
         </uap:Extension>
-
-        <!-- Register the widget provider COM server -->
-        <com:Extension Category="windows.comServer">
-          <com:ComServer>
-            <com:ExeServer Executable="Elementary.WidgetApp\Elementary.WidgetApp.exe"
-                           Arguments="-RegisterProcessAsComServer"
-                           DisplayName="Elementary Widget Provider">
-              <!-- CLSID must match what WidgetProvider is decorated with -->
-              <com:Class Id="A1B2C3D4-E5F6-7890-ABCD-EF1234567891" DisplayName="ElementaryVerseOfTheDayProvider" />
-            </com:ExeServer>
-          </com:ComServer>
-        </com:Extension>
-
-        <!-- Declare the Windows 11 widget provider -->
-        <uap3:Extension Category="windows.appExtension">
-          <uap3:AppExtension Name="com.microsoft.windows.widgets"
-                             Id="Elementary.VerseOfTheDay"
-                             PublicFolder="Public"
-                             DisplayName="Verse of the Day"
-                             Description="Daily Bible verse with a nature background image">
-            <uap3:Properties>
-              <WidgetProvider>
-                <ProviderIcons>
-                  <Icon Path="Assets\Square44x44Logo.png" />
-                </ProviderIcons>
-                <Activation>
-                  <CreateInstance ClassId="A1B2C3D4-E5F6-7890-ABCD-EF1234567891" />
-                </Activation>
-                <Definitions>
-                  <Definition Id="Elementary_VerseOfTheDay"
-                              DisplayName="Verse of the Day"
-                              Description="Daily Bible verse with a nature background"
-                              AllowMultiple="false">
-                    <Capabilities>
-                      <Capability Type="size2x2" />
-                      <Capability Type="size4x2" />
-                      <Capability Type="size4x4" />
-                    </Capabilities>
-                  </Definition>
-                </Definitions>
-              </WidgetProvider>
-            </uap3:Properties>
-          </uap3:AppExtension>
-        </uap3:Extension>
       </Extensions>
     </Application>
+
   </Applications>
 
   <Capabilities>
     <Capability Name="internetClient" />
-    <rescap:Capability Name="runFullTrust" />
-    <rescap:Capability Name="widgetProvider" />
   </Capabilities>
 
 </Package>

@@ -1,3 +1,4 @@
+#nullable enable
 using Elementary.VerseOfTheDay.Interfaces;
 using System;
 using System.Threading.Tasks;
@@ -8,7 +9,7 @@ namespace Elementary.Services
     public class UwpVotdStorageService : IVotdStorageService
     {
         private const string CacheFolderName = "votd_cache";
-
+ 
         private StorageFolder? _cacheFolder;
 
         private async Task<StorageFolder> GetCacheFolderAsync()

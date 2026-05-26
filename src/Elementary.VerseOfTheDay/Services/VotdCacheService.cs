@@ -1,6 +1,7 @@
 using Elementary.VerseOfTheDay.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,12 +22,17 @@ namespace Elementary.VerseOfTheDay.Services
             try
             {
                 if (_store.TryGetValue(key, out var entry) && entry.ExpiresAt > DateTime.UtcNow)
+                {
+                    Debug.WriteLine($"[VotdCacheService] Cache hit for '{key}' (expires {entry.ExpiresAt:O}).");
                     return (T)entry.Value;
+                }
             }
             finally
             {
                 _lock.Release();
             }
+
+            Debug.WriteLine($"[VotdCacheService] Cache miss for '{key}'. Fetching new value.");
 
             // Fetch outside the lock to avoid holding it during a network call
             var result = await factory().ConfigureAwait(false);
@@ -35,6 +41,7 @@ namespace Elementary.VerseOfTheDay.Services
             try
             {
                 _store[key] = (result!, DateTime.UtcNow.Add(Ttl));
+                Debug.WriteLine($"[VotdCacheService] Stored '{key}' in cache until {_store[key].ExpiresAt:O}.");
             }
             finally
             {
@@ -47,7 +54,11 @@ namespace Elementary.VerseOfTheDay.Services
         public void Invalidate(string key)
         {
             _lock.Wait();
-            try { _store.Remove(key); }
+            try
+            {
+                var removed = _store.Remove(key);
+                Debug.WriteLine($"[VotdCacheService] Invalidate '{key}' removed={removed}.");
+            }
             finally { _lock.Release(); }
         }
     }

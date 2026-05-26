@@ -15,7 +15,7 @@ namespace Elementary.VerseOfTheDay.Services
             (150, 150),  // TileMedium150
             (310, 150),  // TileWide310x150
             (310, 310),  // TileLarge310x310
-            (800, 450),  // InApp
+            (800, 800),  // InApp
         };
 
         public byte[] Compose(UnsplashPhoto photo, BibleVerseData verse, VotdImageSize size)
@@ -51,11 +51,32 @@ namespace Elementary.VerseOfTheDay.Services
                 using var bitmap = SKBitmap.Decode(photo.ImageBytes);
                 if (bitmap == null) return;
 
-                canvas.DrawBitmap(bitmap,
-                    new SKRect(0, 0, bitmap.Width, bitmap.Height),
-                    new SKRect(0, 0, width, height));
+                var sourceRect = GetCoverSourceRect(bitmap.Width, bitmap.Height, width, height);
+                canvas.DrawBitmap(bitmap, sourceRect, new SKRect(0, 0, width, height));
             }
             catch { /* Silently skip if image cannot be decoded */ }
+        }
+
+        private static SKRect GetCoverSourceRect(int sourceWidth, int sourceHeight, int targetWidth, int targetHeight)
+        {
+            if (sourceWidth <= 0 || sourceHeight <= 0 || targetWidth <= 0 || targetHeight <= 0)
+            {
+                return new SKRect(0, 0, sourceWidth, sourceHeight);
+            }
+
+            var sourceAspect = (float)sourceWidth / sourceHeight;
+            var targetAspect = (float)targetWidth / targetHeight;
+
+            if (sourceAspect > targetAspect)
+            {
+                var croppedWidth = sourceHeight * targetAspect;
+                var left = (sourceWidth - croppedWidth) / 2f;
+                return new SKRect(left, 0, left + croppedWidth, sourceHeight);
+            }
+
+            var croppedHeight = sourceWidth / targetAspect;
+            var top = (sourceHeight - croppedHeight) / 2f;
+            return new SKRect(0, top, sourceWidth, top + croppedHeight);
         }
 
         private static void DrawGradientOverlay(SKCanvas canvas, int width, int height)
@@ -133,20 +154,33 @@ namespace Elementary.VerseOfTheDay.Services
             canvas.DrawText(verse.Reference, padding, y, refPaint);
         }
 
-        private static float CalculateFontSize(string text, float textAreaWidth, float textAreaHeight, int imageWidth)
+        internal static float CalculateFontSize(string text, float textAreaWidth, float textAreaHeight, int imageWidth)
         {
-            float baseFontSize = imageWidth * 0.045f;
+            float baseFontSize = imageWidth * 0.11f;
             float minFontSize = Math.Max(7f, imageWidth * 0.025f);
-            float maxFontSize = imageWidth * 0.08f;
-            baseFontSize = Math.Min(baseFontSize, maxFontSize);
+            float maxFontSize = imageWidth * 0.11f;
 
-            // If text is long, try to reduce font size so it fits in the available height
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                var characterCount = text.Trim().Length;
+                if (characterCount > 180)
+                {
+                    baseFontSize = imageWidth * 0.07f;
+                }
+                else if (characterCount > 120)
+                {
+                    baseFontSize = imageWidth * 0.085f;
+                }
+            }
+
+            baseFontSize = Math.Max(minFontSize, Math.Min(baseFontSize, maxFontSize));
+
             using var tempPaint = new SKPaint { TextSize = baseFontSize };
             var lines = WrapText(text, tempPaint, textAreaWidth);
             float lineHeight = baseFontSize * 1.35f;
             float totalH = lines.Count * lineHeight;
 
-            while (totalH > textAreaHeight && baseFontSize > minFontSize)
+            while ((totalH > textAreaHeight || HasLineExceedingWidth(lines, tempPaint, textAreaWidth)) && baseFontSize > minFontSize)
             {
                 baseFontSize -= 1f;
                 tempPaint.TextSize = baseFontSize;
@@ -156,6 +190,19 @@ namespace Elementary.VerseOfTheDay.Services
             }
 
             return baseFontSize;
+        }
+
+        private static bool HasLineExceedingWidth(IReadOnlyList<string> lines, SKPaint paint, float maxWidth)
+        {
+            foreach (var line in lines)
+            {
+                if (paint.MeasureText(line) > maxWidth)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static List<string> WrapText(string text, SKPaint paint, float maxWidth)

@@ -13,7 +13,7 @@ namespace Elementary.WidgetApp.Services
     public class WinAppSdkVotdStorageService : IVotdStorageService
     {
         private const string CacheFolderName = "votd_cache";
-
+ 
         private StorageFolder? _cacheFolder;
 
         private async Task<StorageFolder> GetCacheFolderAsync()

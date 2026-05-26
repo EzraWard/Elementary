@@ -5,7 +5,8 @@ namespace Elementary.VerseOfTheDay
 {
     internal static class ApiKeys
     {
-        // Obtain a free key at https://unsplash.com/developers
-        public const string UnsplashClientId = "YOUR_UNSPLASH_CLIENT_ID_HERE";
+        // Obtain a free access key at https://unsplash.com/developers
+        // The app falls back to a generated background until this value is replaced.
+        public const string UnsplashAccessKey = "YOUR_UNSPLASH_ACCESS_KEY_HERE";
     }
 }

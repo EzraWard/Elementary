@@ -2,6 +2,7 @@ using Elementary.VerseOfTheDay.Interfaces;
 using Elementary.VerseOfTheDay.Models;
 using SkiaSharp;
 using System;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -21,21 +22,56 @@ namespace Elementary.VerseOfTheDay.Services
 
         public async Task<UnsplashPhoto> FetchAsync()
         {
+            if (!HasConfiguredAccessKey())
+            {
+                Debug.WriteLine("[UnsplashService] Unsplash access key is not configured. Using fallback background.");
+                return GenerateFallback();
+            }
+
             try
             {
-                var url = $"{ApiBase}?query=nature&orientation=landscape&w=1920&h=1080&client_id={ApiKeys.UnsplashClientId}";
-                var json = await _httpClient.GetStringAsync(url).ConfigureAwait(false);
+                var metadataRequest = new HttpRequestMessage(
+                    HttpMethod.Get,
+                    $"{ApiBase}?query=nature&orientation=landscape&content_filter=high");
+                metadataRequest.Headers.TryAddWithoutValidation("Accept-Version", "v1");
+                metadataRequest.Headers.TryAddWithoutValidation("Authorization", $"Client-ID {ApiKeys.UnsplashAccessKey}");
+
+                Debug.WriteLine($"[UnsplashService] Requesting random photo metadata from '{ApiBase}' using Authorization: Client-ID and Accept-Version: v1.");
+                using var metadataResponse = await _httpClient.SendAsync(metadataRequest).ConfigureAwait(false);
+                var json = await metadataResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+                if (!metadataResponse.IsSuccessStatusCode)
+                {
+                    Debug.WriteLine($"[UnsplashService] Metadata request failed with {(int)metadataResponse.StatusCode} {metadataResponse.ReasonPhrase}. Body='{Truncate(json, 300)}'. Using fallback background.");
+                    return GenerateFallback();
+                }
+
                 var meta = ParseMeta(json);
 
-                var imageUrl = meta.imageUrl;
+                var imageUrl = BuildOptimizedImageUrl(meta.rawImageUrl ?? meta.imageUrl);
                 if (string.IsNullOrEmpty(imageUrl))
+                {
+                    Debug.WriteLine("[UnsplashService] Metadata response did not include a usable image URL. Using fallback background.");
                     return GenerateFallback();
+                }
 
-                var imageBytes = await _httpClient.GetByteArrayAsync(imageUrl).ConfigureAwait(false);
-
-                // Reject images smaller than 1920×1080
-                if (!MeetsMinimumSize(imageBytes, 1920, 1080))
+                Debug.WriteLine($"[UnsplashService] Downloading photo bytes from '{imageUrl}'.");
+                using var imageResponse = await _httpClient.GetAsync(imageUrl).ConfigureAwait(false);
+                if (!imageResponse.IsSuccessStatusCode)
+                {
+                    Debug.WriteLine($"[UnsplashService] Image download failed with {(int)imageResponse.StatusCode} {imageResponse.ReasonPhrase}. Using fallback background.");
                     return GenerateFallback();
+                }
+
+                var imageBytes = await imageResponse.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+
+                // Keep only images large enough to cover both wide tiles and square in-app output.
+                if (!MeetsMinimumSize(imageBytes, 1080, 1080))
+                {
+                    Debug.WriteLine("[UnsplashService] Downloaded image is smaller than 1080x1080. Using fallback background.");
+                    return GenerateFallback();
+                }
+
+                Debug.WriteLine($"[UnsplashService] Downloaded Unsplash image ({imageBytes.Length} bytes) successfully.");
 
                 return new UnsplashPhoto
                 {
@@ -46,20 +82,30 @@ namespace Elementary.VerseOfTheDay.Services
                     IsFallback = false
                 };
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Debug.WriteLine($"[UnsplashService] Fetch failed: {ex}");
                 return GenerateFallback();
             }
         }
 
-        private static (string? imageUrl, string? photographerName, string? photographerUrl) ParseMeta(string json)
+        private static bool HasConfiguredAccessKey()
+        {
+            return !string.IsNullOrWhiteSpace(ApiKeys.UnsplashAccessKey)
+                && !string.Equals(ApiKeys.UnsplashAccessKey, "YOUR_UNSPLASH_ACCESS_KEY_HERE", StringComparison.Ordinal);
+        }
+
+        private static (string? imageUrl, string? rawImageUrl, string? photographerName, string? photographerUrl) ParseMeta(string json)
         {
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
             string? imageUrl = null;
+            string? rawImageUrl = null;
             if (root.TryGetProperty("urls", out var urls) && urls.TryGetProperty("full", out var full))
                 imageUrl = full.GetString();
+            if (root.TryGetProperty("urls", out urls) && urls.TryGetProperty("raw", out var raw))
+                rawImageUrl = raw.GetString();
 
             string? photographerName = null;
             string? photographerUrl = null;
@@ -71,7 +117,19 @@ namespace Elementary.VerseOfTheDay.Services
                     photographerUrl = htmlEl.GetString();
             }
 
-            return (imageUrl, photographerName, photographerUrl);
+            return (imageUrl, rawImageUrl, photographerName, photographerUrl);
+        }
+
+        private static string? BuildOptimizedImageUrl(string? baseImageUrl)
+        {
+            if (string.IsNullOrWhiteSpace(baseImageUrl))
+            {
+                return baseImageUrl;
+            }
+
+            var resolvedBaseImageUrl = baseImageUrl!;
+            var separator = resolvedBaseImageUrl.Contains("?") ? "&" : "?";
+            return $"{resolvedBaseImageUrl}{separator}w=1600&h=1600&fit=crop&crop=entropy&auto=format&fm=jpg&q=80";
         }
 
         private static bool MeetsMinimumSize(byte[] imageBytes, int minWidth, int minHeight)
@@ -92,7 +150,7 @@ namespace Elementary.VerseOfTheDay.Services
         public static UnsplashPhoto GenerateFallback()
         {
             const int width = 1920;
-            const int height = 1080;
+            const int height = 1920;
             using var surface = SKSurface.Create(new SKImageInfo(width, height));
             var canvas = surface.Canvas;
 
@@ -113,6 +171,16 @@ namespace Elementary.VerseOfTheDay.Services
                 ImageBytes = data.ToArray(),
                 IsFallback = true
             };
+        }
+
+        private static string Truncate(string value, int maxLength)
+        {
+            if (string.IsNullOrEmpty(value) || value.Length <= maxLength)
+            {
+                return value;
+            }
+
+            return value.Substring(0, maxLength);
         }
     }
 }

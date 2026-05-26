@@ -1,4 +1,5 @@
 using Elementary.VerseOfTheDay.Services;
+using SkiaSharp;
 
 namespace Elementary.Tests.Services
 {
@@ -23,6 +24,16 @@ namespace Elementary.Tests.Services
 
             Assert.IsNull(fallback.PhotographerName);
             Assert.IsNull(fallback.Attribution);
+        }
+
+        [TestMethod]
+        public void GenerateFallback_ShouldProduceSquareImage()
+        {
+            var fallback = UnsplashService.GenerateFallback();
+
+            using var codec = SKCodec.Create(new System.IO.MemoryStream(fallback.ImageBytes!));
+            Assert.IsNotNull(codec);
+            Assert.AreEqual(codec.Info.Width, codec.Info.Height);
         }
     }
 }
