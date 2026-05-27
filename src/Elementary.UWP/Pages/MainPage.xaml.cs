@@ -10,6 +10,7 @@ using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Animation;
+using Elementary.Core.Enums;
 using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
 using System.Collections.Generic;
@@ -22,6 +23,7 @@ namespace Elementary
     {
         private Microsoft.UI.Xaml.Controls.NavigationViewItem _lastItem;
         private IVerseOfTheDayDialogService _verseOfTheDayDialogService;
+        private bool _isSearchPanelOpen;
 
         public MainPage()
         {
@@ -57,38 +59,25 @@ namespace Elementary
 
         private async void NavigationView_ItemInvoked(MUXC.NavigationView sender, MUXC.NavigationViewItemInvokedEventArgs args)
         {
-            //if _lastItem is null, it means this is the first time the user has navigated away
-            //from the BiblePage, so we want to set it to the current page
-            if (_lastItem == null)
-            {
-                _lastItem = BiblePageNavigationViewItem;
-            }
-
             var item = args.InvokedItemContainer as Microsoft.UI.Xaml.Controls.NavigationViewItem;
-            if (item == null || item == _lastItem) return;
+            if (item == null) return;
 
-            var clickedView = item.Tag.ToString();
-            if (clickedView == null || clickedView == "Settings") clickedView = "SettingsPage";
+            var clickedView = item.Tag?.ToString();
+            if (string.IsNullOrEmpty(clickedView)) return;
 
             if (clickedView == "VerseOfTheDay")
             {
                 await _verseOfTheDayDialogService.ShowAsync();
-
-                // Reset selection back to the currently displayed page
-                MainNavigationView.SelectedItem = _lastItem;
                 return;
             }
 
             if (clickedView == "History")
             {
-                // Populate history flyout from settings service and show it anchored to the invoked item
                 var settingsService = App.Services.GetRequiredService<ISettingsService>();
                 var history = settingsService.GetNavigationHistory() ?? new List<NavigationHistoryItem>();
-                // Display newest items first (reverse chronological)
                 var displayHistory = history.AsEnumerable().Reverse().ToList();
                 HistoryListView.ItemsSource = displayHistory;
 
-                // Show empty state or list
                 if (displayHistory.Count == 0)
                 {
                     HistoryEmptyText.Visibility = Windows.UI.Xaml.Visibility.Visible;
@@ -101,12 +90,23 @@ namespace Elementary
                 }
 
                 HistoryFlyout.ShowAt(item);
-
-                // Reset selection back to the currently displayed page
-                MainNavigationView.SelectedItem = _lastItem;
                 return;
             }
 
+            if (clickedView == "Search")
+            {
+                ToggleSearchPanel();
+                return;
+            }
+
+            if (_lastItem == null)
+            {
+                _lastItem = BiblePageNavigationViewItem;
+            }
+
+            if (item == _lastItem) return;
+
+            if (clickedView == "Settings") clickedView = "SettingsPage";
             if (!NavigateToView(clickedView)) return;
             _lastItem = item;
         }
@@ -185,6 +185,112 @@ namespace Elementary
                 _lastItem = BiblePageNavigationViewItem;
                 MainNavigationView.SelectedItem = _lastItem;
             }
+        }
+
+        private void ToggleSearchPanel()
+        {
+            _isSearchPanelOpen = !_isSearchPanelOpen;
+            SearchPanel.Visibility = _isSearchPanelOpen ? Visibility.Visible : Visibility.Collapsed;
+            if (_isSearchPanelOpen)
+            {
+                SearchBox.Focus(FocusState.Programmatic);
+            }
+        }
+
+        private void CloseSearchPanelButton_Click(object sender, RoutedEventArgs e)
+        {
+            _isSearchPanelOpen = false;
+            SearchPanel.Visibility = Visibility.Collapsed;
+        }
+
+        private async void SearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+        {
+            var query = args.QueryText?.Trim();
+            if (string.IsNullOrWhiteSpace(query)) return;
+
+            await ExecuteSearchAsync(query);
+        }
+
+        private async Task ExecuteSearchAsync(string query)
+        {
+            SearchResultsListView.Visibility = Visibility.Collapsed;
+            SearchEmptyText.Text = "No results";
+            SearchEmptyText.Visibility = Visibility.Collapsed;
+            SearchProgressRing.IsActive = true;
+
+            try
+            {
+                var scopeItem = SearchScopeComboBox.SelectedItem as ComboBoxItem;
+                var scopeTag = scopeItem?.Tag?.ToString() ?? "EntireBible";
+                var scope = ESearchScope.EntireBible;
+                switch (scopeTag)
+                {
+                    case "OldTestament":
+                        scope = ESearchScope.OldTestament;
+                        break;
+                    case "NewTestament":
+                        scope = ESearchScope.NewTestament;
+                        break;
+                }
+
+                var searchService = App.Services.GetRequiredService<ISearchService>();
+                var bibleService = App.Services.GetRequiredService<IBibleService>();
+                var settingsService = App.Services.GetRequiredService<ISettingsService>();
+                var settings = settingsService.GetSettings();
+                var bible = await bibleService.GetBible(settings.Translation);
+                var results = await searchService.SearchAsync(bible, settings.Translation, query, scope);
+
+                if (results.Count == 0)
+                {
+                    SearchEmptyText.Visibility = Visibility.Visible;
+                    SearchResultsListView.Visibility = Visibility.Collapsed;
+                    SearchResultsListView.ItemsSource = null;
+                }
+                else
+                {
+                    SearchResultsListView.ItemsSource = results;
+                    SearchResultsListView.Visibility = Visibility.Visible;
+                    SearchEmptyText.Visibility = Visibility.Collapsed;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Search failed: {ex.Message}");
+                SearchResultsListView.ItemsSource = null;
+                SearchResultsListView.Visibility = Visibility.Collapsed;
+                SearchEmptyText.Text = "Search failed";
+                SearchEmptyText.Visibility = Visibility.Visible;
+            }
+            finally
+            {
+                SearchProgressRing.IsActive = false;
+            }
+        }
+
+        private async void SearchResultsListView_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            if (!(e?.ClickedItem is SearchResult result)) return;
+
+            var searchParam = new SearchNavigationParameter
+            {
+                BookTitle = result.BookTitle,
+                BookKey = result.BookKey,
+                ChapterIndex = result.ChapterIndex,
+                VerseNumber = result.VerseNumber,
+                SearchQuery = SearchBox.Text?.Trim()
+            };
+
+            if (ContentFrame.Content is BiblePage biblePage)
+            {
+                await biblePage.NavigateToFromSearchAsync(searchParam);
+            }
+            else
+            {
+                NavigateToView("BiblePage", searchParam);
+            }
+
+            _lastItem = BiblePageNavigationViewItem;
+            MainNavigationView.SelectedItem = _lastItem;
         }
     }
 }
