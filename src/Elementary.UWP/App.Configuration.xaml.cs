@@ -42,6 +42,9 @@ namespace Elementary
             // Register the Bible service
             provider.AddSingleton<IBibleService, BibleService>();
 
+            // Register the search service
+            provider.AddSingleton<ISearchService, SearchService>();
+
             // Register shared HttpClient for VOTD services
             provider.AddSingleton<HttpClient>(_ =>
             {

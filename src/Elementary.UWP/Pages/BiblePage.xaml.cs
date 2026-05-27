@@ -43,6 +43,9 @@ namespace Elementary
         private string _pendingHistoryBook;
         private int _pendingHistoryChapter;
         private string _pendingHistoryBookKey;
+        private SearchNavigationParameter _pendingSearchParam;
+        private Panel _highlightedElement;
+        private TaskCompletionSource<bool> _pendingSearchNavigationCompletionSource;
         private int _navigationVisualStateVersion;
         private DateTimeOffset _lastIntermediateScrollSyncAt = DateTimeOffset.MinValue;
         private bool _isProcessingScrollSync;
@@ -67,6 +70,19 @@ namespace Elementary
         {
             base.OnNavigatedTo(e);
 
+            if (e.Parameter is SearchNavigationParameter searchParam)
+            {
+                if (!_isLoaded)
+                {
+                    _pendingSearchParam = searchParam;
+                    EnsurePendingSearchNavigationCompletionSource();
+                    return;
+                }
+
+                _ = NavigateToFromSearchAsync(searchParam);
+                return;
+            }
+
             if (!(e.Parameter is NavigationHistoryItem historyItem)) return;
 
             if (!_isLoaded)
@@ -84,6 +100,7 @@ namespace Elementary
         {
             base.OnNavigatedFrom(e);
 
+            ClearVerseHighlight();
             _scrollLocationPersistenceVersion++;
             if (_isLoaded)
             {
@@ -96,6 +113,7 @@ namespace Elementary
             if (_isInitializing || _isLoaded) return;
 
             _isInitializing = true;
+            SearchNavigationParameter pendingSearch = null;
             try
             {
                 _viewModel.IsLoaded = false;
@@ -108,7 +126,18 @@ namespace Elementary
                 SetupTopFadeGradient();
                 await EnsureReaderScrollViewerAsync();
 
-                if (_pendingHistoryBook != null)
+                if (_pendingSearchParam != null)
+                {
+                    pendingSearch = _pendingSearchParam;
+                    _pendingSearchParam = null;
+
+                    var pendingWindowChanged = await _viewModel.UpdateNavigationSettingsAsync(pendingSearch.BookTitle, pendingSearch.ChapterIndex, pendingSearch.BookKey);
+                    if (pendingWindowChanged)
+                    {
+                        ResetChapterElementTracking();
+                    }
+                }
+                else if (_pendingHistoryBook != null)
                 {
                     var pendingBook = _pendingHistoryBook;
                     var pendingChapter = _pendingHistoryChapter;
@@ -129,9 +158,20 @@ namespace Elementary
                 _isLoaded = true;
                 SetReaderVisualState(showContent: true, showSpinner: false);
                 SetPickerInteractionEnabled(true);
+
+                if (pendingSearch != null)
+                {
+                    await HighlightVerseAsync(pendingSearch.ChapterIndex, pendingSearch.VerseNumber);
+                    CompletePendingSearchNavigation();
+                }
             }
             finally
             {
+                if (pendingSearch != null)
+                {
+                    CompletePendingSearchNavigation();
+                }
+
                 _isInitializing = false;
             }
         }
@@ -418,6 +458,41 @@ namespace Elementary
             });
         }
 
+        public async Task NavigateToFromSearchAsync(SearchNavigationParameter searchParam)
+        {
+            if (searchParam == null) return;
+
+            if (!_isLoaded)
+            {
+                _pendingSearchParam = searchParam;
+                var completionSource = EnsurePendingSearchNavigationCompletionSource();
+                await completionSource.Task;
+                return;
+            }
+
+            ClearVerseHighlight();
+            _isAwaitingChapterSelection = false;
+            await ExecuteNavigationTransitionAsync(async () =>
+            {
+                SuppressScrollSyncFor(TimeSpan.FromMilliseconds(NavigationScrollSyncSuppressionMs));
+                BookChapterComboBox.IsDropDownOpen = false;
+                var windowChanged = await _viewModel.UpdateNavigationSettingsAsync(searchParam.BookTitle, searchParam.ChapterIndex, searchParam.BookKey);
+                if (windowChanged)
+                {
+                    ResetChapterElementTracking();
+                }
+
+                SynchronizePickerSelection();
+                await PositionReaderAsync(waitForLayout: true);
+                await HighlightVerseAsync(searchParam.ChapterIndex, searchParam.VerseNumber);
+            });
+        }
+
+        public void ClearSearchHighlight()
+        {
+            ClearVerseHighlight();
+        }
+
         private async Task BeginPendingBookSelectionAsync(Book selectedBook)
         {
             _isAwaitingChapterSelection = true;
@@ -569,6 +644,155 @@ namespace Elementary
             }
 
             return GetChapterElement(chapterIndex);
+        }
+
+        private async Task HighlightVerseAsync(int chapterIndex, int verseNumber)
+        {
+            if (verseNumber <= 0)
+            {
+                return;
+            }
+
+            var chapterListIndex = FindChapterListIndex(chapterIndex);
+            if (chapterListIndex < 0)
+            {
+                return;
+            }
+
+            await EnsureReaderScrollViewerAsync();
+            if (_readerScrollViewer == null)
+            {
+                return;
+            }
+
+            BibleChaptersListView.ScrollIntoView(_viewModel.Chapters[chapterListIndex], ScrollIntoViewAlignment.Leading);
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => BibleChaptersListView.UpdateLayout());
+            await Task.Delay(LayoutSettleDelayMs);
+
+            var verseElement = await WaitForVerseElementAsync(chapterListIndex, verseNumber);
+            if (verseElement == null)
+            {
+                return;
+            }
+
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+                ClearVerseHighlight();
+
+                var isDark = ActualTheme == ElementTheme.Dark ||
+                             (ActualTheme == ElementTheme.Default && Application.Current.RequestedTheme == ApplicationTheme.Dark);
+                var highlightColor = isDark
+                    ? Color.FromArgb(80, 255, 200, 50)
+                    : Color.FromArgb(80, 255, 230, 100);
+
+                verseElement.Background = new SolidColorBrush(highlightColor);
+                _highlightedElement = verseElement;
+                ScrollElementIntoView(verseElement);
+            });
+        }
+
+        private async Task<Panel> WaitForVerseElementAsync(int chapterListIndex, int verseNumber)
+        {
+            for (int attempt = 0; attempt < ChapterElementWaitMaxAttempts; attempt++)
+            {
+                var chapterElement = await WaitForChapterElementAsync(chapterListIndex);
+                var verseElement = FindVerseElement(chapterElement, verseNumber);
+                if (verseElement != null)
+                {
+                    return verseElement;
+                }
+
+                BibleChaptersListView.ScrollIntoView(_viewModel.Chapters[chapterListIndex], ScrollIntoViewAlignment.Leading);
+                await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => BibleChaptersListView.UpdateLayout());
+                await Task.Delay(ChapterElementWaitDelayMs);
+            }
+
+            return null;
+        }
+
+        private int FindChapterListIndex(int chapterIndex)
+        {
+            if (_viewModel?.Chapters == null)
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < _viewModel.Chapters.Count; i++)
+            {
+                if (_viewModel.Chapters[i].Index == chapterIndex)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private static Panel FindVerseElement(DependencyObject root, int verseNumber)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            if (root is Panel panel
+                && panel.DataContext is ChapterDisplayLine line
+                && line.Type == ChapterDisplayLineType.Verse
+                && line.VerseNumber == verseNumber)
+            {
+                return panel;
+            }
+
+            var childCount = VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < childCount; i++)
+            {
+                var result = FindVerseElement(VisualTreeHelper.GetChild(root, i), verseNumber);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+
+            return null;
+        }
+
+        private void ScrollElementIntoView(FrameworkElement element)
+        {
+            if (element == null || _readerScrollViewer == null)
+            {
+                return;
+            }
+
+            var transform = element.TransformToVisual(_readerScrollViewer);
+            var position = transform.TransformPoint(new Windows.Foundation.Point(0, 0));
+            var targetOffset = Math.Max(0, _readerScrollViewer.VerticalOffset + position.Y - (_readerScrollViewer.ViewportHeight / 3));
+            _readerScrollViewer.ChangeView(null, targetOffset, null, false);
+        }
+
+        private void ClearVerseHighlight()
+        {
+            if (_highlightedElement == null)
+            {
+                return;
+            }
+
+            _highlightedElement.Background = null;
+            _highlightedElement = null;
+        }
+
+        private TaskCompletionSource<bool> EnsurePendingSearchNavigationCompletionSource()
+        {
+            if (_pendingSearchNavigationCompletionSource == null || _pendingSearchNavigationCompletionSource.Task.IsCompleted)
+            {
+                _pendingSearchNavigationCompletionSource = new TaskCompletionSource<bool>();
+            }
+
+            return _pendingSearchNavigationCompletionSource;
+        }
+
+        private void CompletePendingSearchNavigation()
+        {
+            _pendingSearchNavigationCompletionSource?.TrySetResult(true);
         }
 
         private void QueueScrollSync()
