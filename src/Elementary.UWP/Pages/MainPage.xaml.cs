@@ -24,6 +24,7 @@ namespace Elementary
         private Microsoft.UI.Xaml.Controls.NavigationViewItem _lastItem;
         private IVerseOfTheDayDialogService _verseOfTheDayDialogService;
         private bool _isSearchPanelOpen;
+        private bool _isSearchNavigationInProgress;
 
         public MainPage()
         {
@@ -95,7 +96,7 @@ namespace Elementary
 
             if (clickedView == "Search")
             {
-                ToggleSearchPanel();
+                await SetSearchPanelOpenAsync(!_isSearchPanelOpen);
                 return;
             }
 
@@ -187,24 +188,31 @@ namespace Elementary
             }
         }
 
-        private void ToggleSearchPanel()
+        private Task SetSearchPanelOpenAsync(bool isOpen)
         {
-            _isSearchPanelOpen = !_isSearchPanelOpen;
+            _isSearchPanelOpen = isOpen;
             SearchPanel.Visibility = _isSearchPanelOpen ? Visibility.Visible : Visibility.Collapsed;
             if (_isSearchPanelOpen)
             {
                 SearchBox.Focus(FocusState.Programmatic);
+                return Task.CompletedTask;
             }
+
+            ClearSearchResultSelection();
+            ClearSearchEmptyState();
+            ClearActiveSearchHighlight();
+            return Task.CompletedTask;
         }
 
-        private void CloseSearchPanelButton_Click(object sender, RoutedEventArgs e)
+        private async void CloseSearchPanelButton_Click(object sender, RoutedEventArgs e)
         {
-            _isSearchPanelOpen = false;
-            SearchPanel.Visibility = Visibility.Collapsed;
+            await SetSearchPanelOpenAsync(false);
         }
 
         private async void SearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
         {
+            if (_isSearchNavigationInProgress) return;
+
             var query = args.QueryText?.Trim();
             if (string.IsNullOrWhiteSpace(query)) return;
 
@@ -269,7 +277,7 @@ namespace Elementary
 
         private async void SearchResultsListView_ItemClick(object sender, ItemClickEventArgs e)
         {
-            if (!(e?.ClickedItem is SearchResult result)) return;
+            if (_isSearchNavigationInProgress || !(e?.ClickedItem is SearchResult result)) return;
 
             var searchParam = new SearchNavigationParameter
             {
@@ -280,17 +288,82 @@ namespace Elementary
                 SearchQuery = SearchBox.Text?.Trim()
             };
 
-            if (ContentFrame.Content is BiblePage biblePage)
+            SetSearchNavigationState(isBusy: true);
+            try
             {
+                var biblePage = await GetOrNavigateToBiblePageAsync();
+                if (biblePage == null)
+                {
+                    return;
+                }
+
                 await biblePage.NavigateToFromSearchAsync(searchParam);
+
+                if (!_isSearchPanelOpen)
+                {
+                    biblePage.ClearSearchHighlight();
+                }
+
+                _lastItem = BiblePageNavigationViewItem;
+                MainNavigationView.SelectedItem = _lastItem;
             }
-            else
+            finally
             {
-                NavigateToView("BiblePage", searchParam);
+                SetSearchNavigationState(isBusy: false);
+            }
+        }
+
+        private void SetSearchNavigationState(bool isBusy)
+        {
+            _isSearchNavigationInProgress = isBusy;
+            SearchResultsListView.IsEnabled = !isBusy;
+            SearchBox.IsEnabled = !isBusy;
+            SearchScopeComboBox.IsEnabled = !isBusy;
+            SearchProgressRing.IsActive = isBusy;
+        }
+
+        private async Task<BiblePage> GetOrNavigateToBiblePageAsync()
+        {
+            if (ContentFrame.Content is BiblePage existingBiblePage)
+            {
+                return existingBiblePage;
             }
 
-            _lastItem = BiblePageNavigationViewItem;
-            MainNavigationView.SelectedItem = _lastItem;
+            if (!NavigateToView("BiblePage"))
+            {
+                return null;
+            }
+
+            for (int attempt = 0; attempt < 20; attempt++)
+            {
+                await Task.Delay(25);
+                if (ContentFrame.Content is BiblePage biblePage)
+                {
+                    return biblePage;
+                }
+            }
+
+            return ContentFrame.Content as BiblePage;
+        }
+
+        private void ClearActiveSearchHighlight()
+        {
+            if (ContentFrame.Content is BiblePage biblePage)
+            {
+                biblePage.ClearSearchHighlight();
+            }
+        }
+
+        private void ClearSearchResultSelection()
+        {
+            SearchResultsListView.SelectedItem = null;
+        }
+
+        private void ClearSearchEmptyState()
+        {
+            SearchProgressRing.IsActive = false;
+            SearchEmptyText.Text = "No results";
+            SearchEmptyText.Visibility = Visibility.Collapsed;
         }
     }
 }

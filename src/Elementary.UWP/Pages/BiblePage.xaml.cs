@@ -45,6 +45,7 @@ namespace Elementary
         private string _pendingHistoryBookKey;
         private SearchNavigationParameter _pendingSearchParam;
         private Panel _highlightedElement;
+        private TaskCompletionSource<bool> _pendingSearchNavigationCompletionSource;
         private int _navigationVisualStateVersion;
         private DateTimeOffset _lastIntermediateScrollSyncAt = DateTimeOffset.MinValue;
         private bool _isProcessingScrollSync;
@@ -74,6 +75,7 @@ namespace Elementary
                 if (!_isLoaded)
                 {
                     _pendingSearchParam = searchParam;
+                    EnsurePendingSearchNavigationCompletionSource();
                     return;
                 }
 
@@ -111,6 +113,7 @@ namespace Elementary
             if (_isInitializing || _isLoaded) return;
 
             _isInitializing = true;
+            SearchNavigationParameter pendingSearch = null;
             try
             {
                 _viewModel.IsLoaded = false;
@@ -123,7 +126,6 @@ namespace Elementary
                 SetupTopFadeGradient();
                 await EnsureReaderScrollViewerAsync();
 
-                SearchNavigationParameter pendingSearch = null;
                 if (_pendingSearchParam != null)
                 {
                     pendingSearch = _pendingSearchParam;
@@ -160,10 +162,16 @@ namespace Elementary
                 if (pendingSearch != null)
                 {
                     await HighlightVerseAsync(pendingSearch.ChapterIndex, pendingSearch.VerseNumber);
+                    CompletePendingSearchNavigation();
                 }
             }
             finally
             {
+                if (pendingSearch != null)
+                {
+                    CompletePendingSearchNavigation();
+                }
+
                 _isInitializing = false;
             }
         }
@@ -457,6 +465,8 @@ namespace Elementary
             if (!_isLoaded)
             {
                 _pendingSearchParam = searchParam;
+                var completionSource = EnsurePendingSearchNavigationCompletionSource();
+                await completionSource.Task;
                 return;
             }
 
@@ -476,6 +486,11 @@ namespace Elementary
                 await PositionReaderAsync(waitForLayout: true);
                 await HighlightVerseAsync(searchParam.ChapterIndex, searchParam.VerseNumber);
             });
+        }
+
+        public void ClearSearchHighlight()
+        {
+            ClearVerseHighlight();
         }
 
         private async Task BeginPendingBookSelectionAsync(Book selectedBook)
@@ -763,6 +778,21 @@ namespace Elementary
 
             _highlightedElement.Background = null;
             _highlightedElement = null;
+        }
+
+        private TaskCompletionSource<bool> EnsurePendingSearchNavigationCompletionSource()
+        {
+            if (_pendingSearchNavigationCompletionSource == null || _pendingSearchNavigationCompletionSource.Task.IsCompleted)
+            {
+                _pendingSearchNavigationCompletionSource = new TaskCompletionSource<bool>();
+            }
+
+            return _pendingSearchNavigationCompletionSource;
+        }
+
+        private void CompletePendingSearchNavigation()
+        {
+            _pendingSearchNavigationCompletionSource?.TrySetResult(true);
         }
 
         private void QueueScrollSync()
