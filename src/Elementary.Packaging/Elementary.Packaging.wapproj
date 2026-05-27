@@ -54,9 +54,11 @@
     <TargetPlatformVersion>10.0.26100.0</TargetPlatformVersion>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <DefaultLanguage>en-US</DefaultLanguage>
-    <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+    <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
     <NoWarn>$(NoWarn);NU1702</NoWarn>
     <EntryPointProjectUniqueName>..\Elementary.UWP\Elementary.UWP.csproj</EntryPointProjectUniqueName>
+    <PackageCertificateThumbprint>D278C9FBB9D45B778BB3D0618ADAD39FAC3D2717</PackageCertificateThumbprint>
+    <PackageCertificateKeyFile>Elementary.Packaging_TemporaryKey.pfx</PackageCertificateKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
@@ -64,6 +66,7 @@
     </AppxManifest>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Elementary.Packaging_TemporaryKey.pfx" />
     <Content Include="Images\SplashScreen.scale-200.png" />
     <Content Include="Images\LockScreenLogo.scale-200.png" />
     <Content Include="Images\Square150x150Logo.scale-200.png" />
