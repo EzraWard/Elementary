@@ -167,11 +167,11 @@ namespace Elementary
         private void UpdateStreakNavigationIcon()
         {
             var hasActiveStreak = _readingStreakService.GetCurrentStreak() > 0;
-            StreakNavigationIcon.FontFamily = hasActiveStreak
-                ? new Windows.UI.Xaml.Media.FontFamily("Segoe UI Emoji")
-                : new Windows.UI.Xaml.Media.FontFamily("Segoe UI Symbol");
-            StreakNavigationIcon.Glyph = "🔥";
-            StreakNavigationIcon.FontSize = hasActiveStreak ? 24 : 24;
+            if (hasActiveStreak)
+                StreakNavigationIcon.Foreground = new Windows.UI.Xaml.Media.SolidColorBrush(
+                    Windows.UI.Color.FromArgb(255, 230, 80, 10));
+            else
+                StreakNavigationIcon.ClearValue(Windows.UI.Xaml.Controls.IconElement.ForegroundProperty);
         }
 
         private string GetStreakThresholdDisplayText()
