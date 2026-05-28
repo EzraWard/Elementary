@@ -164,5 +164,44 @@ namespace Elementary.Core.Tests.Services
             Assert.AreEqual("John", history[1].BookKey);
             Assert.AreEqual(3, history[1].Chapter);
         }
+
+        [TestMethod]
+        public void SaveReadingStreakProgress_ShouldPersistDistinctSortedDates()
+        {
+            _settingsService.SaveReadingStreakProgress(new ReadingStreakProgress
+            {
+                ActiveDates = new List<DateTime>
+                {
+                    new DateTime(2026, 5, 28),
+                    new DateTime(2026, 5, 27),
+                    new DateTime(2026, 5, 28)
+                },
+                DailyReadingSeconds = new Dictionary<DateTime, int>
+                {
+                    [new DateTime(2026, 5, 28)] = 720,
+                    [new DateTime(2026, 5, 27)] = 600
+                }
+            });
+
+            _settingsProviderMock.Verify(
+                x => x.SaveSetting("readingStreak", "20260527,20260528;20260527=600,20260528=720"),
+                Times.Once);
+        }
+
+        [TestMethod]
+        public void GetReadingStreakProgress_ShouldParseValidStoredDates()
+        {
+            _settingsProviderMock
+                .Setup(x => x.GetSetting("readingStreak"))
+                .Returns("20260527,20260528;20260527=600,20260528=720");
+
+            var progress = _settingsService.GetReadingStreakProgress();
+
+            Assert.AreEqual(2, progress.ActiveDates.Count);
+            Assert.AreEqual(new DateTime(2026, 5, 27), progress.ActiveDates[0]);
+            Assert.AreEqual(new DateTime(2026, 5, 28), progress.ActiveDates[1]);
+            Assert.AreEqual(600, progress.DailyReadingSeconds[new DateTime(2026, 5, 27)]);
+            Assert.AreEqual(720, progress.DailyReadingSeconds[new DateTime(2026, 5, 28)]);
+        }
     }
 }

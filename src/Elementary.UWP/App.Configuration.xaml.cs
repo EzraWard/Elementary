@@ -45,6 +45,9 @@ namespace Elementary
             // Register the search service
             provider.AddSingleton<ISearchService, SearchService>();
 
+            // Register the reading streak service
+            provider.AddSingleton<IReadingStreakService, ReadingStreakService>();
+
             // Register shared HttpClient for VOTD services
             provider.AddSingleton<HttpClient>(_ =>
             {

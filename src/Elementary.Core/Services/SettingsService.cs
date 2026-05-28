@@ -1,7 +1,10 @@
-﻿using Elementary.Core.Enums;
+using Elementary.Core.Enums;
 using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
 using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 
 namespace Elementary.Core.Services
 {
@@ -146,5 +149,89 @@ namespace Elementary.Core.Services
             }
             SaveSetting("navigationHistory", string.Join(";", parts));
         }
+
+        public ReadingStreakProgress GetReadingStreakProgress()
+        {
+            var raw = GetSetting("readingStreak");
+            var progress = new ReadingStreakProgress();
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return progress;
+            }
+
+            var segments = raw.Split(new[] { ';' }, StringSplitOptions.None);
+            var serializedDates = (segments.Length > 0 ? segments[0] : string.Empty)
+                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var serializedDate in serializedDates)
+            {
+                if (DateTime.TryParseExact(serializedDate, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var activeDate))
+                {
+                    progress.ActiveDates.Add(activeDate.Date);
+                }
+            }
+
+            progress.ActiveDates = progress.ActiveDates
+                .Distinct()
+                .OrderBy(date => date)
+                .ToList();
+
+            if (segments.Length > 1 && !string.IsNullOrWhiteSpace(segments[1]))
+            {
+                var serializedReadingTimes = segments[1].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var serializedReadingTime in serializedReadingTimes)
+                {
+                    var parts = serializedReadingTime.Split(new[] { '=' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length != 2)
+                    {
+                        continue;
+                    }
+
+                    if (!DateTime.TryParseExact(parts[0], "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var readingDate))
+                    {
+                        continue;
+                    }
+
+                    if (!int.TryParse(parts[1], out var readingSeconds))
+                    {
+                        continue;
+                    }
+
+                    progress.DailyReadingSeconds[readingDate.Date] = Math.Max(0, readingSeconds);
+                }
+            }
+
+            return progress;
+        }
+
+        public void SaveReadingStreakProgress(ReadingStreakProgress progress)
+        {
+            if (progress == null)
+            {
+                SaveSetting("readingStreak", string.Empty);
+                return;
+            }
+
+            var serializedDates = string.Join(",",
+                (progress.ActiveDates ?? new List<DateTime>())
+                    .Select(date => date.Date)
+                    .Distinct()
+                    .OrderBy(date => date)
+                    .Select(date => date.ToString("yyyyMMdd", CultureInfo.InvariantCulture)));
+
+            var serializedReadingSeconds = string.Join(",",
+                (progress.DailyReadingSeconds ?? new Dictionary<DateTime, int>())
+                    .Where(entry => entry.Value > 0)
+                    .OrderBy(entry => entry.Key.Date)
+                    .Select(entry => $"{entry.Key.Date.ToString("yyyyMMdd", CultureInfo.InvariantCulture)}={entry.Value}"));
+
+            if (string.IsNullOrWhiteSpace(serializedDates) && string.IsNullOrWhiteSpace(serializedReadingSeconds))
+            {
+                SaveSetting("readingStreak", string.Empty);
+                return;
+            }
+
+            SaveSetting("readingStreak", $"{serializedDates};{serializedReadingSeconds}");
+        }
+
     }
 }

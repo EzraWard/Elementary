@@ -23,14 +23,19 @@ namespace Elementary
     {
         private Microsoft.UI.Xaml.Controls.NavigationViewItem _lastItem;
         private IVerseOfTheDayDialogService _verseOfTheDayDialogService;
+        private readonly IReadingStreakService _readingStreakService;
         private bool _isSearchPanelOpen;
         private bool _isSearchNavigationInProgress;
+        private int _streakNotificationVersion;
 
         public MainPage()
         {
             _verseOfTheDayDialogService = App.Services.GetRequiredService<IVerseOfTheDayDialogService>();
+            _readingStreakService = App.Services.GetRequiredService<IReadingStreakService>();
 
             this.InitializeComponent();
+            _readingStreakService.ReadingActivityLogged += ReadingStreakService_ReadingActivityLogged;
+            UpdateStreakNavigationIcon();
 
             Loaded += RedirectInitialFocus;
 
@@ -58,8 +63,40 @@ namespace Elementary
             InitialFocusStealer.Focus(FocusState.Programmatic);
         }
 
+        private async void ReadingStreakService_ReadingActivityLogged(object sender, ReadingStreakLoggedEventArgs e)
+        {
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
+            {
+                UpdateStreakNavigationIcon();
+                var thresholdText = GetStreakThresholdDisplayText();
+                var streakMessage = e.CurrentStreak == 1
+                    ? $"You read for {thresholdText} today. You're on a 1 day streak."
+                    : $"You read for {thresholdText} today. You're on a {e.CurrentStreak} day streak.";
+                StreakTeachingTip.Subtitle = streakMessage;
+                StreakTeachingTip.Target = StreakNavigationViewItem;
+                StreakTeachingTip.IsOpen = true;
+
+                var notificationVersion = ++_streakNotificationVersion;
+                await Task.Delay(4000);
+                if (notificationVersion == _streakNotificationVersion)
+                {
+                    StreakTeachingTip.IsOpen = false;
+                }
+            });
+        }
+
         private async void NavigationView_ItemInvoked(MUXC.NavigationView sender, MUXC.NavigationViewItemInvokedEventArgs args)
         {
+            if (args.IsSettingsInvoked)
+            {
+                if (NavigateToView("SettingsPage"))
+                {
+                    _lastItem = null;
+                }
+
+                return;
+            }
+
             var item = args.InvokedItemContainer as Microsoft.UI.Xaml.Controls.NavigationViewItem;
             if (item == null) return;
 
@@ -127,6 +164,24 @@ namespace Elementary
 
         }
 
+        private void UpdateStreakNavigationIcon()
+        {
+            var hasActiveStreak = _readingStreakService.GetCurrentStreak() > 0;
+            StreakNavigationIcon.FontFamily = hasActiveStreak
+                ? new Windows.UI.Xaml.Media.FontFamily("Segoe UI Emoji")
+                : new Windows.UI.Xaml.Media.FontFamily("Segoe UI Symbol");
+            StreakNavigationIcon.Glyph = "🔥";
+            StreakNavigationIcon.FontSize = hasActiveStreak ? 24 : 24;
+        }
+
+        private string GetStreakThresholdDisplayText()
+        {
+            var threshold = _readingStreakService.GetDailyThreshold();
+            return threshold.TotalMinutes >= 1 && Math.Abs(threshold.TotalSeconds % 60) < double.Epsilon
+                ? $"{(int)threshold.TotalMinutes} minute{(threshold.TotalMinutes == 1 ? string.Empty : "s")}"
+                : $"{(int)threshold.TotalSeconds} second{(threshold.TotalSeconds == 1 ? string.Empty : "s")}";
+        }
+
         private void WindowSizeChanged(object sender, WindowSizeChangedEventArgs e)
         {
             var titleBar = ApplicationView.GetForCurrentView().TitleBar;
@@ -162,6 +217,7 @@ namespace Elementary
 
         private void OnThemeChanged(ThemeListener sender)
         {
+            UpdateStreakNavigationIcon();
             if (SystemInformationHelper.Instance.OperatingSystemVersion.Build <= 20348)
             {
                 WindowHelpers.SetCaptionButtonColors(sender.CurrentTheme);
