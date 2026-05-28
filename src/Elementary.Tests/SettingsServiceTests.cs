@@ -164,5 +164,56 @@ namespace Elementary.Core.Tests.Services
             Assert.AreEqual("John", history[1].BookKey);
             Assert.AreEqual(3, history[1].Chapter);
         }
+
+        [TestMethod]
+        public void SaveReadingPlanProgress_ShouldPersistActivePlanAndCompletedDays()
+        {
+            _settingsService.SaveReadingPlanProgress(new ReadingPlanProgress
+            {
+                ActivePlanId = "john-in-21-days",
+                CompletedDayCount = 4
+            });
+
+            _settingsProviderMock.Verify(
+                x => x.SaveSetting("readingPlanProgress", "john-in-21-days|4"),
+                Times.Once);
+        }
+
+        [TestMethod]
+        public void SaveReadingPlanProgress_ShouldClearStateWhenNoActivePlan()
+        {
+            _settingsService.SaveReadingPlanProgress(new ReadingPlanProgress());
+
+            _settingsProviderMock.Verify(
+                x => x.SaveSetting("readingPlanProgress", string.Empty),
+                Times.Once);
+        }
+
+        [TestMethod]
+        public void GetReadingPlanProgress_ShouldParseValidStoredProgress()
+        {
+            _settingsProviderMock
+                .Setup(x => x.GetSetting("readingPlanProgress"))
+                .Returns("proverbs-in-31-days|7");
+
+            var progress = _settingsService.GetReadingPlanProgress();
+
+            Assert.AreEqual("proverbs-in-31-days", progress.ActivePlanId);
+            Assert.AreEqual(7, progress.CompletedDayCount);
+        }
+
+        [TestMethod]
+        public void GetReadingPlanProgress_ShouldReturnEmptyProgressWhenMissing()
+        {
+            _settingsProviderMock
+                .Setup(x => x.GetSetting("readingPlanProgress"))
+                .Returns(string.Empty);
+
+            var progress = _settingsService.GetReadingPlanProgress();
+
+            Assert.IsFalse(progress.HasActivePlan);
+            Assert.AreEqual(0, progress.CompletedDayCount);
+        }
+
     }
 }

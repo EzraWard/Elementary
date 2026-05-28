@@ -60,6 +60,16 @@ namespace Elementary
 
         private async void NavigationView_ItemInvoked(MUXC.NavigationView sender, MUXC.NavigationViewItemInvokedEventArgs args)
         {
+            if (args.IsSettingsInvoked)
+            {
+                if (NavigateToView("SettingsPage"))
+                {
+                    _lastItem = null;
+                }
+
+                return;
+            }
+
             var item = args.InvokedItemContainer as Microsoft.UI.Xaml.Controls.NavigationViewItem;
             if (item == null) return;
 
@@ -119,6 +129,18 @@ namespace Elementary
             if (string.IsNullOrWhiteSpace(clickedView) || view == null) return false;
 
             ContentFrame.Navigate(view, parameter, new EntranceNavigationTransitionInfo());
+            return true;
+        }
+
+        public bool NavigateToBiblePage(object parameter = null)
+        {
+            if (!NavigateToView("BiblePage", parameter))
+            {
+                return false;
+            }
+
+            _lastItem = BiblePageNavigationViewItem;
+            MainNavigationView.SelectedItem = _lastItem;
             return true;
         }
 

@@ -68,7 +68,7 @@ To run Elementary, you'll need:
 - [x] KJV, ASV translations
 - [x] Bible reading history
 - [ ] Infinite scrolling
-- [ ] Integrated Bible reading plans
+- [x] Integrated Bible reading plans
 - [ ] ...and more!
 
 See the [open issues](https://github.com/EzraWard/Elementary/issues) for a full list of proposed features (and known issues).
@@ -154,5 +154,3 @@ Project Link: [https://github.com/EzraWard/Elementary](https://github.com/EzraWa
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 
 [linkedin-url]: https://www.linkedin.com/in/ezra-ward-466a5038
-
-

@@ -1,8 +1,7 @@
-﻿using Elementary.Core.Enums;
+using Elementary.Core.Enums;
 using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
 using System;
-
 namespace Elementary.Core.Services
 {
     public class SettingsService : ISettingsService
@@ -145,6 +144,47 @@ namespace Elementary.Core.Services
                 parts.Add($"{h.BookTitle}|{h.Chapter}|{h.BookKey}");
             }
             SaveSetting("navigationHistory", string.Join(";", parts));
+        }
+
+        public ReadingPlanProgress GetReadingPlanProgress()
+        {
+            var raw = GetSetting("readingPlanProgress");
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return new ReadingPlanProgress();
+            }
+
+            var parts = raw.Split(new[] { '|' }, System.StringSplitOptions.None);
+            var progress = new ReadingPlanProgress
+            {
+                ActivePlanId = parts.Length > 0 ? parts[0] : null,
+                CompletedDayCount = 0
+            };
+
+            if (parts.Length > 1 && int.TryParse(parts[1], out var completedDayCount))
+            {
+                progress.CompletedDayCount = Math.Max(0, completedDayCount);
+            }
+
+            return progress;
+        }
+
+        public void SaveReadingPlanProgress(ReadingPlanProgress progress)
+        {
+            if (progress == null)
+            {
+                SaveSetting("readingPlanProgress", string.Empty);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(progress.ActivePlanId))
+            {
+                SaveSetting("readingPlanProgress", string.Empty);
+                return;
+            }
+
+            var completedDayCount = Math.Max(0, progress.CompletedDayCount);
+            SaveSetting("readingPlanProgress", $"{progress.ActivePlanId}|{completedDayCount}");
         }
     }
 }
