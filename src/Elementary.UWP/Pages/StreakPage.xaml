@@ -15,19 +15,50 @@
     </Page.Resources>
 
     <Grid>
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+                <VisualState x:Name="VeryNarrowLayout" />
+                <VisualState x:Name="NarrowLayout">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="500" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="ContentStackPanel.Margin" Value="0" />
+                    </VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="WideLayout">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="720" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="ContentStackPanel.Margin" Value="0" />
+                        <Setter Target="CardsPrimaryColumn.Width" Value="320" />
+                        <Setter Target="CardsSecondaryColumn.Width" Value="*" />
+                        <Setter Target="StreakDetailsCard.(Grid.Column)" Value="1" />
+                        <Setter Target="StreakDetailsCard.(Grid.Row)" Value="0" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
         <ScrollViewer>
             <Grid Padding="16">
-                <StackPanel MaxWidth="1000" Spacing="16">
-                    <TextBlock Text="Reading Streak" FontSize="32" FontWeight="Bold" />
+                <StackPanel x:Name="ContentStackPanel" MaxWidth="1000" Spacing="16">
+                    <TextBlock x:Name="HeaderTextBlock" Text="Reading Streak" FontSize="32" FontWeight="Bold" />
                     <TextBlock Text="{x:Bind ViewModel.SummaryText, Mode=OneWay}" Opacity="0.8" TextWrapping="WrapWholeWords" />
 
-                    <Grid ColumnSpacing="12">
+                    <Grid x:Name="CardsGrid" ColumnSpacing="12" RowSpacing="12">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="320" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition x:Name="CardsPrimaryColumn" Width="*" />
+                            <ColumnDefinition x:Name="CardsSecondaryColumn" Width="0" />
                         </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
-                        <Border Grid.Column="0"
+                        <Border x:Name="StreakHeroCard"
+                                Grid.Column="0"
+                                Grid.Row="0"
                                 Padding="16"
                                 CornerRadius="8"
                                 Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
@@ -87,7 +118,9 @@
                             </StackPanel>
                         </Border>
 
-                        <Border Grid.Column="1"
+                        <Border x:Name="StreakDetailsCard"
+                                Grid.Column="0"
+                                Grid.Row="1"
                                 Padding="16"
                                 CornerRadius="8"
                                 Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">

@@ -62,6 +62,7 @@
                         Height="1" />
                 <muxc:NavigationView Name="MainNavigationView"
                                      ItemInvoked="NavigationView_ItemInvoked"
+                                     DisplayModeChanged="MainNavigationView_DisplayModeChanged"
                                      IsTitleBarAutoPaddingEnabled="false"
                                      IsBackButtonVisible="Collapsed"
                                      IsPaneOpen="False"
@@ -182,7 +183,10 @@
                         </Grid>
                     </Border>
 
-                    <Frame Grid.Column="1" Name="ContentFrame" NavigationFailed="ContentFrame_NavigationFailed" />
+                    <Frame Grid.Column="1"
+                           Name="ContentFrame"
+                           Navigated="ContentFrame_Navigated"
+                           NavigationFailed="ContentFrame_NavigationFailed" />
                 </Grid>
             </muxc:NavigationView>
         </Grid>

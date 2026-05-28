@@ -159,9 +159,19 @@ namespace Elementary
             return true;
         }
 
+        private void ContentFrame_Navigated(object sender, Windows.UI.Xaml.Navigation.NavigationEventArgs e)
+        {
+            UpdateCurrentPageNavigationLayout();
+        }
+
         private void ContentFrame_NavigationFailed(object sender, Windows.UI.Xaml.Navigation.NavigationFailedEventArgs e)
         {
 
+        }
+
+        private void MainNavigationView_DisplayModeChanged(MUXC.NavigationView sender, MUXC.NavigationViewDisplayModeChangedEventArgs args)
+        {
+            UpdateCurrentPageNavigationLayout();
         }
 
         private void UpdateStreakNavigationIcon()
@@ -179,6 +189,15 @@ namespace Elementary
             return threshold.TotalMinutes >= 1 && Math.Abs(threshold.TotalSeconds % 60) < double.Epsilon
                 ? $"{(int)threshold.TotalMinutes} minute{(threshold.TotalMinutes == 1 ? string.Empty : "s")}"
                 : $"{(int)threshold.TotalSeconds} second{(threshold.TotalSeconds == 1 ? string.Empty : "s")}";
+        }
+
+        private void UpdateCurrentPageNavigationLayout()
+        {
+            if (ContentFrame.Content is StreakPage streakPage)
+            {
+                streakPage.SetHeaderInsetForMinimalNavigation(
+                    MainNavigationView.DisplayMode == MUXC.NavigationViewDisplayMode.Minimal);
+            }
         }
 
         private void WindowSizeChanged(object sender, WindowSizeChangedEventArgs e)

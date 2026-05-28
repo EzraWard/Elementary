@@ -7,6 +7,9 @@ namespace Elementary
 {
     public sealed partial class StreakPage : Page
     {
+        private static readonly Thickness DefaultHeaderMargin = new Thickness(0);
+        private static readonly Thickness MinimalNavigationHeaderMargin = new Thickness(0, 16, 0, 0);
+
         public StreakPageViewModel ViewModel { get; }
 
         public StreakPage()
@@ -26,6 +29,13 @@ namespace Elementary
         private void StreakPage_Loaded(object sender, RoutedEventArgs e)
         {
             ViewModel.Initialize();
+        }
+
+        public void SetHeaderInsetForMinimalNavigation(bool isMinimalNavigation)
+        {
+            HeaderTextBlock.Margin = isMinimalNavigation
+                ? MinimalNavigationHeaderMargin
+                : DefaultHeaderMargin;
         }
     }
 }
