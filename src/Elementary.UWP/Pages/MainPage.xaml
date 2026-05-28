@@ -92,8 +92,15 @@
                 <muxc:NavigationView.FooterMenuItems>
                     <muxc:NavigationViewItem x:Name="StreakNavigationViewItem" Content="Streak" Tag="StreakPage">
                         <muxc:NavigationViewItem.Icon>
-                            <PathIcon x:Name="StreakNavigationIcon"
-                                      Data="M10,18 C5,15 2,9 5,6 C6,3 8,2 10,2 C12,2 14,3 15,6 C16,9 17,13 14,17 C13,18 11,19 10,18 Z" />
+                            <FontIcon x:Name="StreakNavigationIcon"
+                                      FontFamily="Segoe UI Symbol"
+                                      Glyph="🔥"
+                                      FontSize="16"
+                                      RenderTransformOrigin="0.5,0.5">
+                                <FontIcon.RenderTransform>
+                                    <ScaleTransform ScaleX="1.5" ScaleY="1.5" />
+                                </FontIcon.RenderTransform>
+                            </FontIcon>
                         </muxc:NavigationViewItem.Icon>
                     </muxc:NavigationViewItem>
                 </muxc:NavigationView.FooterMenuItems>
