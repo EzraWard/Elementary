@@ -25,7 +25,7 @@ namespace Elementary.ViewModels
 
         public bool HasActivity => LongestStreak > 0;
 
-        public string StreakLabel => CurrentStreak == 1 ? "day streak" : "days streak";
+        public string StreakLabel => "day streak";
 
         public string ThresholdText
         {
