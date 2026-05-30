@@ -351,6 +351,3 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
-
-# Elementary – local API key file (never commit)
-src/Elementary.VerseOfTheDay/ApiKeys.cs

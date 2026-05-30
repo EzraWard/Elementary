@@ -1,3 +1,4 @@
+using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
 using Elementary.ViewModels;
 using System;
@@ -51,6 +52,9 @@ namespace Elementary
         private bool _isProcessingScrollSync;
         private bool _hasPendingScrollSync;
         private int _scrollLocationPersistenceVersion;
+        private readonly DispatcherTimer _readingSessionTimer;
+        private DateTimeOffset? _readingSessionStartedAt;
+        private bool _isWindowVisible = true;
 
         public BiblePage()
         {
@@ -61,9 +65,16 @@ namespace Elementary
             DataContext = _viewModel;
 
             Loaded += BiblePage_Loaded;
+            Unloaded += BiblePage_Unloaded;
             ActualThemeChanged += BiblePage_ActualThemeChanged;
             ChooserBorder.RenderTransform = _chooserTranslate;
             SetReaderVisualState(showContent: false, showSpinner: true);
+
+            _readingSessionTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(30)
+            };
+            _readingSessionTimer.Tick += ReadingSessionTimer_Tick;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -100,6 +111,7 @@ namespace Elementary
         {
             base.OnNavigatedFrom(e);
 
+            StopReadingSession();
             ClearVerseHighlight();
             _scrollLocationPersistenceVersion++;
             if (_isLoaded)
@@ -158,6 +170,7 @@ namespace Elementary
                 _isLoaded = true;
                 SetReaderVisualState(showContent: true, showSpinner: false);
                 SetPickerInteractionEnabled(true);
+                StartReadingSession();
 
                 if (pendingSearch != null)
                 {
@@ -179,6 +192,12 @@ namespace Elementary
         private void BiblePage_ActualThemeChanged(FrameworkElement sender, object args)
         {
             SetupTopFadeGradient();
+        }
+
+        private void BiblePage_Unloaded(object sender, RoutedEventArgs e)
+        {
+            Window.Current.VisibilityChanged -= Window_VisibilityChanged;
+            StopReadingSession();
         }
 
         private void ApplyTopOffsetToFirstChapter()
@@ -977,6 +996,74 @@ namespace Elementary
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error saving navigation history: {ex.Message}");
+            }
+        }
+
+        private void Window_VisibilityChanged(object sender, VisibilityChangedEventArgs args)
+        {
+            _isWindowVisible = args.Visible;
+            if (_isWindowVisible)
+            {
+                StartReadingSession();
+            }
+            else
+            {
+                StopReadingSession();
+            }
+        }
+
+        private void ReadingSessionTimer_Tick(object sender, object e)
+        {
+            FlushReadingSessionTime();
+        }
+
+        private void StartReadingSession()
+        {
+            if (!_isLoaded || !_isWindowVisible || _readingSessionStartedAt.HasValue)
+            {
+                return;
+            }
+
+            Window.Current.VisibilityChanged -= Window_VisibilityChanged;
+            Window.Current.VisibilityChanged += Window_VisibilityChanged;
+            _readingSessionStartedAt = DateTimeOffset.Now;
+            _readingSessionTimer.Start();
+        }
+
+        private void StopReadingSession()
+        {
+            _readingSessionTimer.Stop();
+            FlushReadingSessionTime();
+        }
+
+        private void FlushReadingSessionTime()
+        {
+            if (!_readingSessionStartedAt.HasValue)
+            {
+                return;
+            }
+
+            var elapsed = DateTimeOffset.Now - _readingSessionStartedAt.Value;
+            if (elapsed <= TimeSpan.Zero)
+            {
+                return;
+            }
+
+            _readingSessionStartedAt = null;
+
+            try
+            {
+                var readingStreakService = App.Services.GetRequiredService<IReadingStreakService>();
+                readingStreakService.AddReadingTime(elapsed);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error tracking reading time: {ex.Message}");
+            }
+
+            if (_isLoaded && _isWindowVisible)
+            {
+                _readingSessionStartedAt = DateTimeOffset.Now;
             }
         }
 
