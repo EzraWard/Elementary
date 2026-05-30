@@ -72,7 +72,7 @@ namespace Elementary
 
             _readingSessionTimer = new DispatcherTimer
             {
-                Interval = TimeSpan.FromSeconds(1)
+                Interval = TimeSpan.FromSeconds(30)
             };
             _readingSessionTimer.Tick += ReadingSessionTimer_Tick;
         }
