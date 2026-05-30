@@ -41,7 +41,7 @@ namespace Elementary.Tests.Services
         }
 
         [TestMethod]
-        public void AddReadingTime_ShouldNotActivateStreakBeforeTenMinutes()
+        public void AddReadingTime_ShouldNotActivateStreakBeforeThreshold()
         {
             var today = new DateTime(2026, 5, 28);
             var threshold = _readingStreakService.GetDailyThreshold();
@@ -53,7 +53,7 @@ namespace Elementary.Tests.Services
         }
 
         [TestMethod]
-        public void AddReadingTime_ShouldActivateStreakAtTenMinutesCumulatively()
+        public void AddReadingTime_ShouldActivateStreakAtThresholdCumulatively()
         {
             var today = new DateTime(2026, 5, 28);
             var threshold = _readingStreakService.GetDailyThreshold();
