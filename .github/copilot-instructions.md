@@ -2,31 +2,32 @@
 
 ## Build, test, and lint commands
 
-- Prerequisites (from README): Windows 10 v1809+, Visual Studio 2022, Windows 11 SDK `10.0.26100.0`.
-- Build shared core library:
+- Prerequisites from `README.md`: Windows 10 v1809+, Visual Studio 2022, Windows 11 SDK `10.0.26100.0`.
+- Build the core library:
   - `dotnet build .\src\Elementary.Core\Elementary.Core.csproj --nologo`
-- Run .NET unit tests:
+- Build the main test project:
+  - `dotnet build .\src\Elementary.Tests\Elementary.Tests.csproj --nologo`
+- Run the unit tests:
   - `dotnet test .\src\Elementary.Tests\Elementary.Tests.csproj --nologo`
-- Run a single MSTest:
+- Run one test method:
   - `dotnet test .\src\Elementary.Tests\Elementary.Tests.csproj --nologo --filter "FullyQualifiedName~UsfmParserTests.ParseBook_ShouldExtractTitleAndChapters"`
-- UWP app/tests (`src\Elementary.UWP`, `src\Elementary.Tests.UWP`) are classic UWP projects and are typically built/run from Visual Studio with x86/x64/ARM64 configs.
-- Lint: there is no dedicated lint command or analyzer script configured in this repository.
+- UWP projects (`src\Elementary.UWP`, `src\Elementary.Tests.UWP`) are classic UWP projects and are typically built/run from Visual Studio with x86/x64/ARM64 configs.
+- No dedicated lint/analyzer script is configured.
 
 ## High-level architecture
 
-- `src\Elementary.slnx` currently wires four projects: `Elementary.Core`, `Elementary.UWP`, `Elementary.Tests`, and `Elementary.Tests.UWP`.
-- `Elementary.Core` (`netstandard2.0`) contains domain logic and contracts:
-  - Interfaces (`IBibleService`, `ISettingsService`, `IFileService`, providers)
-  - Services (`BibleService`, `SettingsService`, `FileService`, `VerseOfTheDayService`)
-  - Parsing/model logic for Bible content (USFM parser + models/enums/dictionaries)
-- `Elementary.UWP` is the app shell and UI layer (XAML pages + viewmodels). Dependency injection is composed in `App.Configuration.xaml.cs`, where platform implementations (`WindowsSettingsProvider`, `WindowsFilePathProvider`, `UWPFileService`) are registered and core services are resolved.
-- Data flow is: page/viewmodel -> core service interfaces -> platform providers/file services. `BibleService` loads translation content (USFM/EPUB paths), and `SettingsService` persists reading state/theme/font/navigation history.
-- `Elementary.Tests` (`net8.0`, MSTest + Moq) covers core behavior. `Elementary.Tests.UWP` contains UWP-specific tests for Windows providers.
+- `src\Elementary.slnx` includes `Elementary.Core`, `Elementary.VerseOfTheDay`, `Elementary.WidgetApp`, `Elementary.Packaging`, `Elementary.Tests.UWP`, `Elementary.Tests`, `Elementary.VerseOfTheDay.ConsolePreview`, and `Elementary.UWP`.
+- `Elementary.Core` (`netstandard2.0`) holds the Bible domain model, parsing, and shared services: settings, file access, Bible loading, search, and reading streak logic.
+- `Elementary.UWP` is the main app shell. XAML pages and viewmodels live here, and `App.Configuration.xaml.cs` is the composition root that registers platform services and shared core services.
+- `Elementary.VerseOfTheDay` is the shared Verse-of-the-Day library used by the widget app, console preview, and UWP app. `Elementary.WidgetApp` is the Windows App SDK entry point; `Elementary.VerseOfTheDay.ConsolePreview` is a .NET console app for preview/debugging.
+- `Elementary.Tests` covers core behavior with MSTest + Moq, and `Elementary.Tests.UWP` covers Windows-specific provider behavior.
 
 ## Key repository conventions
 
-- Use dependency injection via `App.Services.GetRequiredService<T>()` from UI/viewmodels; avoid direct `new` for services that already have interfaces/registrations.
-- Persist user state through `ISettingsService`/`ISettingsProvider` using established keys (`translation`, `book`, `chapter`, `font`, `fontSize`, `showVerseNumbers`, `theme`, `navigationHistory`) instead of adding ad-hoc storage paths.
-- Navigation history format is string-serialized as `BookTitle|Chapter` entries joined by `;` and capped to 10 items (`SettingsService`); keep this format compatible.
-- Bible loading is intentionally staged: books are listed first and chapter content is loaded lazily via `EnsureBookLoaded`; preserve this behavior for performance.
-- Tests use MSTest attributes and method names in `Method_Condition_ExpectedResult` style; follow existing patterns in `src\Elementary.Tests\*.cs`.
+- Resolve UI/viewmodel dependencies through `App.Services.GetRequiredService<T>()`; avoid `new` for services that are already registered in DI.
+- Keep settings compatibility intact. Existing keys include `translation`, `book`, `chapter`, `font`, `fontSize`, `showVerseNumbers`, `theme`, `navigationHistory`, and `readingStreak`.
+- Preserve serialized formats: navigation history is `BookTitle|Chapter[|BookKey]` entries joined by `;`, capped to 10 items; reading streak data is stored as `yyyyMMdd` values plus per-day reading seconds.
+- Bible content loading is intentionally staged: books are discovered first, then chapter content is loaded lazily with `EnsureBookLoaded`. Keep that behavior to protect startup and navigation performance.
+- When touching `SettingsService`, remember it fills in defaults and persists them immediately on read.
+- Test naming follows MSTest with `Method_Condition_ExpectedResult`-style method names. `Elementary.Tests` also imports MSTest via MSBuild `<Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />`, so test files usually do not need a `using` for it.
+- `Elementary.VerseOfTheDay\ApiKeys.cs` is ignored; edit `ApiKeys.Template.cs` instead.
