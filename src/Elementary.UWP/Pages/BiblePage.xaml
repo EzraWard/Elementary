@@ -26,7 +26,7 @@
         </Grid.RowDefinitions>
         <ListView x:Name="BibleChaptersListView"
                   Grid.RowSpan="2"
-                  ItemsSource="{Binding Chapters}"
+                  ItemsSource="{Binding ReaderItems}"
                   SelectionMode="None"
                   IsItemClickEnabled="False"
                   IsTabStop="False"
@@ -36,14 +36,6 @@
                   ScrollViewer.VerticalScrollBarVisibility="Hidden"
                   ScrollViewer.IsVerticalScrollChainingEnabled="False"
                   ScrollViewer.IsVerticalRailEnabled="True">
-            <ListView.Header>
-                <TextBlock Text="{Binding CurrentBook.Title}"
-                           FontSize="34"
-                           FontWeight="Bold"
-                           HorizontalAlignment="Center"
-                           TextAlignment="Center"
-                           Margin="0,68,0,10"/>
-            </ListView.Header>
             <ListView.ItemsPanel>
                 <ItemsPanelTemplate>
                     <ItemsStackPanel Orientation="Vertical"/>
@@ -61,19 +53,29 @@
             </ListView.ItemContainerStyle>
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <Grid x:Name="ChapterItemGrid"
+                    <Grid x:Name="ReaderItemGrid"
                           Margin="0,0,0,20"
-                          Loaded="ChapterItemGrid_Loaded"
-                          Unloaded="ChapterItemGrid_Unloaded">
+                          Loaded="ReaderItemGrid_Loaded"
+                          Unloaded="ReaderItemGrid_Unloaded">
                         <StackPanel MaxWidth="700"
                                     HorizontalAlignment="Center">
+                            <TextBlock Text="{Binding BookTitle}"
+                                       FontSize="34"
+                                       FontWeight="Bold"
+                                       HorizontalAlignment="Center"
+                                       TextAlignment="Center"
+                                       Margin="0,68,0,10"
+                                       Visibility="{Binding IsBookHeader, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                            <Border Height="{Binding SpacerHeight}"
+                                    Visibility="{Binding IsBottomSpacer, Converter={StaticResource BoolToVisibilityConverter}}"/>
                             <TextBlock FontSize="28"
                                         FontWeight="Bold"
                                         HorizontalAlignment="Center"
                                         TextAlignment="Center"
-                                        Margin="0,24,0,8">
+                                        Margin="0,24,0,8"
+                                        Visibility="{Binding IsChapter, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <Run Text="Chapter " />
-                                <Run Text="{Binding Index}" />
+                                <Run Text="{Binding ChapterIndex}" />
                             </TextBlock>
                             <ItemsControl ItemsSource="{Binding DisplayLines}">
                                 <ItemsControl.ItemTemplate>
