@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:Elementary.Core.Models"
     xmlns:viewModels="using:Elementary.ViewModels"
     xmlns:converters="using:Elementary.UWP.Converters"
     mc:Ignorable="d"
@@ -12,6 +13,95 @@
     <Page.Resources>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <converters:BoolToVisibilityConverter x:Key="InvertedBoolToVisibilityConverter" IsInverted="True" />
+        <Style x:Key="StreakBadgeListViewItemStyle" TargetType="ListViewItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,0,12,12" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="UseSystemFocusVisuals" Value="False" />
+            <Setter Property="IsTabStop" Value="False" />
+        </Style>
+
+        <DataTemplate x:Key="StreakBadgeGalleryItemTemplate" x:DataType="models:StreakBadgeProgress">
+            <Grid x:Name="BadgeCardRoot"
+                  Width="300"
+                  Height="108"
+                  Padding="8"
+                  HorizontalAlignment="Stretch"
+                  Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                  BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}"
+                  BorderThickness="1"
+                  ColumnSpacing="16"
+                  CornerRadius="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Width="56"
+                        Height="56"
+                        Margin="8,12,0,0"
+                        VerticalAlignment="Top"
+                        CornerRadius="12"
+                        BorderBrush="#66D67606"
+                        BorderThickness="1"
+                        Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}">
+                    <TextBlock Text="{x:Bind PlaceholderText}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               FontSize="{x:Bind PlaceholderFontSize}"
+                               FontWeight="SemiBold" />
+                </Border>
+
+                <Grid Grid.Column="1"
+                      Margin="0,12,8,12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="{x:Bind Title}"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               TextLineBounds="TrimToCapHeight"
+                               TextTrimming="CharacterEllipsis" />
+
+                    <TextBlock Grid.Row="1"
+                               Margin="0,4,0,0"
+                               Opacity="0.78"
+                               Text="{x:Bind Description}"
+                               TextTrimming="WordEllipsis"
+                               TextWrapping="WrapWholeWords"
+                               MaxLines="2" />
+
+                    <TextBlock Grid.Row="2"
+                               Margin="0,8,0,0"
+                               FontSize="12"
+                               Opacity="0.65"
+                               Text="{x:Bind StatusText}"
+                               TextTrimming="CharacterEllipsis" />
+                </Grid>
+
+                <VisualStateManager.VisualStateGroups>
+                    <VisualStateGroup x:Name="BadgeCardLayoutStates">
+                        <VisualState x:Name="WideBadgeCardLayout">
+                            <VisualState.StateTriggers>
+                                <AdaptiveTrigger MinWindowWidth="720" />
+                            </VisualState.StateTriggers>
+                        </VisualState>
+                        <VisualState x:Name="NarrowBadgeCardLayout">
+                            <VisualState.StateTriggers>
+                                <AdaptiveTrigger MinWindowWidth="0" />
+                            </VisualState.StateTriggers>
+                            <VisualState.Setters>
+                                <Setter Target="BadgeCardRoot.Width" Value="Auto" />
+                            </VisualState.Setters>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateManager.VisualStateGroups>
+            </Grid>
+        </DataTemplate>
     </Page.Resources>
 
     <Grid>
@@ -154,6 +244,36 @@
                             </Grid>
                         </Border>
                     </Grid>
+
+                    <Border Padding="16"
+                            CornerRadius="8"
+                            Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Streak badges" FontSize="20" FontWeight="SemiBold" />
+                            <TextBlock Text="{x:Bind ViewModel.BadgeSummaryText, Mode=OneWay}"
+                                       Opacity="0.8"
+                                       TextWrapping="WrapWholeWords" />
+                            <ListView ItemsSource="{x:Bind ViewModel.Badges, Mode=OneWay}"
+                                      ItemTemplate="{StaticResource StreakBadgeGalleryItemTemplate}"
+                                      ItemContainerStyle="{StaticResource StreakBadgeListViewItemStyle}"
+                                      SelectionMode="None"
+                                      IsItemClickEnabled="False"
+                                      IsSwipeEnabled="False"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      ScrollViewer.HorizontalScrollMode="Disabled"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                      ScrollViewer.VerticalScrollMode="Disabled"
+                                      ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                                <ListView.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <ItemsWrapGrid Orientation="Horizontal"
+                                                       MaximumRowsOrColumns="2" />
+                                    </ItemsPanelTemplate>
+                                </ListView.ItemsPanel>
+                            </ListView>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </Grid>
         </ScrollViewer>

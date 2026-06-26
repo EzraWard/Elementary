@@ -1,8 +1,10 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Elementary.Core.Interfaces;
+using Elementary.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace Elementary.ViewModels
 {
@@ -11,13 +13,20 @@ namespace Elementary.ViewModels
         private const int RecentActivityDays = 7;
         private readonly IReadingStreakService _readingStreakService;
         private readonly ObservableCollection<StreakDayActivityViewModel> _recentActivity = new ObservableCollection<StreakDayActivityViewModel>();
+        private readonly ObservableCollection<StreakBadgeProgress> _badges = new ObservableCollection<StreakBadgeProgress>();
 
-        public StreakPageViewModel()
+        public StreakPageViewModel() : this(App.Services.GetRequiredService<IReadingStreakService>())
         {
-            _readingStreakService = App.Services.GetRequiredService<IReadingStreakService>();
+        }
+
+        internal StreakPageViewModel(IReadingStreakService readingStreakService)
+        {
+            _readingStreakService = readingStreakService ?? throw new ArgumentNullException(nameof(readingStreakService));
         }
 
         public ObservableCollection<StreakDayActivityViewModel> RecentActivity => _recentActivity;
+
+        public ObservableCollection<StreakBadgeProgress> Badges => _badges;
 
         public int CurrentStreak => _readingStreakService.GetCurrentStreak();
 
@@ -48,6 +57,17 @@ namespace Elementary.ViewModels
         public string HowItWorksText =>
             $"Read for at least {ThresholdText} on consecutive calendar days to grow the streak. Missing a full day resets the current streak, but your longest streak stays.";
 
+        public string BadgeSummaryText
+        {
+            get
+            {
+                var nextBadge = _badges.FirstOrDefault(badge => badge.IsNextToEarn);
+                return nextBadge == null
+                    ? "You've unlocked every current streak badge."
+                    : $"Next badge: {nextBadge.Title} at {nextBadge.ThresholdDays} day{(nextBadge.ThresholdDays == 1 ? string.Empty : "s")}.";
+            }
+        }
+
         public void Initialize()
         {
             Refresh();
@@ -56,6 +76,7 @@ namespace Elementary.ViewModels
         public void Refresh()
         {
             ReplaceRecentActivity();
+            ReplaceBadges();
             OnPropertyChanged(nameof(CurrentStreak));
             OnPropertyChanged(nameof(LongestStreak));
             OnPropertyChanged(nameof(HasActivity));
@@ -64,6 +85,7 @@ namespace Elementary.ViewModels
             OnPropertyChanged(nameof(SummaryText));
             OnPropertyChanged(nameof(ThresholdHelpText));
             OnPropertyChanged(nameof(HowItWorksText));
+            OnPropertyChanged(nameof(BadgeSummaryText));
         }
 
         private void ReplaceRecentActivity()
@@ -79,6 +101,15 @@ namespace Elementary.ViewModels
                 });
 
                 currentDate = currentDate.AddDays(1);
+            }
+        }
+
+        private void ReplaceBadges()
+        {
+            _badges.Clear();
+            foreach (var badge in StreakBadgeCatalog.BuildProgress(LongestStreak))
+            {
+                _badges.Add(badge);
             }
         }
     }
