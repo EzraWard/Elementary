@@ -220,6 +220,20 @@ namespace Elementary.ViewModels
             return GetReaderItem(CurrentBook, CurrentChapter);
         }
 
+        public BibleReaderItem GetReaderHeaderForCurrentBook()
+        {
+            return GetReaderHeader(CurrentBook);
+        }
+
+        public BibleReaderItem GetReaderHeader(Book book)
+        {
+            if (book == null) return null;
+
+            return ReaderItems.FirstOrDefault(item =>
+                item.IsBookHeader
+                && ReferenceEquals(item.Book, book));
+        }
+
         public BibleReaderItem GetReaderItem(Book book, Chapter chapter)
         {
             if (book == null || chapter == null) return null;

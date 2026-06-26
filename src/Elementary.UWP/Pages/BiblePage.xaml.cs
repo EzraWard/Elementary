@@ -707,11 +707,17 @@ namespace Elementary
                 return;
             }
 
-            BibleChaptersListView.ScrollIntoView(currentChapterItem, ScrollIntoViewAlignment.Leading);
+            var scrollTargetItem = ShouldPositionBookHeaderForCurrentChapter()
+                ? _viewModel.GetReaderHeaderForCurrentBook() ?? currentChapterItem
+                : currentChapterItem;
+
+            BibleChaptersListView.ScrollIntoView(scrollTargetItem, ScrollIntoViewAlignment.Leading);
             await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => BibleChaptersListView.UpdateLayout());
             await Task.Delay(LayoutSettleDelayMs);
 
-            var element = await WaitForChapterElementAsync(currentChapterItem);
+            var element = scrollTargetItem.IsChapter
+                ? await WaitForChapterElementAsync(scrollTargetItem)
+                : await WaitForReaderItemElementAsync(scrollTargetItem);
             if (element == null)
             {
                 return;
@@ -721,6 +727,35 @@ namespace Elementary
             var adjustedOffset = Math.Max(0, _readerScrollViewer.VerticalOffset + chapterTopInViewport - ChapterTopOffset);
             _readerScrollViewer.ChangeView(null, adjustedOffset, null, true);
             ApplyTopOffsetToFirstChapter();
+        }
+
+        private bool ShouldPositionBookHeaderForCurrentChapter()
+        {
+            var currentBook = _viewModel?.CurrentBook;
+            var currentChapter = _viewModel?.CurrentChapter;
+            if (currentBook?.Chapters == null || currentChapter == null || currentBook.Chapters.Count == 0)
+            {
+                return false;
+            }
+
+            return ReferenceEquals(currentChapter, currentBook.Chapters[0]);
+        }
+
+        private async Task<FrameworkElement> WaitForReaderItemElementAsync(BibleReaderItem readerItem)
+        {
+            for (int attempt = 0; attempt < ChapterElementWaitMaxAttempts; attempt++)
+            {
+                var element = GetChapterElement(readerItem);
+                if (element?.DataContext is BibleReaderItem item && ReferenceEquals(item, readerItem))
+                {
+                    return element;
+                }
+
+                await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => BibleChaptersListView.UpdateLayout());
+                await Task.Delay(ChapterElementWaitDelayMs);
+            }
+
+            return GetChapterElement(readerItem);
         }
 
         private async Task<FrameworkElement> WaitForChapterElementAsync(BibleReaderItem readerItem)
