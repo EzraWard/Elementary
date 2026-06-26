@@ -133,16 +133,13 @@ namespace Elementary
 
             if (clickedView == "Search")
             {
+                if (!SearchNavigationViewItem.IsEnabled) return;
+
                 await SetSearchPanelOpenAsync(!_isSearchPanelOpen);
                 return;
             }
 
-            if (_lastItem == null)
-            {
-                _lastItem = BiblePageNavigationViewItem;
-            }
-
-            if (item == _lastItem) return;
+            if (_lastItem != null && item == _lastItem) return;
 
             if (clickedView == "Settings") clickedView = "SettingsPage";
             if (!NavigateToView(clickedView)) return;
@@ -155,6 +152,16 @@ namespace Elementary
 
             if (string.IsNullOrWhiteSpace(clickedView) || view == null) return false;
 
+            if (parameter == null && clickedView == "BiblePage" && ContentFrame.CanGoBack)
+            {
+                var previousEntry = ContentFrame.BackStack.LastOrDefault();
+                if (previousEntry?.SourcePageType == view)
+                {
+                    ContentFrame.GoBack(new EntranceNavigationTransitionInfo());
+                    return true;
+                }
+            }
+
             ContentFrame.Navigate(view, parameter, new EntranceNavigationTransitionInfo());
             return true;
         }
@@ -162,6 +169,7 @@ namespace Elementary
         private void ContentFrame_Navigated(object sender, Windows.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             UpdateCurrentPageNavigationLayout();
+            UpdateSearchNavigationAvailability();
         }
 
         private void ContentFrame_NavigationFailed(object sender, Windows.UI.Xaml.Navigation.NavigationFailedEventArgs e)
@@ -197,6 +205,17 @@ namespace Elementary
             {
                 streakPage.SetHeaderInsetForMinimalNavigation(
                     MainNavigationView.DisplayMode == MUXC.NavigationViewDisplayMode.Minimal);
+            }
+        }
+
+        private void UpdateSearchNavigationAvailability()
+        {
+            var isSearchAvailable = !(ContentFrame.Content is StreakPage) && !(ContentFrame.Content is SettingsPage);
+            SearchNavigationViewItem.IsEnabled = isSearchAvailable;
+
+            if (!isSearchAvailable && _isSearchPanelOpen)
+            {
+                _ = SetSearchPanelOpenAsync(false);
             }
         }
 

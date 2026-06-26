@@ -18,8 +18,8 @@ namespace Elementary
 {
     public sealed partial class BiblePage : Page
     {
-        private const double ScrollAnchorY = 120d;
         private const double ChapterTopOffset = 124d;
+        private const double ScrollAnchorY = ChapterTopOffset + 8d;
         private const int LayoutSettleDelayMs = 100;
         private const int NavigationSpinnerDelayMs = 120;
         private const int NavigationScrollSyncSuppressionMs = 500;
@@ -59,7 +59,7 @@ namespace Elementary
         public BiblePage()
         {
             InitializeComponent();
-            NavigationCacheMode = NavigationCacheMode.Disabled;
+            NavigationCacheMode = NavigationCacheMode.Required;
 
             _viewModel = new BiblePageViewModel();
             DataContext = _viewModel;
@@ -94,17 +94,24 @@ namespace Elementary
                 return;
             }
 
-            if (!(e.Parameter is NavigationHistoryItem historyItem)) return;
-
-            if (!_isLoaded)
+            if (e.Parameter is NavigationHistoryItem historyItem)
             {
-                _pendingHistoryBook = historyItem.BookTitle;
-                _pendingHistoryChapter = historyItem.Chapter;
-                _pendingHistoryBookKey = historyItem.BookKey;
+                if (!_isLoaded)
+                {
+                    _pendingHistoryBook = historyItem.BookTitle;
+                    _pendingHistoryChapter = historyItem.Chapter;
+                    _pendingHistoryBookKey = historyItem.BookKey;
+                    return;
+                }
+
+                _ = NavigateToFromHistoryAsync(historyItem.BookTitle, historyItem.Chapter, historyItem.BookKey);
                 return;
             }
 
-            _ = NavigateToFromHistoryAsync(historyItem.BookTitle, historyItem.Chapter, historyItem.BookKey);
+            if (_isLoaded)
+            {
+                StartReadingSession();
+            }
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
