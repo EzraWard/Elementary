@@ -106,7 +106,7 @@ namespace Elementary.VerseOfTheDay.Services
 
             using var textPaint = new SKPaint
             {
-                Color = SKColors.White,
+                Color = new SKColor(248, 244, 235),
                 TextSize = fontSize,
                 IsAntialias = true,
                 Typeface = SKTypeface.Default,
@@ -115,7 +115,7 @@ namespace Elementary.VerseOfTheDay.Services
 
             using var shadowPaint = new SKPaint
             {
-                Color = new SKColor(0, 0, 0, 200),
+                Color = new SKColor(0, 0, 0, 115),
                 TextSize = fontSize,
                 IsAntialias = true,
                 Typeface = SKTypeface.Default
@@ -127,14 +127,53 @@ namespace Elementary.VerseOfTheDay.Services
 
             // Centre the text block vertically in the upper 75% of the image
             float textStartY = ((textAreaHeight - totalTextHeight) / 2f) + fontSize;
+            DrawTextBackdrop(canvas, padding, textStartY, lines.Count, fontSize, lineHeight, textAreaWidth);
 
             foreach (var line in lines)
             {
-                float shadowOffset = Math.Max(1f, fontSize * 0.04f);
+                float shadowOffset = Math.Max(0.75f, fontSize * 0.025f);
                 canvas.DrawText(line, padding + shadowOffset, textStartY + shadowOffset, shadowPaint);
                 canvas.DrawText(line, padding, textStartY, textPaint);
                 textStartY += lineHeight;
             }
+        }
+
+        private static void DrawTextBackdrop(
+            SKCanvas canvas,
+            float x,
+            float firstBaseline,
+            int lineCount,
+            float fontSize,
+            float lineHeight,
+            float width)
+        {
+            if (lineCount <= 0) return;
+
+            float horizontalInset = fontSize * 0.35f;
+            float verticalInset = fontSize * 0.28f;
+            float top = firstBaseline - fontSize - verticalInset;
+            float bottom = firstBaseline + ((lineCount - 1) * lineHeight) + (fontSize * 0.35f) + verticalInset;
+            var rect = new SKRect(
+                x - horizontalInset,
+                top,
+                x + width + horizontalInset,
+                bottom);
+            float radius = Math.Max(4f, fontSize * 0.18f);
+
+            using var glowPaint = new SKPaint
+            {
+                Color = new SKColor(0, 0, 0, 55),
+                IsAntialias = true,
+                MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, Math.Max(3f, fontSize * 0.18f))
+            };
+            canvas.DrawRoundRect(rect, radius, radius, glowPaint);
+
+            using var fillPaint = new SKPaint
+            {
+                Color = new SKColor(0, 0, 0, 62),
+                IsAntialias = true
+            };
+            canvas.DrawRoundRect(rect, radius, radius, fillPaint);
         }
 
         private static void DrawReference(SKCanvas canvas, BibleVerseData verse, int width, int height)
@@ -144,7 +183,7 @@ namespace Elementary.VerseOfTheDay.Services
 
             using var refPaint = new SKPaint
             {
-                Color = new SKColor(230, 230, 230, 220),
+                Color = new SKColor(238, 232, 220, 210),
                 TextSize = refFontSize,
                 IsAntialias = true,
                 Typeface = SKTypeface.Default
