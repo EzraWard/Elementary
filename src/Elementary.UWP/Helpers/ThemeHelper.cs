@@ -1,21 +1,56 @@
+using Elementary.Core.Enums;
+using Windows.UI.ViewManagement;
+using Windows.UI.Xaml;
+
 namespace Elementary.Helpers
 {
     public static class ThemeHelpers
     {
-        public static string GetCurrentApplicationTheme()
+        public static ApplicationTheme GetCurrentApplicationTheme()
         {
-            var DefaultTheme = new Windows.UI.ViewManagement.UISettings();
-            var uiTheme = DefaultTheme.GetColorValue(Windows.UI.ViewManagement.UIColorType.Background).ToString();
-            if (uiTheme == "#FF000000")
+            var uiSettings = new UISettings();
+            var background = uiSettings.GetColorValue(UIColorType.Background);
+            var perceivedBrightness = ((background.R * 299) + (background.G * 587) + (background.B * 114)) / 1000;
+
+            return perceivedBrightness < 128
+                ? ApplicationTheme.Dark
+                : ApplicationTheme.Light;
+        }
+
+        public static ApplicationTheme ResolveApplicationTheme(ETheme theme)
+        {
+            switch (theme)
             {
-                return "Dark";
+                case ETheme.Dark:
+                    return ApplicationTheme.Dark;
+                case ETheme.Light:
+                    return ApplicationTheme.Light;
+                case ETheme.System:
+                case ETheme.NotSet:
+                default:
+                    return GetCurrentApplicationTheme();
             }
-            else if (uiTheme == "#FFFFFFFF")
+        }
+
+        public static ApplicationTheme ApplyTheme(ETheme theme)
+        {
+            var applicationTheme = ResolveApplicationTheme(theme);
+            ApplyTheme(applicationTheme);
+            return applicationTheme;
+        }
+
+        public static void ApplyTheme(ApplicationTheme applicationTheme)
+        {
+            if (Window.Current?.Content is FrameworkElement rootElement)
             {
-                return "Light";
+                // Application.RequestedTheme cannot change after startup, so System must be
+                // resolved and applied explicitly to the root element at runtime.
+                rootElement.RequestedTheme = applicationTheme == ApplicationTheme.Dark
+                    ? ElementTheme.Dark
+                    : ElementTheme.Light;
             }
 
-            return "Unknown";
+            WindowHelpers.SetCaptionButtonColors(applicationTheme);
         }
     }
 }

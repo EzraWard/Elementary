@@ -1,5 +1,6 @@
 ﻿using Elementary.Helpers;
 using System;
+using Elementary.Core.Enums;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.ApplicationModel.Core;
@@ -21,16 +22,11 @@ namespace Elementary
         /// </summary>
         public App()
         {
-            var settings = ApplicationData.Current.LocalSettings;
-            var theme = settings.Values["Theme"];
-            if (theme is null)
+            var theme = GetStoredTheme();
+            if (theme != ETheme.System)
             {
-                settings.Values["Theme"] = "System";
-                theme = "System";
+                RequestedTheme = ThemeHelpers.ResolveApplicationTheme(theme);
             }
-
-            if (theme.ToString() == "Dark") RequestedTheme = ApplicationTheme.Dark;
-            if (theme.ToString() == "Light") RequestedTheme = ApplicationTheme.Light;
 
             this.InitializeComponent();
             this.Suspending += OnSuspending;
@@ -72,6 +68,10 @@ namespace Elementary
                 Window.Current.Content = rootFrame;
             }
 
+            // UISettings can report the app's default light theme before a UWP window exists.
+            // Resolve and apply System after the root is attached so startup matches Windows.
+            ThemeHelpers.ApplyTheme(GetStoredTheme());
+
             if (e.PrelaunchActivated == false)
             {
                 if (rootFrame.Content == null)
@@ -83,13 +83,20 @@ namespace Elementary
                 }
                 // Ensure the current window is active
                 Window.Current.Activate();
-
-                if (SystemInformationHelper.Instance.OperatingSystemVersion.Build <= 20348)
-                {
-                    var currentTheme = Application.Current.RequestedTheme;
-                    WindowHelpers.SetCaptionButtonColors(currentTheme);
-                }
             }
+        }
+
+        private static ETheme GetStoredTheme()
+        {
+            var settings = ApplicationData.Current.LocalSettings;
+            var storedTheme = settings.Values["theme"]?.ToString();
+            if (Enum.TryParse(storedTheme, true, out ETheme theme) && theme != ETheme.NotSet)
+            {
+                return theme;
+            }
+
+            settings.Values["theme"] = ETheme.System.ToString();
+            return ETheme.System;
         }
 
         /// <summary>

@@ -106,6 +106,7 @@ namespace Elementary.Core.Tests.Services
             Assert.AreEqual(EFont.SegoeUIVariable, settings.Font);
             Assert.AreEqual(EFontSize.Medium, settings.FontSize);
             Assert.IsTrue(settings.ShowVerseNumbers);
+            Assert.AreEqual(ETheme.System, settings.Theme);
         }
 
         [TestMethod]

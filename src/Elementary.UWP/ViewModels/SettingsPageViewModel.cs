@@ -8,7 +8,6 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Windows.ApplicationModel;
-using Windows.UI.Xaml;
 
 namespace Elementary.ViewModels
 {
@@ -140,29 +139,7 @@ namespace Elementary.ViewModels
 
         private void ApplyTheme(ETheme theme)
         {
-            ApplicationTheme applicationTheme = ApplicationTheme.Light;
-
-            if (Window.Current.Content is FrameworkElement frameworkElement)
-            {
-                switch (theme)
-                {
-                    case ETheme.Dark:
-                        frameworkElement.RequestedTheme = ElementTheme.Dark;
-                        applicationTheme = ApplicationTheme.Dark;
-                        break;
-                    case ETheme.Light:
-                        frameworkElement.RequestedTheme = ElementTheme.Light;
-                        applicationTheme = ApplicationTheme.Light;
-                        break;
-                    case ETheme.System:
-                        frameworkElement.RequestedTheme = ElementTheme.Default;
-                        var currentAppTheme = ThemeHelpers.GetCurrentApplicationTheme();
-                        applicationTheme = currentAppTheme == "Dark" ? ApplicationTheme.Dark : ApplicationTheme.Light;
-                        break;
-                }
-            }
-
-            WindowHelpers.SetCaptionButtonColors(applicationTheme);
+            ThemeHelpers.ApplyTheme(theme);
         }
 
         private static string GetApplicationVersion()

@@ -44,7 +44,10 @@
                 <ColumnDefinition x:Name="TitleColumn" Width="Auto"/>
             </Grid.ColumnDefinitions>
             
-            <Image Grid.Column="1" Height="16" Margin="12,0,0,0" Source="ms-appx:///Assets/logo.png" />
+            <Image Grid.Column="1"
+                   Height="16"
+                   Margin="12,0,0,0"
+                   Source="ms-appx:///Assets/Square44x44Logo.png" />
             <TextBlock Grid.Column="2" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" VerticalAlignment="Center" Margin="16,0,0,1">Elementary</TextBlock>
         </Grid>
         <Grid Grid.Row="1">

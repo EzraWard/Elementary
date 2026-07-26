@@ -18,7 +18,9 @@ namespace Elementary
 {
     public sealed partial class BiblePage : Page
     {
-        private const double ChapterTopOffset = 124d;
+        // End the preceding chapter inside the 90px top fade. The heading supplies another
+        // 24px top margin, placing "Chapter N" just below the overlay and fully readable.
+        private const double ChapterTopOffset = 72d;
         private const double ScrollAnchorY = ChapterTopOffset + 8d;
         private const int LayoutSettleDelayMs = 100;
         private const int NavigationSpinnerDelayMs = 120;
@@ -131,7 +133,25 @@ namespace Elementary
 
         private async void BiblePage_Loaded(object sender, RoutedEventArgs e)
         {
-            if (_isInitializing || _isLoaded) return;
+            // This page is navigation-cached. A theme can change while Settings is visible,
+            // when ActualThemeChanged is not delivered to the detached page.
+            SetupTopFadeGradient();
+
+            if (_isInitializing) return;
+
+            if (_isLoaded)
+            {
+                var translationChanged = _viewModel.RefreshSettingsAndDetectTranslationChange();
+                if (!translationChanged)
+                {
+                    ApplyReadingTypography(BibleChaptersListView);
+                    return;
+                }
+
+                // The cached page owns the Bible and its realized reader items. Reinitialize the
+                // stream when the persisted translation changes so the new text appears now.
+                _isLoaded = false;
+            }
 
             _isInitializing = true;
             SearchNavigationParameter pendingSearch = null;
@@ -144,7 +164,6 @@ namespace Elementary
                 await _viewModel.Initialize();
                 ResetChapterElementTracking();
                 _chooserTranslate.Y = 0;
-                SetupTopFadeGradient();
                 await EnsureReaderScrollViewerAsync();
 
                 if (_pendingSearchParam != null)
@@ -226,18 +245,14 @@ namespace Elementary
 
         private void SetupTopFadeGradient()
         {
-            Color baseColor;
             var isDark = ActualTheme == ElementTheme.Dark ||
                          (ActualTheme == ElementTheme.Default && Application.Current.RequestedTheme == ApplicationTheme.Dark);
-            if (Application.Current.Resources.TryGetValue("ApplicationPageBackgroundThemeBrush", out var res)
-                && res is SolidColorBrush bgBrush)
-            {
-                baseColor = bgBrush.Color;
-            }
-            else
-            {
-                baseColor = isDark ? Color.FromArgb(255, 32, 32, 32) : Color.FromArgb(255, 243, 243, 243);
-            }
+            // A theme resource resolved directly from Application.Current.Resources keeps the
+            // application's startup theme when RequestedTheme changes on the window content.
+            // Use the page's resolved theme so the custom acrylic and gradient transition too.
+            var baseColor = isDark
+                ? Color.FromArgb(255, 32, 32, 32)
+                : Color.FromArgb(255, 243, 243, 243);
 
             // Gradient shadow layer
             var gradient = new LinearGradientBrush
@@ -726,7 +741,29 @@ namespace Elementary
             var chapterTopInViewport = GetChapterTopInViewport(element);
             var adjustedOffset = Math.Max(0, _readerScrollViewer.VerticalOffset + chapterTopInViewport - ChapterTopOffset);
             _readerScrollViewer.ChangeView(null, adjustedOffset, null, true);
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => BibleChaptersListView.UpdateLayout());
+            await Task.Delay(ChapterElementWaitDelayMs);
+            await CorrectCurrentChapterPositionIfNeededAsync(currentChapterItem);
             ApplyTopOffsetToFirstChapter();
+        }
+
+        private async Task CorrectCurrentChapterPositionIfNeededAsync(BibleReaderItem currentChapterItem)
+        {
+            var itemAtAnchor = GetChapterAtReadingAnchor();
+            if (ReferenceEquals(itemAtAnchor, currentChapterItem))
+            {
+                return;
+            }
+
+            var element = await WaitForChapterElementAsync(currentChapterItem);
+            if (element == null)
+            {
+                return;
+            }
+
+            var chapterTopInViewport = GetChapterTopInViewport(element);
+            var adjustedOffset = Math.Max(0, _readerScrollViewer.VerticalOffset + chapterTopInViewport - ChapterTopOffset);
+            _readerScrollViewer.ChangeView(null, adjustedOffset, null, true);
         }
 
         private bool ShouldPositionBookHeaderForCurrentChapter()
@@ -746,7 +783,7 @@ namespace Elementary
             for (int attempt = 0; attempt < ChapterElementWaitMaxAttempts; attempt++)
             {
                 var element = GetChapterElement(readerItem);
-                if (element?.DataContext is BibleReaderItem item && ReferenceEquals(item, readerItem))
+                if (IsElementForReaderItem(element, readerItem))
                 {
                     return element;
                 }
@@ -755,7 +792,8 @@ namespace Elementary
                 await Task.Delay(ChapterElementWaitDelayMs);
             }
 
-            return GetChapterElement(readerItem);
+            var finalElement = GetChapterElement(readerItem);
+            return IsElementForReaderItem(finalElement, readerItem) ? finalElement : null;
         }
 
         private async Task<FrameworkElement> WaitForChapterElementAsync(BibleReaderItem readerItem)
@@ -763,7 +801,8 @@ namespace Elementary
             for (int attempt = 0; attempt < ChapterElementWaitMaxAttempts; attempt++)
             {
                 var element = GetChapterElement(readerItem);
-                if (element?.DataContext is BibleReaderItem item
+                if (IsElementForReaderItem(element, readerItem)
+                    && element.DataContext is BibleReaderItem item
                     && item.IsChapter
                     && item.ChapterIndex > 0
                     && item.DisplayLines != null
@@ -776,7 +815,13 @@ namespace Elementary
                 await Task.Delay(ChapterElementWaitDelayMs);
             }
 
-            return GetChapterElement(readerItem);
+            var finalElement = GetChapterElement(readerItem);
+            return IsElementForReaderItem(finalElement, readerItem) ? finalElement : null;
+        }
+
+        private static bool IsElementForReaderItem(FrameworkElement element, BibleReaderItem readerItem)
+        {
+            return element?.DataContext is BibleReaderItem item && ReferenceEquals(item, readerItem);
         }
 
         private async Task HighlightVerseAsync(int chapterIndex, int verseNumber)
@@ -1009,9 +1054,20 @@ namespace Elementary
 
         private void ReaderItemGrid_Loaded(object sender, RoutedEventArgs e)
         {
-            if (sender is FrameworkElement element
-                && element.DataContext is BibleReaderItem readerItem
-                && readerItem.IsChapter)
+            if (!(sender is FrameworkElement element)
+                || !(element.DataContext is BibleReaderItem readerItem))
+            {
+                return;
+            }
+
+            // The chapter heading already supplies its own top margin. Avoid stacking the
+            // shared item gap after a book header, which made the title-to-chapter spacing
+            // noticeably larger than the spacing elsewhere in the reader.
+            element.Margin = readerItem.IsBookHeader
+                ? new Thickness(0)
+                : new Thickness(0, 0, 0, 20);
+
+            if (readerItem.IsChapter)
             {
                 _chapterElements[readerItem] = element;
             }

@@ -24,6 +24,7 @@ namespace Elementary
         private Microsoft.UI.Xaml.Controls.NavigationViewItem _lastItem;
         private IVerseOfTheDayDialogService _verseOfTheDayDialogService;
         private readonly IReadingStreakService _readingStreakService;
+        private readonly ThemeListener _themeListener;
         private bool _isSearchPanelOpen;
         private bool _isSearchNavigationInProgress;
         private int _streakNotificationVersion;
@@ -42,8 +43,8 @@ namespace Elementary
             Window.Current.SizeChanged += WindowSizeChanged;
             WindowSizeChanged(this, null);
 
-            var listener = new ThemeListener();
-            listener.ThemeChanged += OnThemeChanged;
+            _themeListener = new ThemeListener();
+            _themeListener.ThemeChanged += OnThemeChanged;
 
             //By default, navigate to the Bible Page
             MainNavigationView.SelectedItem = BiblePageNavigationViewItem;
@@ -255,9 +256,16 @@ namespace Elementary
         private void OnThemeChanged(ThemeListener sender)
         {
             UpdateStreakNavigationIcon();
-            if (SystemInformationHelper.Instance.OperatingSystemVersion.Build <= 20348)
+
+            var settingsService = App.Services.GetRequiredService<ISettingsService>();
+            var selectedTheme = settingsService.GetSettings().Theme;
+            if (selectedTheme == ETheme.System)
             {
-                WindowHelpers.SetCaptionButtonColors(sender.CurrentTheme);
+                ThemeHelpers.ApplyTheme(sender.CurrentTheme);
+            }
+            else if (SystemInformationHelper.Instance.OperatingSystemVersion.Build <= 20348)
+            {
+                WindowHelpers.SetCaptionButtonColors(ThemeHelpers.ResolveApplicationTheme(selectedTheme));
             }
         }
 

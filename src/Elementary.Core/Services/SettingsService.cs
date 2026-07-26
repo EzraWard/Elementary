@@ -82,6 +82,8 @@ namespace Elementary.Core.Services
             if (appSettings.ShowVerseNumbers == null)
                 appSettings.ShowVerseNumbers = true;
 
+            if (appSettings.Theme == ETheme.NotSet) appSettings.Theme = ETheme.System;
+
             SaveSettings(appSettings);
         }
 

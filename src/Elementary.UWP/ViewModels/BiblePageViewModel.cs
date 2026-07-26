@@ -118,6 +118,17 @@ namespace Elementary.ViewModels
             await SetCurrentLocationAsync(initialBook, AppSettings.Chapter, persistSettings: false);
         }
 
+        public bool RefreshSettingsAndDetectTranslationChange()
+        {
+            _settingsService = _settingsService ?? App.Services.GetRequiredService<ISettingsService>();
+
+            var updatedSettings = _settingsService.GetSettings();
+            var translationChanged = AppSettings != null
+                                     && AppSettings.Translation != updatedSettings.Translation;
+            AppSettings = updatedSettings;
+            return translationChanged;
+        }
+
         public async Task<bool> SetCurrentLocationAsync(Book book, int chapterIndex, bool persistSettings = true)
         {
             if (book == null) return false;
@@ -368,9 +379,15 @@ namespace Elementary.ViewModels
 
             if (!EBookToLocation.EBookTitleToEBook.TryGetValue(CurrentBook.Title, out var bookEnum)) return;
 
+            // Merge the location into the latest stored settings. The reader page can be cached,
+            // so saving its older settings object must not revert a change made in Settings.
+            var latestSettings = _settingsService.GetSettings();
+            latestSettings.Book = bookEnum;
+            latestSettings.Chapter = CurrentChapter.Index;
+            _settingsService.SaveSettings(latestSettings);
+
             AppSettings.Book = bookEnum;
             AppSettings.Chapter = CurrentChapter.Index;
-            _settingsService.SaveSettings(AppSettings);
         }
 
         private async Task ResetReaderStreamAroundBookAsync(Book book)
