@@ -17,6 +17,8 @@ namespace Elementary.Core.Models
 
         public bool? ShowVerseNumbers { get; set; }
 
+        public bool KeepScreenAwake { get; set; }
+
         public ETheme Theme { get; set; }
     }
 }

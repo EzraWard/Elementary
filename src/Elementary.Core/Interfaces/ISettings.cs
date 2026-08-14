@@ -44,6 +44,12 @@ namespace Elementary.Core.Interfaces
         bool? ShowVerseNumbers {  get; set; }
 
         /// <summary>
+        /// Prevent the display from turning off while the Bible reader is active.
+        /// Default false.
+        /// </summary>
+        bool KeepScreenAwake { get; set; }
+
+        /// <summary>
         /// The theme of the application.
         /// Default ETheme.System.
         /// </summary>

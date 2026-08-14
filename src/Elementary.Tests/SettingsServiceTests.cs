@@ -31,6 +31,7 @@ namespace Elementary.Core.Tests.Services
                 { "font", EFont.SegoeUIVariable.ToString() },
                 { "fontSize", EFontSize.Medium.ToString() },
                 { "showVerseNumbers", "true" },
+                { "keepScreenAwake", "true" },
                 { "theme", ETheme.Light.ToString() }
             };
 
@@ -47,6 +48,7 @@ namespace Elementary.Core.Tests.Services
             Assert.AreEqual(EFont.SegoeUIVariable, settings.Font);
             Assert.AreEqual(EFontSize.Medium, settings.FontSize);
             Assert.IsTrue(settings.ShowVerseNumbers);
+            Assert.IsTrue(settings.KeepScreenAwake);
             Assert.AreEqual(ETheme.Light, settings.Theme);
         }
 
@@ -62,6 +64,7 @@ namespace Elementary.Core.Tests.Services
                 Font = EFont.SegoeUIVariable,
                 FontSize = EFontSize.Medium,
                 ShowVerseNumbers = true,
+                KeepScreenAwake = true,
                 Theme = ETheme.Light
             };
 
@@ -75,6 +78,7 @@ namespace Elementary.Core.Tests.Services
             _settingsProviderMock.Verify(x => x.SaveSetting("font", EFont.SegoeUIVariable.ToString()), Times.Once);
             _settingsProviderMock.Verify(x => x.SaveSetting("fontSize", EFontSize.Medium.ToString()), Times.Once);
             _settingsProviderMock.Verify(x => x.SaveSetting("showVerseNumbers", "True"), Times.Once);
+            _settingsProviderMock.Verify(x => x.SaveSetting("keepScreenAwake", "True"), Times.Once);
             _settingsProviderMock.Verify(x => x.SaveSetting("theme", ETheme.Light.ToString()), Times.Once);
         }
 
@@ -90,6 +94,7 @@ namespace Elementary.Core.Tests.Services
                 { "font", "" },
                 { "fontSize", "" },
                 { "showVerseNumbers", "" },
+                { "keepScreenAwake", "" },
                 { "theme", "" }
             };
 
@@ -106,6 +111,7 @@ namespace Elementary.Core.Tests.Services
             Assert.AreEqual(EFont.SegoeUIVariable, settings.Font);
             Assert.AreEqual(EFontSize.Medium, settings.FontSize);
             Assert.IsTrue(settings.ShowVerseNumbers);
+            Assert.IsFalse(settings.KeepScreenAwake);
             Assert.AreEqual(ETheme.System, settings.Theme);
         }
 

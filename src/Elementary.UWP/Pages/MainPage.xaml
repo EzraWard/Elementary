@@ -10,7 +10,7 @@
     muxc:BackdropMaterial.ApplyToRootOrPageBackground="True">
 
     <Page.Resources>
-        <Flyout x:Name="HistoryFlyout" Placement="Right">
+        <Flyout x:Name="HistoryFlyout" Placement="Right" Closed="HistoryFlyout_Closed">
             <Grid MinWidth="200">
                 <TextBlock x:Name="HistoryEmptyText"
                            Text="No history yet"
@@ -45,9 +45,11 @@
             </Grid.ColumnDefinitions>
             
             <Image Grid.Column="1"
+                   Width="16"
                    Height="16"
                    Margin="12,0,0,0"
-                   Source="ms-appx:///Assets/Square44x44Logo.png" />
+                   Stretch="None"
+                   Source="ms-appx:///Assets/TitleBarIcon.png" />
             <TextBlock Grid.Column="2" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" VerticalAlignment="Center" Margin="16,0,0,1">Elementary</TextBlock>
         </Grid>
         <Grid Grid.Row="1">

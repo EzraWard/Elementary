@@ -41,6 +41,12 @@ namespace Elementary.Tests.Services
         }
 
         [TestMethod]
+        public void GetDailyThreshold_ShouldRequireTenMinutes()
+        {
+            Assert.AreEqual(TimeSpan.FromMinutes(10), _readingStreakService.GetDailyThreshold());
+        }
+
+        [TestMethod]
         public void AddReadingTime_ShouldNotActivateStreakBeforeThreshold()
         {
             var today = new DateTime(2026, 5, 28);

@@ -49,13 +49,13 @@ namespace Elementary.ViewModels
 
         public string SummaryText =>
             HasActivity
-                ? $"Your streak grows when you read for at least {ThresholdText} on consecutive calendar days."
-                : $"Read for {ThresholdText} in the Bible today to start your streak.";
+                ? $"Your streak grows when you actively read the Bible for at least {ThresholdText} on consecutive calendar days."
+                : $"Actively read the Bible for {ThresholdText} today to start your streak.";
 
-        public string ThresholdHelpText => $"A day counts once after you reach {ThresholdText} of reading.";
+        public string ThresholdHelpText => $"A day counts after {ThresholdText} with the Bible open and Elementary active.";
 
         public string HowItWorksText =>
-            $"Read for at least {ThresholdText} on consecutive calendar days to grow the streak. Missing a full day resets the current streak, but your longest streak stays.";
+            $"Open the Bible, settle in, and read for {ThresholdText} each day. Come back tomorrow to keep the flame glowing! If you miss a day, your current streak starts fresh, but your best streak stays safe.";
 
         public string BadgeSummaryText
         {

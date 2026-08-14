@@ -47,6 +47,9 @@ namespace Elementary.Core.Services
             }
             appSettings.ShowVerseNumbers = showVerseNumbers;
 
+            bool.TryParse(GetSetting("keepScreenAwake"), out bool keepScreenAwake);
+            appSettings.KeepScreenAwake = keepScreenAwake;
+
             Enum.TryParse(GetSetting("theme"), out ETheme theme);
             appSettings.Theme = theme;
 
@@ -63,6 +66,7 @@ namespace Elementary.Core.Services
             SaveSetting("font", settings.Font.ToString());
             SaveSetting("fontSize", settings.FontSize.ToString());
             SaveSetting("showVerseNumbers", settings.ShowVerseNumbers.ToString());
+            SaveSetting("keepScreenAwake", settings.KeepScreenAwake.ToString());
             SaveSetting("theme", settings.Theme.ToString());
         }
 

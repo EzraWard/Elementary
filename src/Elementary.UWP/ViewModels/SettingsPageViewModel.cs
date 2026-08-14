@@ -112,6 +112,20 @@ namespace Elementary.ViewModels
             }
         }
 
+        public bool KeepScreenAwake
+        {
+            get => _settings.KeepScreenAwake;
+            set
+            {
+                if (_settings.KeepScreenAwake != value)
+                {
+                    _settings.KeepScreenAwake = value;
+                    SaveSettings();
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public ThemeOption SelectedTheme
         {
             get => ThemeOptions.FirstOrDefault(t => t.Value == _settings.Theme);

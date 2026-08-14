@@ -60,6 +60,7 @@
                         <StackPanel MaxWidth="700"
                                     HorizontalAlignment="Center">
                             <TextBlock Text="{Binding BookTitle}"
+                                       Tag="bookheading"
                                        FontSize="34"
                                        FontWeight="Bold"
                                        HorizontalAlignment="Center"
@@ -69,6 +70,7 @@
                             <Border Height="{Binding SpacerHeight}"
                                     Visibility="{Binding IsBottomSpacer, Converter={StaticResource BoolToVisibilityConverter}}"/>
                             <TextBlock FontSize="28"
+                                        Tag="chapterheading"
                                         FontWeight="Bold"
                                         HorizontalAlignment="Center"
                                         TextAlignment="Center"

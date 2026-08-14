@@ -8,11 +8,7 @@ namespace Elementary.Core.Services
 {
     public class ReadingStreakService : IReadingStreakService
     {
-#if DEBUG
-        private const int DailyStreakThresholdSeconds = 10;
-#else
         private const int DailyStreakThresholdSeconds = 600;
-#endif
         private readonly ISettingsService _settingsService;
 
         public event EventHandler<ReadingStreakLoggedEventArgs> ReadingActivityLogged;

@@ -61,6 +61,14 @@
                         <ToggleSwitch IsOn="{x:Bind ViewModel.ShowVerseNumbers, Mode=TwoWay}" />
                     </controls:SettingsCard>
 
+                    <controls:SettingsCard Description="Prevent the screen from turning off while reading"
+                                           Header="Keep screen awake">
+                        <controls:SettingsCard.HeaderIcon>
+                            <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE706;"/>
+                        </controls:SettingsCard.HeaderIcon>
+                        <ToggleSwitch IsOn="{x:Bind ViewModel.KeepScreenAwake, Mode=TwoWay}" />
+                    </controls:SettingsCard>
+
                     <controls:SettingsCard Description="Select the font for text"
                                            Header="Font">
                         <controls:SettingsCard.HeaderIcon>

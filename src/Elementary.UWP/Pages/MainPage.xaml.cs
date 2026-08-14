@@ -27,6 +27,8 @@ namespace Elementary
         private readonly ThemeListener _themeListener;
         private bool _isSearchPanelOpen;
         private bool _isSearchNavigationInProgress;
+        private bool _isHistoryFlyoutOpen;
+        private bool _isVerseOfTheDayDialogOpen;
         private int _streakNotificationVersion;
 
         public MainPage()
@@ -106,7 +108,17 @@ namespace Elementary
 
             if (clickedView == "VerseOfTheDay")
             {
-                await _verseOfTheDayDialogService.ShowAsync();
+                _isVerseOfTheDayDialogOpen = true;
+                UpdateBibleReadingObscured();
+                try
+                {
+                    await _verseOfTheDayDialogService.ShowAsync();
+                }
+                finally
+                {
+                    _isVerseOfTheDayDialogOpen = false;
+                    UpdateBibleReadingObscured();
+                }
                 return;
             }
 
@@ -128,6 +140,8 @@ namespace Elementary
                     HistoryListView.Visibility = Windows.UI.Xaml.Visibility.Visible;
                 }
 
+                _isHistoryFlyoutOpen = true;
+                UpdateBibleReadingObscured();
                 HistoryFlyout.ShowAt(item);
                 return;
             }
@@ -171,6 +185,7 @@ namespace Elementary
         {
             UpdateCurrentPageNavigationLayout();
             UpdateSearchNavigationAvailability();
+            UpdateBibleReadingObscured();
         }
 
         private void ContentFrame_NavigationFailed(object sender, Windows.UI.Xaml.Navigation.NavigationFailedEventArgs e)
@@ -211,12 +226,20 @@ namespace Elementary
 
         private void UpdateSearchNavigationAvailability()
         {
-            var isSearchAvailable = !(ContentFrame.Content is StreakPage) && !(ContentFrame.Content is SettingsPage);
+            var isStreakPage = ContentFrame.Content is StreakPage;
+            var isSettingsPage = ContentFrame.Content is SettingsPage;
+            var isSearchAvailable = !isStreakPage && !isSettingsPage;
             SearchNavigationViewItem.IsEnabled = isSearchAvailable;
+            HistoryNavigationViewItem.IsEnabled = !isStreakPage && !isSettingsPage;
 
             if (!isSearchAvailable && _isSearchPanelOpen)
             {
                 _ = SetSearchPanelOpenAsync(false);
+            }
+
+            if ((isStreakPage || isSettingsPage) && _isHistoryFlyoutOpen)
+            {
+                HistoryFlyout.Hide();
             }
         }
 
@@ -293,6 +316,7 @@ namespace Elementary
         {
             _isSearchPanelOpen = isOpen;
             SearchPanel.Visibility = _isSearchPanelOpen ? Visibility.Visible : Visibility.Collapsed;
+            UpdateBibleReadingObscured();
             if (_isSearchPanelOpen)
             {
                 SearchBox.Focus(FocusState.Programmatic);
@@ -303,6 +327,21 @@ namespace Elementary
             ClearSearchEmptyState();
             ClearActiveSearchHighlight();
             return Task.CompletedTask;
+        }
+
+        private void HistoryFlyout_Closed(object sender, object e)
+        {
+            _isHistoryFlyoutOpen = false;
+            UpdateBibleReadingObscured();
+        }
+
+        private void UpdateBibleReadingObscured()
+        {
+            if (ContentFrame.Content is BiblePage biblePage)
+            {
+                biblePage.SetReadingObscured(
+                    _isSearchPanelOpen || _isHistoryFlyoutOpen || _isVerseOfTheDayDialogOpen);
+            }
         }
 
         private async void CloseSearchPanelButton_Click(object sender, RoutedEventArgs e)

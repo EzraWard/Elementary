@@ -1,5 +1,6 @@
 using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
+using Elementary.Core.Services;
 using Elementary.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -7,6 +8,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Windows.ApplicationModel;
+using Windows.System.Display;
 using Windows.UI;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
@@ -31,6 +34,9 @@ namespace Elementary
         private const int ComboResetRetryDelayMs = 20;
         private const int ChapterElementWaitMaxAttempts = 12;
         private const int ChapterElementWaitDelayMs = 25;
+        private const int ReaderPositionStabilizationMaxAttempts = 8;
+        private const int ReaderPositionRequiredStablePasses = 2;
+        private const double ReaderPositionTolerance = 1d;
         private const double InfiniteScrollEdgeThreshold = 900d;
 
         private readonly BiblePageViewModel _viewModel;
@@ -57,8 +63,15 @@ namespace Elementary
         private bool _isUpdatingReaderWindow;
         private int _scrollLocationPersistenceVersion;
         private readonly DispatcherTimer _readingSessionTimer;
+        private readonly DisplayRequest _displayRequest = new DisplayRequest();
         private DateTimeOffset? _readingSessionStartedAt;
         private bool _isWindowVisible = true;
+        private bool _isWindowActive = true;
+        private bool _isReaderPageActive;
+        private bool _isReaderObscured;
+        private bool _isApplicationSuspended;
+        private bool _areReadingLifecycleHandlersAttached;
+        private bool _isDisplayRequestActive;
 
         public BiblePage()
         {
@@ -84,6 +97,7 @@ namespace Elementary
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+            _isReaderPageActive = true;
 
             if (e.Parameter is SearchNavigationParameter searchParam)
             {
@@ -122,7 +136,8 @@ namespace Elementary
         {
             base.OnNavigatedFrom(e);
 
-            StopReadingSession();
+            _isReaderPageActive = false;
+            UpdateReadingSessionState();
             ClearVerseHighlight();
             _scrollLocationPersistenceVersion++;
             if (_isLoaded)
@@ -133,6 +148,8 @@ namespace Elementary
 
         private async void BiblePage_Loaded(object sender, RoutedEventArgs e)
         {
+            AttachReadingLifecycleHandlers();
+
             // This page is navigation-cached. A theme can change while Settings is visible,
             // when ActualThemeChanged is not delivered to the detached page.
             SetupTopFadeGradient();
@@ -145,6 +162,7 @@ namespace Elementary
                 if (!translationChanged)
                 {
                     ApplyReadingTypography(BibleChaptersListView);
+                    UpdateReadingSessionState();
                     return;
                 }
 
@@ -224,8 +242,19 @@ namespace Elementary
 
         private void BiblePage_Unloaded(object sender, RoutedEventArgs e)
         {
-            Window.Current.VisibilityChanged -= Window_VisibilityChanged;
+            DetachReadingLifecycleHandlers();
             StopReadingSession();
+        }
+
+        public void SetReadingObscured(bool isObscured)
+        {
+            if (_isReaderObscured == isObscured)
+            {
+                return;
+            }
+
+            _isReaderObscured = isObscured;
+            UpdateReadingSessionState();
         }
 
         private void ApplyTopOffsetToFirstChapter()
@@ -304,6 +333,12 @@ namespace Elementary
                 var tag = textBlock.Tag as string;
                 switch (tag)
                 {
+                    case "bookheading":
+                        textBlock.FontSize = fontSize * 1.9;
+                        break;
+                    case "chapterheading":
+                        textBlock.FontSize = fontSize * 1.55;
+                        break;
                     case "heading":
                         textBlock.FontSize = fontSize * 1.2;
                         break;
@@ -314,7 +349,7 @@ namespace Elementary
                     case "footnote":
                         textBlock.FontSize = fontSize * 0.75;
                         break;
-                    default:
+                    case "body":
                         textBlock.FontSize = fontSize;
                         break;
                 }
@@ -743,27 +778,62 @@ namespace Elementary
             _readerScrollViewer.ChangeView(null, adjustedOffset, null, true);
             await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => BibleChaptersListView.UpdateLayout());
             await Task.Delay(ChapterElementWaitDelayMs);
-            await CorrectCurrentChapterPositionIfNeededAsync(currentChapterItem);
+            await StabilizeReaderItemPositionAsync(scrollTargetItem);
             ApplyTopOffsetToFirstChapter();
+            SuppressScrollSyncFor(TimeSpan.FromMilliseconds(NavigationScrollSyncSuppressionMs));
         }
 
-        private async Task CorrectCurrentChapterPositionIfNeededAsync(BibleReaderItem currentChapterItem)
+        private async Task StabilizeReaderItemPositionAsync(BibleReaderItem targetItem)
         {
-            var itemAtAnchor = GetChapterAtReadingAnchor();
-            if (ReferenceEquals(itemAtAnchor, currentChapterItem))
+            if (targetItem == null)
             {
                 return;
             }
 
-            var element = await WaitForChapterElementAsync(currentChapterItem);
-            if (element == null)
+            var stablePasses = 0;
+            for (int attempt = 0; attempt < ReaderPositionStabilizationMaxAttempts; attempt++)
             {
-                return;
-            }
+                var element = GetChapterElement(targetItem);
+                if (!IsElementForReaderItem(element, targetItem))
+                {
+                    // Variable-height chapter virtualization can invalidate the ListView's
+                    // first estimated position and recycle the target container. Realize the
+                    // intended item again before applying another exact offset correction.
+                    BibleChaptersListView.ScrollIntoView(targetItem, ScrollIntoViewAlignment.Leading);
+                    await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => BibleChaptersListView.UpdateLayout());
+                    await Task.Delay(LayoutSettleDelayMs);
 
-            var chapterTopInViewport = GetChapterTopInViewport(element);
-            var adjustedOffset = Math.Max(0, _readerScrollViewer.VerticalOffset + chapterTopInViewport - ChapterTopOffset);
-            _readerScrollViewer.ChangeView(null, adjustedOffset, null, true);
+                    element = targetItem.IsChapter
+                        ? await WaitForChapterElementAsync(targetItem)
+                        : await WaitForReaderItemElementAsync(targetItem);
+                }
+
+                if (element == null)
+                {
+                    stablePasses = 0;
+                    continue;
+                }
+
+                var positionError = GetChapterTopInViewport(element) - ChapterTopOffset;
+                if (Math.Abs(positionError) <= ReaderPositionTolerance)
+                {
+                    stablePasses++;
+                    if (stablePasses >= ReaderPositionRequiredStablePasses)
+                    {
+                        return;
+                    }
+                }
+                else
+                {
+                    stablePasses = 0;
+                    var adjustedOffset = Math.Max(0, _readerScrollViewer.VerticalOffset + positionError);
+                    SuppressScrollSyncFor(TimeSpan.FromMilliseconds(NavigationScrollSyncSuppressionMs));
+                    _readerScrollViewer.ChangeView(null, adjustedOffset, null, true);
+                }
+
+                await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => BibleChaptersListView.UpdateLayout());
+                await Task.Delay(LayoutSettleDelayMs);
+            }
         }
 
         private bool ShouldPositionBookHeaderForCurrentChapter()
@@ -1163,7 +1233,71 @@ namespace Elementary
         private void Window_VisibilityChanged(object sender, VisibilityChangedEventArgs args)
         {
             _isWindowVisible = args.Visible;
-            if (_isWindowVisible)
+            UpdateReadingSessionState();
+        }
+
+        private void Window_Activated(object sender, WindowActivatedEventArgs args)
+        {
+            _isWindowActive = args.WindowActivationState != CoreWindowActivationState.Deactivated;
+            UpdateReadingSessionState();
+        }
+
+        private void Application_Suspending(object sender, SuspendingEventArgs args)
+        {
+            _isApplicationSuspended = true;
+            UpdateReadingSessionState();
+        }
+
+        private void Application_Resuming(object sender, object args)
+        {
+            _isApplicationSuspended = false;
+            UpdateReadingSessionState();
+        }
+
+        private void AttachReadingLifecycleHandlers()
+        {
+            if (_areReadingLifecycleHandlersAttached)
+            {
+                return;
+            }
+
+            Window.Current.VisibilityChanged += Window_VisibilityChanged;
+            Window.Current.Activated += Window_Activated;
+            Application.Current.Suspending += Application_Suspending;
+            Application.Current.Resuming += Application_Resuming;
+            _areReadingLifecycleHandlersAttached = true;
+        }
+
+        private void DetachReadingLifecycleHandlers()
+        {
+            if (!_areReadingLifecycleHandlersAttached)
+            {
+                return;
+            }
+
+            Window.Current.VisibilityChanged -= Window_VisibilityChanged;
+            Window.Current.Activated -= Window_Activated;
+            Application.Current.Suspending -= Application_Suspending;
+            Application.Current.Resuming -= Application_Resuming;
+            _areReadingLifecycleHandlersAttached = false;
+        }
+
+        private void ReadingSessionTimer_Tick(object sender, object e)
+        {
+            FlushReadingSessionTime();
+        }
+
+        private bool IsReadingSessionEligible => ReadingSessionEligibility.ShouldCount(
+            isReaderLoaded: _isLoaded,
+            isReaderPageActive: _isReaderPageActive,
+            isWindowVisible: _isWindowVisible,
+            isWindowActive: _isWindowActive,
+            isReaderObscured: _isReaderObscured,
+            isApplicationSuspended: _isApplicationSuspended);
+
+        private void UpdateReadingSessionState()
+        {
+            if (IsReadingSessionEligible)
             {
                 StartReadingSession();
             }
@@ -1173,28 +1307,70 @@ namespace Elementary
             }
         }
 
-        private void ReadingSessionTimer_Tick(object sender, object e)
-        {
-            FlushReadingSessionTime();
-        }
-
         private void StartReadingSession()
         {
-            if (!_isLoaded || !_isWindowVisible || _readingSessionStartedAt.HasValue)
+            if (!IsReadingSessionEligible)
             {
                 return;
             }
 
-            Window.Current.VisibilityChanged -= Window_VisibilityChanged;
-            Window.Current.VisibilityChanged += Window_VisibilityChanged;
-            _readingSessionStartedAt = DateTimeOffset.Now;
-            _readingSessionTimer.Start();
+            if (!_readingSessionStartedAt.HasValue)
+            {
+                _readingSessionStartedAt = DateTimeOffset.Now;
+                _readingSessionTimer.Start();
+            }
+
+            UpdateDisplayRequest();
         }
 
         private void StopReadingSession()
         {
             _readingSessionTimer.Stop();
             FlushReadingSessionTime();
+            _readingSessionStartedAt = null;
+            ReleaseDisplayRequest();
+        }
+
+        private void UpdateDisplayRequest()
+        {
+            var shouldKeepScreenAwake = _isLoaded
+                                        && IsReadingSessionEligible
+                                        && (_viewModel.AppSettings?.KeepScreenAwake ?? false);
+
+            if (shouldKeepScreenAwake && !_isDisplayRequestActive)
+            {
+                try
+                {
+                    _displayRequest.RequestActive();
+                    _isDisplayRequestActive = true;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Unable to keep the screen awake: {ex.Message}");
+                }
+            }
+            else if (!shouldKeepScreenAwake)
+            {
+                ReleaseDisplayRequest();
+            }
+        }
+
+        private void ReleaseDisplayRequest()
+        {
+            if (!_isDisplayRequestActive)
+            {
+                return;
+            }
+
+            try
+            {
+                _displayRequest.RequestRelease();
+                _isDisplayRequestActive = false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Unable to release the screen-awake request: {ex.Message}");
+            }
         }
 
         private void FlushReadingSessionTime()
@@ -1222,7 +1398,7 @@ namespace Elementary
                 Debug.WriteLine($"Error tracking reading time: {ex.Message}");
             }
 
-            if (_isLoaded && _isWindowVisible)
+            if (IsReadingSessionEligible)
             {
                 _readingSessionStartedAt = DateTimeOffset.Now;
             }
