@@ -135,6 +135,7 @@
     <Compile Include="Services\ITileUpdateService.cs" />
     <Compile Include="Services\TileUpdateService.cs" />
     <Compile Include="Services\IVerseOfTheDayDialogService.cs" />
+    <Compile Include="Services\ReadingStreakDiagnostics.cs" />
     <Compile Include="Services\VerseOfTheDayDialogService.cs" />
     <Compile Include="Services\UWPFileService.cs" />
     <Compile Include="Services\UwpVotdStorageService.cs" />

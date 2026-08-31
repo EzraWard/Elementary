@@ -1,6 +1,7 @@
 using Elementary.Core.Interfaces;
 using Elementary.Core.Models;
 using Elementary.Core.Services;
+using Elementary.Services;
 using Elementary.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -65,6 +66,7 @@ namespace Elementary
         private readonly DispatcherTimer _readingSessionTimer;
         private readonly DisplayRequest _displayRequest = new DisplayRequest();
         private DateTimeOffset? _readingSessionStartedAt;
+        private Stopwatch _readingSessionStopwatch;
         private bool _isWindowVisible = true;
         private bool _isWindowActive = true;
         private bool _isReaderPageActive;
@@ -128,7 +130,7 @@ namespace Elementary
 
             if (_isLoaded)
             {
-                StartReadingSession();
+                StartReadingSession("navigated-to");
             }
         }
 
@@ -137,7 +139,7 @@ namespace Elementary
             base.OnNavigatedFrom(e);
 
             _isReaderPageActive = false;
-            UpdateReadingSessionState();
+            UpdateReadingSessionState("navigated-from");
             ClearVerseHighlight();
             _scrollLocationPersistenceVersion++;
             if (_isLoaded)
@@ -162,7 +164,7 @@ namespace Elementary
                 if (!translationChanged)
                 {
                     ApplyReadingTypography(BibleChaptersListView);
-                    UpdateReadingSessionState();
+                    UpdateReadingSessionState("cached-reader-loaded");
                     return;
                 }
 
@@ -217,7 +219,7 @@ namespace Elementary
                 UpdateNavigationHistory(departedLocation: null);
                 SetReaderVisualState(showContent: true, showSpinner: false);
                 SetPickerInteractionEnabled(true);
-                StartReadingSession();
+                StartReadingSession("reader-initialized");
 
                 if (pendingSearch != null)
                 {
@@ -244,7 +246,7 @@ namespace Elementary
         private void BiblePage_Unloaded(object sender, RoutedEventArgs e)
         {
             DetachReadingLifecycleHandlers();
-            StopReadingSession();
+            StopReadingSession("reader-unloaded");
         }
 
         public void SetReadingObscured(bool isObscured)
@@ -255,7 +257,7 @@ namespace Elementary
             }
 
             _isReaderObscured = isObscured;
-            UpdateReadingSessionState();
+            UpdateReadingSessionState(isObscured ? "reader-obscured" : "reader-unobscured");
         }
 
         private void ApplyTopOffsetToFirstChapter()
@@ -1241,25 +1243,25 @@ namespace Elementary
         private void Window_VisibilityChanged(object sender, VisibilityChangedEventArgs args)
         {
             _isWindowVisible = args.Visible;
-            UpdateReadingSessionState();
+            UpdateReadingSessionState(args.Visible ? "window-visible" : "window-hidden");
         }
 
         private void Window_Activated(object sender, WindowActivatedEventArgs args)
         {
             _isWindowActive = args.WindowActivationState != CoreWindowActivationState.Deactivated;
-            UpdateReadingSessionState();
+            UpdateReadingSessionState($"window-activation-{args.WindowActivationState}");
         }
 
         private void Application_Suspending(object sender, SuspendingEventArgs args)
         {
             _isApplicationSuspended = true;
-            UpdateReadingSessionState();
+            UpdateReadingSessionState("application-suspending");
         }
 
         private void Application_Resuming(object sender, object args)
         {
             _isApplicationSuspended = false;
-            UpdateReadingSessionState();
+            UpdateReadingSessionState("application-resuming");
         }
 
         private void AttachReadingLifecycleHandlers()
@@ -1292,7 +1294,7 @@ namespace Elementary
 
         private void ReadingSessionTimer_Tick(object sender, object e)
         {
-            FlushReadingSessionTime();
+            FlushReadingSessionTime("timer-tick");
         }
 
         private bool IsReadingSessionEligible => ReadingSessionEligibility.ShouldCount(
@@ -1303,39 +1305,61 @@ namespace Elementary
             isReaderObscured: _isReaderObscured,
             isApplicationSuspended: _isApplicationSuspended);
 
-        private void UpdateReadingSessionState()
+        private void UpdateReadingSessionState(string trigger)
         {
+            ReadingStreakDiagnostics.Log(
+                "eligibility-evaluated",
+                $"trigger={trigger} {GetReadingEligibilityDetails()} sessionRunning={_readingSessionStartedAt.HasValue}");
+
             if (IsReadingSessionEligible)
             {
-                StartReadingSession();
+                StartReadingSession(trigger);
             }
             else
             {
-                StopReadingSession();
+                StopReadingSession(trigger);
             }
         }
 
-        private void StartReadingSession()
+        private void StartReadingSession(string trigger)
         {
             if (!IsReadingSessionEligible)
             {
+                ReadingStreakDiagnostics.Log(
+                    "start-skipped",
+                    $"trigger={trigger} {GetReadingEligibilityDetails()}");
                 return;
             }
 
             if (!_readingSessionStartedAt.HasValue)
             {
                 _readingSessionStartedAt = DateTimeOffset.Now;
+                _readingSessionStopwatch = Stopwatch.StartNew();
                 _readingSessionTimer.Start();
+                ReadingStreakDiagnostics.Log(
+                    "session-started",
+                    $"trigger={trigger} startedAt={_readingSessionStartedAt.Value:O} {GetReadingEligibilityDetails()}");
+            }
+            else
+            {
+                ReadingStreakDiagnostics.Log(
+                    "session-already-running",
+                    $"trigger={trigger} startedAt={_readingSessionStartedAt.Value:O} {GetReadingEligibilityDetails()}");
             }
 
             UpdateDisplayRequest();
         }
 
-        private void StopReadingSession()
+        private void StopReadingSession(string trigger)
         {
+            var hadRunningSession = _readingSessionStartedAt.HasValue;
+            ReadingStreakDiagnostics.Log(
+                "session-stopping",
+                $"trigger={trigger} sessionRunning={hadRunningSession} {GetReadingEligibilityDetails()}");
             _readingSessionTimer.Stop();
-            FlushReadingSessionTime();
+            FlushReadingSessionTime(trigger);
             _readingSessionStartedAt = null;
+            _readingSessionStopwatch = null;
             ReleaseDisplayRequest();
         }
 
@@ -1381,35 +1405,70 @@ namespace Elementary
             }
         }
 
-        private void FlushReadingSessionTime()
+        private void FlushReadingSessionTime(string trigger)
         {
             if (!_readingSessionStartedAt.HasValue)
             {
+                ReadingStreakDiagnostics.Log(
+                    "flush-skipped",
+                    $"trigger={trigger} reason=no-running-session {GetReadingEligibilityDetails()}");
                 return;
             }
 
-            var elapsed = DateTimeOffset.Now - _readingSessionStartedAt.Value;
+            var flushedAt = DateTimeOffset.Now;
+            var startedAt = _readingSessionStartedAt.Value;
+            var elapsed = flushedAt - startedAt;
+            var monotonicElapsed = _readingSessionStopwatch?.Elapsed;
             if (elapsed <= TimeSpan.Zero)
             {
+                ReadingStreakDiagnostics.Log(
+                    "flush-skipped",
+                    $"trigger={trigger} reason=non-positive-elapsed startedAt={startedAt:O} flushedAt={flushedAt:O} elapsedMs={elapsed.TotalMilliseconds:F0} monotonicElapsedMs={monotonicElapsed?.TotalMilliseconds:F0}");
                 return;
             }
 
             _readingSessionStartedAt = null;
+            _readingSessionStopwatch = null;
 
             try
             {
                 var readingStreakService = App.Services.GetRequiredService<IReadingStreakService>();
+                var activityDateBefore = DateTime.Today;
+                var progressBefore = readingStreakService.GetProgress();
+                progressBefore.DailyReadingSeconds.TryGetValue(activityDateBefore, out var secondsBefore);
+                var wasActive = progressBefore.ActiveDates.Contains(activityDateBefore);
                 readingStreakService.AddReadingTime(elapsed);
+                var activityDateAfter = DateTime.Today;
+                var progressAfter = readingStreakService.GetProgress();
+                progressAfter.DailyReadingSeconds.TryGetValue(activityDateAfter, out var secondsAfter);
+                var isActive = progressAfter.ActiveDates.Contains(activityDateAfter);
+                var thresholdSeconds = (int)readingStreakService.GetDailyThreshold().TotalSeconds;
+
+                ReadingStreakDiagnostics.Log(
+                    "time-flushed",
+                    $"trigger={trigger} startedAt={startedAt:O} flushedAt={flushedAt:O} wallElapsedMs={elapsed.TotalMilliseconds:F0} monotonicElapsedMs={monotonicElapsed?.TotalMilliseconds:F0} clockDriftMs={(monotonicElapsed.HasValue ? elapsed.TotalMilliseconds - monotonicElapsed.Value.TotalMilliseconds : 0):F0} requestedFloorSeconds={(int)Math.Floor(elapsed.TotalSeconds)} activityDateBefore={activityDateBefore:yyyy-MM-dd} activityDateAfter={activityDateAfter:yyyy-MM-dd} storedSecondsBefore={secondsBefore} storedSecondsAfter={secondsAfter} creditedSeconds={secondsAfter - secondsBefore} thresholdSeconds={thresholdSeconds} activeBefore={wasActive} activeAfter={isActive} {GetReadingEligibilityDetails()}");
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error tracking reading time: {ex.Message}");
+                ReadingStreakDiagnostics.Log(
+                    "time-flush-error",
+                    $"trigger={trigger} exception={ex.GetType().Name} message={ex.Message}");
             }
 
             if (IsReadingSessionEligible)
             {
                 _readingSessionStartedAt = DateTimeOffset.Now;
+                _readingSessionStopwatch = Stopwatch.StartNew();
+                ReadingStreakDiagnostics.Log(
+                    "session-restarted",
+                    $"trigger={trigger} startedAt={_readingSessionStartedAt.Value:O} {GetReadingEligibilityDetails()}");
             }
+        }
+
+        private string GetReadingEligibilityDetails()
+        {
+            return $"eligible={IsReadingSessionEligible} readerLoaded={_isLoaded} pageActive={_isReaderPageActive} windowVisible={_isWindowVisible} windowActive={_isWindowActive} readerObscured={_isReaderObscured} applicationSuspended={_isApplicationSuspended}";
         }
 
         private async Task ResetChapterPickerScrollAsync()
