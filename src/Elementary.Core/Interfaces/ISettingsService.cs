@@ -9,7 +9,7 @@ namespace Elementary.Core.Interfaces
 
         void SaveSettings(ISettings settings);
 
-        // Navigation history for manual book/chapter selections (up to 10 items)
+        // Recently departed reading locations (up to 10 items)
         List<NavigationHistoryItem> GetNavigationHistory();
         void SaveNavigationHistory(List<NavigationHistoryItem> history);
 

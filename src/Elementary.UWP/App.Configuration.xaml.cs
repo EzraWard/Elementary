@@ -61,7 +61,6 @@ namespace Elementary
             provider.AddSingleton<IVotdCacheService, VotdCacheService>();
             provider.AddSingleton<IVotdStorageService, UwpVotdStorageService>();
             provider.AddSingleton<IVerseFetchService, VerseFetchService>();
-            provider.AddSingleton<IUnsplashService, UnsplashService>();
             provider.AddSingleton<IVotdImageCompositor, VotdImageCompositor>();
             provider.AddSingleton<IVerseOfTheDayService, Elementary.VerseOfTheDay.Services.VerseOfTheDayService>();
 

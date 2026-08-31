@@ -8,9 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Template file is documentation only; the real ApiKeys.cs is git-ignored -->
+    <!-- Legacy local secrets are not part of the generated-artwork pipeline. -->
+    <Compile Remove="ApiKeys.cs" />
     <Compile Remove="ApiKeys.Template.cs" />
-    <None Include="ApiKeys.Template.cs" />
   </ItemGroup>
 
   <ItemGroup>

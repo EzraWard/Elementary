@@ -22,12 +22,11 @@ namespace Elementary.VerseOfTheDay.ConsolePreview
 
             var cache = new VotdCacheService();
             var verseFetch = new VerseFetchService(httpClient);
-            var unsplash = new UnsplashService(httpClient);
             var compositor = new VotdImageCompositor();
-            var votdService = new VerseOfTheDayService(verseFetch, unsplash, compositor, cache);
+            var votdService = new VerseOfTheDayService(verseFetch, compositor, cache);
 
             // Generate a result at a large size first to warm up the cache
-            Console.WriteLine("Fetching verse and background image...");
+            Console.WriteLine("Fetching verse and generating abstract artwork...");
 
             foreach (VotdImageSize size in Enum.GetValues(typeof(VotdImageSize)))
             {
@@ -49,8 +48,6 @@ namespace Elementary.VerseOfTheDay.ConsolePreview
                         Console.WriteLine();
                         Console.WriteLine($"  Verse: {result.VerseText}");
                         Console.WriteLine($"  Reference: {result.Reference}");
-                        if (!string.IsNullOrEmpty(result.UnsplashAttribution))
-                            Console.WriteLine($"  Attribution: {result.UnsplashAttribution}");
                         Console.WriteLine();
                     }
                 }

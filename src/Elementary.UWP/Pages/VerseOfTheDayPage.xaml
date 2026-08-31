@@ -7,11 +7,6 @@
     mc:Ignorable="d">
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-
         <!-- Loading state -->
         <ProgressRing x:Name="LoadingRing"
                       IsActive="True"
@@ -46,13 +41,5 @@
                VerticalAlignment="Center"
                Grid.Row="0" />
 
-        <!-- Attribution footer -->
-        <TextBlock x:Name="AttributionText"
-                   Visibility="Collapsed"
-                   Margin="16,4,16,8"
-                   FontSize="11"
-                   Opacity="0.6"
-                   TextWrapping="Wrap"
-                   Grid.Row="1" />
     </Grid>
 </Page>

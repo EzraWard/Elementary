@@ -214,6 +214,7 @@ namespace Elementary
 
                 _viewModel.IsLoaded = true;
                 _isLoaded = true;
+                UpdateNavigationHistory(departedLocation: null);
                 SetReaderVisualState(showContent: true, showSpinner: false);
                 SetPickerInteractionEnabled(true);
                 StartReadingSession();
@@ -378,10 +379,12 @@ namespace Elementary
                     || _viewModel.CurrentBook != readerItemAtAnchor.Book;
                 if (currentChapterChanged)
                 {
+                    var departedLocation = CreateNavigationHistoryItem(_viewModel.CurrentBook, _viewModel.CurrentChapter);
                     _isUpdatingFromScroll = true;
                     try
                     {
                         _viewModel.UpdateCurrentChapterFromScroll(readerItemAtAnchor);
+                        UpdateNavigationHistory(departedLocation);
                         SynchronizePickerSelection();
                         ScheduleCurrentLocationPersistence();
                     }
@@ -602,6 +605,7 @@ namespace Elementary
 
                 SynchronizePickerSelection();
                 await PositionReaderAsync(waitForLayout: true);
+                UpdateNavigationHistory(departedLocation: null);
             });
         }
 
@@ -631,6 +635,7 @@ namespace Elementary
 
                 SynchronizePickerSelection();
                 await PositionReaderAsync(waitForLayout: true);
+                UpdateNavigationHistory(departedLocation: null);
                 await HighlightVerseAsync(searchParam.ChapterIndex, searchParam.VerseNumber);
             });
         }
@@ -667,6 +672,7 @@ namespace Elementary
         {
             if (book == null) return;
 
+            var departedLocation = CreateNavigationHistoryItem(_viewModel.CurrentBook, _viewModel.CurrentChapter);
             await ExecuteNavigationTransitionAsync(async () =>
             {
                 SuppressScrollSyncFor(TimeSpan.FromMilliseconds(NavigationScrollSyncSuppressionMs));
@@ -682,7 +688,7 @@ namespace Elementary
 
                 if (saveToHistory)
                 {
-                    SaveCurrentSelectionToHistory();
+                    UpdateNavigationHistory(departedLocation);
                 }
             });
         }
@@ -1196,33 +1202,35 @@ namespace Elementary
             _pendingHistoryBookKey = null;
         }
 
-        private void SaveCurrentSelectionToHistory()
+        private static NavigationHistoryItem CreateNavigationHistoryItem(Book book, Chapter chapter)
+        {
+            if (book == null || chapter == null)
+            {
+                return null;
+            }
+
+            var bookTitle = book.Title ?? string.Empty;
+            var bookKey = Core.Dictionaries.EBookToLocation.EBookTitleToEBook.TryGetValue(bookTitle, out var bookEnum)
+                ? bookEnum.ToString()
+                : null;
+
+            return new NavigationHistoryItem
+            {
+                BookTitle = bookTitle,
+                BookKey = bookKey,
+                Chapter = chapter.Index
+            };
+        }
+
+        private void UpdateNavigationHistory(NavigationHistoryItem departedLocation)
         {
             try
             {
                 var settingsService = App.Services.GetRequiredService<Core.Interfaces.ISettingsService>();
                 var history = settingsService.GetNavigationHistory() ?? new List<NavigationHistoryItem>();
-                var currentBookTitle = _viewModel.CurrentBook?.Title ?? _viewModel.Bible?.Books?.FirstOrDefault()?.Title ?? string.Empty;
-                var currentBookKey = Core.Dictionaries.EBookToLocation.EBookTitleToEBook.TryGetValue(currentBookTitle, out var bookEnum)
-                    ? bookEnum.ToString()
-                    : null;
-                var currentChapter = _viewModel.SelectedChapterIndex;
-
-                if (history.Count == 0
-                    || history[history.Count - 1].BookTitle != currentBookTitle
-                    || history[history.Count - 1].Chapter != currentChapter
-                    || history[history.Count - 1].BookKey != currentBookKey)
-                {
-                    history.Add(new NavigationHistoryItem
-                    {
-                        BookTitle = currentBookTitle,
-                        Chapter = currentChapter,
-                        BookKey = currentBookKey
-                    });
-
-                    if (history.Count > 10) history.RemoveAt(0);
-                    settingsService.SaveNavigationHistory(history);
-                }
+                var currentLocation = CreateNavigationHistoryItem(_viewModel.CurrentBook, _viewModel.CurrentChapter);
+                var updatedHistory = NavigationHistoryManager.RecordDeparture(history, departedLocation, currentLocation);
+                settingsService.SaveNavigationHistory(updatedHistory);
             }
             catch (Exception ex)
             {

@@ -107,7 +107,7 @@ namespace Elementary.Core.Services
             _settingsProvider.DeleteSetting(key);
         }
 
-        // Navigation history handling (manual book/chapter selections only)
+        // Navigation history handling (recently departed reading locations)
         public System.Collections.Generic.List<NavigationHistoryItem> GetNavigationHistory()
         {
             var raw = GetSetting("navigationHistory");

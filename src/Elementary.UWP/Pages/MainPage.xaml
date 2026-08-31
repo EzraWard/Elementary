@@ -89,11 +89,6 @@
                             <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE81C;"/>
                         </muxc:NavigationViewItem.Icon>
                     </muxc:NavigationViewItem>
-                    <muxc:NavigationViewItem x:Name="VerseOfTheDayNavigationViewItem" Content="Verse of the Day" Tag="VerseOfTheDay" SelectsOnInvoked="False">
-                        <muxc:NavigationViewItem.Icon>
-                            <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE787;"/>
-                        </muxc:NavigationViewItem.Icon>
-                    </muxc:NavigationViewItem>
                 </muxc:NavigationView.MenuItems>
                 <muxc:NavigationView.FooterMenuItems>
                     <muxc:NavigationViewItem x:Name="StreakNavigationViewItem" Content="Streak" Tag="StreakPage">
@@ -107,6 +102,11 @@
                                     <ScaleTransform ScaleX="1.5" ScaleY="1.5" />
                                 </FontIcon.RenderTransform>
                             </FontIcon>
+                        </muxc:NavigationViewItem.Icon>
+                    </muxc:NavigationViewItem>
+                    <muxc:NavigationViewItem x:Name="VerseOfTheDayNavigationViewItem" Content="Verse of the Day" Tag="VerseOfTheDay" SelectsOnInvoked="False">
+                        <muxc:NavigationViewItem.Icon>
+                            <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE787;"/>
                         </muxc:NavigationViewItem.Icon>
                     </muxc:NavigationViewItem>
                 </muxc:NavigationView.FooterMenuItems>

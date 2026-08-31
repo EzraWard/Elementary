@@ -15,13 +15,14 @@ namespace Elementary.Tests.Services
             Verse = "16"
         };
 
+        private const string SampleSeed = "2026-08-14";
+
         [TestMethod]
         public void Compose_Widget_ShouldReturnNonEmptyBytes()
         {
             var compositor = new VotdImageCompositor();
-            var photo = UnsplashService.GenerateFallback();
 
-            var result = compositor.Compose(photo, SampleVerse, VotdImageSize.Widget640x360);
+            var result = compositor.Compose(SampleVerse, VotdImageSize.Widget640x360, SampleSeed);
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Length > 0);
@@ -31,9 +32,8 @@ namespace Elementary.Tests.Services
         public void Compose_TileMedium_ShouldReturnNonEmptyBytes()
         {
             var compositor = new VotdImageCompositor();
-            var photo = UnsplashService.GenerateFallback();
 
-            var result = compositor.Compose(photo, SampleVerse, VotdImageSize.TileMedium150);
+            var result = compositor.Compose(SampleVerse, VotdImageSize.TileMedium150, SampleSeed);
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Length > 0);
@@ -43,9 +43,8 @@ namespace Elementary.Tests.Services
         public void Compose_TileWide_ShouldReturnNonEmptyBytes()
         {
             var compositor = new VotdImageCompositor();
-            var photo = UnsplashService.GenerateFallback();
 
-            var result = compositor.Compose(photo, SampleVerse, VotdImageSize.TileWide310x150);
+            var result = compositor.Compose(SampleVerse, VotdImageSize.TileWide310x150, SampleSeed);
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Length > 0);
@@ -55,9 +54,8 @@ namespace Elementary.Tests.Services
         public void Compose_TileLarge_ShouldReturnNonEmptyBytes()
         {
             var compositor = new VotdImageCompositor();
-            var photo = UnsplashService.GenerateFallback();
 
-            var result = compositor.Compose(photo, SampleVerse, VotdImageSize.TileLarge310x310);
+            var result = compositor.Compose(SampleVerse, VotdImageSize.TileLarge310x310, SampleSeed);
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Length > 0);
@@ -67,9 +65,8 @@ namespace Elementary.Tests.Services
         public void Compose_InApp_ShouldReturnNonEmptyBytes()
         {
             var compositor = new VotdImageCompositor();
-            var photo = UnsplashService.GenerateFallback();
 
-            var result = compositor.Compose(photo, SampleVerse, VotdImageSize.InApp);
+            var result = compositor.Compose(SampleVerse, VotdImageSize.InApp, SampleSeed);
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Length > 0);
@@ -79,9 +76,8 @@ namespace Elementary.Tests.Services
         public void Compose_InApp_ShouldReturnSquareImage()
         {
             var compositor = new VotdImageCompositor();
-            var photo = UnsplashService.GenerateFallback();
 
-            var result = compositor.Compose(photo, SampleVerse, VotdImageSize.InApp);
+            var result = compositor.Compose(SampleVerse, VotdImageSize.InApp, SampleSeed);
 
             using var codec = SKCodec.Create(new System.IO.MemoryStream(result));
             Assert.IsNotNull(codec);
@@ -112,27 +108,36 @@ namespace Elementary.Tests.Services
         }
 
         [TestMethod]
-        public void Compose_WithNullImageBytes_ShouldStillReturnValidImage()
+        public void Compose_WithSameSeed_ShouldReturnIdenticalArtwork()
         {
             var compositor = new VotdImageCompositor();
-            var emptyPhoto = new UnsplashPhoto { ImageBytes = null, IsFallback = true };
 
-            var result = compositor.Compose(emptyPhoto, SampleVerse, VotdImageSize.InApp);
+            var first = compositor.Compose(SampleVerse, VotdImageSize.InApp, SampleSeed);
+            var second = compositor.Compose(SampleVerse, VotdImageSize.InApp, SampleSeed);
 
-            Assert.IsNotNull(result);
-            Assert.IsTrue(result.Length > 0);
+            CollectionAssert.AreEqual(first, second);
+        }
+
+        [TestMethod]
+        public void Compose_WithDifferentSeed_ShouldReturnDifferentArtwork()
+        {
+            var compositor = new VotdImageCompositor();
+
+            var first = compositor.Compose(SampleVerse, VotdImageSize.InApp, SampleSeed);
+            var second = compositor.Compose(SampleVerse, VotdImageSize.InApp, "2026-08-15");
+
+            CollectionAssert.AreNotEqual(first, second);
         }
 
         [TestMethod]
         public void Compose_AllSizes_ShouldCompleteWithinTimeLimit()
         {
             var compositor = new VotdImageCompositor();
-            var photo = UnsplashService.GenerateFallback();
 
             foreach (VotdImageSize size in System.Enum.GetValues(typeof(VotdImageSize)))
             {
                 var sw = System.Diagnostics.Stopwatch.StartNew();
-                compositor.Compose(photo, SampleVerse, size);
+                compositor.Compose(SampleVerse, size, SampleSeed);
                 sw.Stop();
                 Assert.IsTrue(sw.ElapsedMilliseconds < 500,
                     $"Compose({size}) took {sw.ElapsedMilliseconds}ms (limit: 500ms)");

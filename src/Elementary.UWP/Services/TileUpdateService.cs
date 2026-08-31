@@ -25,7 +25,7 @@ namespace Elementary.Services
                 updater.Clear();
 
                 string dateKey = DateTime.UtcNow.ToString("yyyy-MM-dd");
-                string largeTileFile = $"{dateKey}_large.png";
+                string largeTileFile = $"{dateKey}_abstract-v1_large.png";
 
                 // Persist the large tile image to LocalFolder for the ms-appdata:// URI
                 if (result.ImageBytes != null && result.ImageBytes.Length > 0)

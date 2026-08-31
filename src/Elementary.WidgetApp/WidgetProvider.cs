@@ -109,7 +109,7 @@ namespace Elementary.WidgetApp
             {
                 string dateKey = DateTime.UtcNow.ToString("yyyy-MM-dd");
                 var imageSize = ResolveWidgetImageSize(widgetId);
-                string filename = $"{dateKey}_{imageSize}.png";
+                string filename = $"{dateKey}_abstract-v1_{imageSize}.png";
 
                 byte[]? imageBytes = null;
                 VerseOfTheDayResult? result = null;

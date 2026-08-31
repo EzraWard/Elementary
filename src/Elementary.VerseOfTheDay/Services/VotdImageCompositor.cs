@@ -18,7 +18,17 @@ namespace Elementary.VerseOfTheDay.Services
             (800, 800),  // InApp
         };
 
-        public byte[] Compose(UnsplashPhoto photo, BibleVerseData verse, VotdImageSize size)
+        private static readonly SKColor[][] Palettes =
+        {
+            new[] { new SKColor(20, 16, 48), new SKColor(67, 56, 202), new SKColor(236, 72, 153), new SKColor(245, 158, 11) },
+            new[] { new SKColor(5, 35, 51), new SKColor(14, 116, 144), new SKColor(56, 189, 248), new SKColor(167, 243, 208) },
+            new[] { new SKColor(45, 15, 28), new SKColor(154, 52, 18), new SKColor(249, 115, 22), new SKColor(253, 230, 138) },
+            new[] { new SKColor(5, 46, 43), new SKColor(15, 118, 110), new SKColor(52, 211, 153), new SKColor(250, 204, 21) },
+            new[] { new SKColor(46, 16, 101), new SKColor(126, 34, 206), new SKColor(232, 121, 249), new SKColor(103, 232, 249) },
+            new[] { new SKColor(39, 39, 105), new SKColor(192, 38, 211), new SKColor(251, 113, 133), new SKColor(253, 230, 138) }
+        };
+
+        public byte[] Compose(BibleVerseData verse, VotdImageSize size, string seed)
         {
             var sw = Stopwatch.StartNew();
 
@@ -28,7 +38,7 @@ namespace Elementary.VerseOfTheDay.Services
             var canvas = surface.Canvas;
             canvas.Clear(SKColors.Black);
 
-            DrawBackground(canvas, photo, width, height);
+            DrawAbstractBackground(canvas, seed, width, height);
             DrawGradientOverlay(canvas, width, height);
             DrawVerseText(canvas, verse, width, height);
             DrawReference(canvas, verse, width, height);
@@ -42,41 +52,105 @@ namespace Elementary.VerseOfTheDay.Services
             return encoded.ToArray();
         }
 
-        private static void DrawBackground(SKCanvas canvas, UnsplashPhoto photo, int width, int height)
+        private static void DrawAbstractBackground(SKCanvas canvas, string seed, int width, int height)
         {
-            if (photo.ImageBytes == null || photo.ImageBytes.Length == 0) return;
+            var random = new Random(GetStableSeed(seed));
+            var palette = Palettes[random.Next(Palettes.Length)];
+            var angle = NextFloat(random, 0f, (float)(Math.PI * 2));
+            var center = new SKPoint(width / 2f, height / 2f);
+            var reach = Math.Max(width, height) * 0.75f;
+            var direction = new SKPoint((float)Math.Cos(angle) * reach, (float)Math.Sin(angle) * reach);
 
-            try
+            using (var basePaint = new SKPaint())
             {
-                using var bitmap = SKBitmap.Decode(photo.ImageBytes);
-                if (bitmap == null) return;
-
-                var sourceRect = GetCoverSourceRect(bitmap.Width, bitmap.Height, width, height);
-                canvas.DrawBitmap(bitmap, sourceRect, new SKRect(0, 0, width, height));
+                basePaint.Shader = SKShader.CreateLinearGradient(
+                    new SKPoint(center.X - direction.X, center.Y - direction.Y),
+                    new SKPoint(center.X + direction.X, center.Y + direction.Y),
+                    new[] { palette[0], palette[1], palette[0] },
+                    new[] { 0f, 0.58f, 1f },
+                    SKShaderTileMode.Clamp);
+                canvas.DrawRect(0, 0, width, height, basePaint);
             }
-            catch { /* Silently skip if image cannot be decoded */ }
+
+            var minimumDimension = Math.Min(width, height);
+            for (var i = 0; i < 5; i++)
+            {
+                var accent = palette[2 + (i % 2)];
+                var glowCenter = new SKPoint(
+                    NextFloat(random, -0.1f, 1.1f) * width,
+                    NextFloat(random, -0.1f, 1.1f) * height);
+                var radius = minimumDimension * NextFloat(random, 0.32f, 0.72f);
+
+                using var glowPaint = new SKPaint { IsAntialias = true };
+                glowPaint.Shader = SKShader.CreateRadialGradient(
+                    glowCenter,
+                    radius,
+                    new[] { WithAlpha(accent, (byte)random.Next(80, 151)), WithAlpha(accent, 0) },
+                    new[] { 0f, 1f },
+                    SKShaderTileMode.Clamp);
+                canvas.DrawCircle(glowCenter, radius, glowPaint);
+            }
+
+            for (var i = 0; i < 3; i++)
+            {
+                var startY = NextFloat(random, -0.1f, 1.1f) * height;
+                using var path = new SKPath();
+                path.MoveTo(-width * 0.15f, startY);
+                path.CubicTo(
+                    width * 0.25f, NextFloat(random, -0.2f, 1.2f) * height,
+                    width * 0.65f, NextFloat(random, -0.2f, 1.2f) * height,
+                    width * 1.15f, NextFloat(random, -0.1f, 1.1f) * height);
+
+                using var ribbonPaint = new SKPaint
+                {
+                    Style = SKPaintStyle.Stroke,
+                    StrokeCap = SKStrokeCap.Round,
+                    StrokeWidth = minimumDimension * NextFloat(random, 0.045f, 0.12f),
+                    Color = WithAlpha(palette[2 + (i % 2)], (byte)random.Next(18, 43)),
+                    IsAntialias = true
+                };
+                canvas.DrawPath(path, ribbonPaint);
+            }
+
+            using var detailPaint = new SKPaint { IsAntialias = true };
+            var detailCount = Math.Max(20, Math.Min(80, (width * height) / 8000));
+            for (var i = 0; i < detailCount; i++)
+            {
+                detailPaint.Color = WithAlpha(palette[3], (byte)random.Next(18, 55));
+                var radius = minimumDimension * NextFloat(random, 0.0015f, 0.006f);
+                canvas.DrawCircle(
+                    NextFloat(random, 0f, width),
+                    NextFloat(random, 0f, height),
+                    Math.Max(0.6f, radius),
+                    detailPaint);
+            }
         }
 
-        private static SKRect GetCoverSourceRect(int sourceWidth, int sourceHeight, int targetWidth, int targetHeight)
+        private static int GetStableSeed(string value)
         {
-            if (sourceWidth <= 0 || sourceHeight <= 0 || targetWidth <= 0 || targetHeight <= 0)
+            unchecked
             {
-                return new SKRect(0, 0, sourceWidth, sourceHeight);
+                const uint offset = 2166136261;
+                const uint prime = 16777619;
+                var hash = offset;
+                foreach (var character in value ?? string.Empty)
+                {
+                    hash ^= character;
+                    hash *= prime;
+                }
+
+                return (int)hash;
             }
+        }
 
-            var sourceAspect = (float)sourceWidth / sourceHeight;
-            var targetAspect = (float)targetWidth / targetHeight;
+        private static float NextFloat(Random random, float minimum, float maximum)
+        {
+            return minimum + ((float)random.NextDouble() * (maximum - minimum));
+        }
 
-            if (sourceAspect > targetAspect)
-            {
-                var croppedWidth = sourceHeight * targetAspect;
-                var left = (sourceWidth - croppedWidth) / 2f;
-                return new SKRect(left, 0, left + croppedWidth, sourceHeight);
-            }
-
-            var croppedHeight = sourceWidth / targetAspect;
-            var top = (sourceHeight - croppedHeight) / 2f;
-            return new SKRect(0, top, sourceWidth, top + croppedHeight);
+        private static SKColor WithAlpha(SKColor color, byte alpha)
+        {
+            return new SKColor(color.Red, color.Green, color.Blue, alpha);
         }
 
         private static void DrawGradientOverlay(SKCanvas canvas, int width, int height)

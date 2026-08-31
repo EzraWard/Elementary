@@ -69,13 +69,7 @@ namespace Elementary
                 VerseImage.Visibility = Visibility.Visible;
             }
 
-            Debug.WriteLine($"[VerseOfTheDayPage] Showing VOTD image. Bytes={result.ImageBytes?.Length ?? 0}, Fallback={result.UsedFallbackBackground}, Attribution='{result.UnsplashAttribution ?? "<none>"}'.");
-
-            if (!string.IsNullOrEmpty(result.UnsplashAttribution))
-            {
-                AttributionText.Text = result.UnsplashAttribution;
-                AttributionText.Visibility = Visibility.Visible;
-            }
+            Debug.WriteLine($"[VerseOfTheDayPage] Showing generated VOTD image. Bytes={result.ImageBytes?.Length ?? 0}.");
         }
 
         private void SetLoadingState()
@@ -84,7 +78,6 @@ namespace Elementary
             LoadingRing.Visibility = Visibility.Visible;
             ErrorPanel.Visibility = Visibility.Collapsed;
             VerseImage.Visibility = Visibility.Collapsed;
-            AttributionText.Visibility = Visibility.Collapsed;
         }
 
         private void SetErrorState()

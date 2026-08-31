@@ -24,9 +24,8 @@ namespace Elementary.WidgetApp
                 var cache = new VotdCacheService();
                 var storage = new WinAppSdkVotdStorageService();
                 var verseFetch = new VerseFetchService(httpClient);
-                var unsplash = new UnsplashService(httpClient);
                 var compositor = new VotdImageCompositor();
-                var votdService = new VerseOfTheDayService(verseFetch, unsplash, compositor, cache);
+                var votdService = new VerseOfTheDayService(verseFetch, compositor, cache);
 
                 var provider = new WidgetProvider(votdService, storage, lifetime);
                 var clsid = typeof(WidgetProvider).GUID;
