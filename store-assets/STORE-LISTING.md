@@ -17,7 +17,7 @@ Do not declare other UI languages until the app strings and listing are localize
 
 ## Short description
 
-Read the Bible without clutter. Elementary is a focused Windows reader with offline NET, KJV, and ASV text, full-Bible search, reading history, customizable typography and themes, and private on-device streaks.
+Read the Bible without clutter. Elementary pairs offline NET, KJV, and ASV text with full-Bible search, reading history, customizable typography and themes, and private on-device streaks.
 
 ## Description
 
@@ -25,9 +25,9 @@ Elementary is a calm, focused Bible reader built for Windows.
 
 Open directly to the text and read without accounts, ads, feeds, or unnecessary distractions. Choose the NET Bible, King James Version, or American Standard Version, then make the reading view your own with light, dark, or system themes, two typefaces, three text sizes, and optional verse numbers.
 
-All included Bible text is available offline. Search across the entire Bible or narrow the scope to the Old or New Testament. Reading history makes it easy to return to recently opened chapters, while a private on-device streak helps you build a consistent reading habit.
+All included Bible text is available offline. Search across the entire Bible or narrow the scope to the Old or New Testament. Reading history makes it easy to return to recently opened chapters, while a private on-device streak and badge gallery help you build a consistent reading habit.
 
-Elementary stores your reading position, history, preferences, and streak progress on your Windows device.
+Elementary stores your reading position, history, preferences, and streak progress on your Windows device. No account or sign-in is required.
 
 ## Product features
 
@@ -42,7 +42,8 @@ Enter these as separate Partner Center feature fields; Partner Center supplies t
 7. Light, dark, and system themes
 8. Segoe UI or Georgia reading fonts
 9. Three text sizes and optional verse numbers
-10. No account or sign-in required
+10. Keep-screen-awake option for longer reading sessions
+11. No account or sign-in required
 
 ## Keywords
 
@@ -62,16 +63,18 @@ Leave this field blank for the first Store submission. For the first update afte
 
 ## Screenshot order and captions
 
-All screenshots are unmodified 1600×900 PNG captures of the running app. They contain no added logos or marketing overlays.
+All screenshots use unmodified captures of the running app, centered on a plain neutral wallpaper background at 1600×1200. The taskbar and desktop clutter are excluded, and the app UI contains no added logos or marketing overlays.
 
-1. `gallery/01-reader-dark.png`  
-   A focused, distraction-free reading view with clear typography and offline scripture.
-2. `gallery/02-search.png`  
-   Search the entire Bible, Old Testament, or New Testament without leaving the reader.
-3. `gallery/03-reading-history.png`  
-   Return quickly to recently opened books and chapters.
-4. `gallery/04-reader-light.png`  
-   Choose light, dark, or system themes and adjust translation, font, size, and verse numbers.
+1. `gallery/01-reader.png`
+   Read offline in a focused, distraction-free view designed for comfortable time in Scripture.
+2. `gallery/02-search.png`
+   Find a word or passage across the entire Bible, Old Testament, or New Testament.
+3. `gallery/03-reading-history.png`
+   Return to recently opened books and chapters with one click.
+4. `gallery/04-reading-streak.png`
+   Build a consistent reading habit with private on-device streaks and badges.
+5. `gallery/05-settings.png`
+   Choose your translation, font, text size, verse numbers, theme, and screen-awake preference.
 
 Additional Store art:
 
