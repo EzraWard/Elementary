@@ -14,12 +14,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="SkiaSharp" Version="2.88.9" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.9">
+    <PackageReference Include="SkiaSharp" Version="4.151.2" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="4.151.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.Text.Json" Version="10.0.8" />
+    <PackageReference Include="System.Text.Json" Version="10.0.11" />
   </ItemGroup>
 
   <ItemGroup>

@@ -240,7 +240,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="SkiaSharp">
-      <Version>2.88.9</Version>
+      <Version>4.151.2</Version>
     </PackageReference>
     <PackageReference Include="SkiaSharp.NativeAssets.UWP">
       <Version>2.88.9</Version>
@@ -255,7 +255,7 @@
       <Version>8.2.251219</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection">
-      <Version>10.0.8</Version>
+      <Version>10.0.11</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.14</Version>
