@@ -1,0 +1,31 @@
+<Solution>
+  <Configurations>
+    <Platform Name="ARM64" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="Elementary.Core/Elementary.Core.csproj" />
+  <Project Path="Elementary.VerseOfTheDay/Elementary.VerseOfTheDay.csproj" />
+  <Project Path="Elementary.WidgetApp/Elementary.WidgetApp.csproj">
+    <Platform Solution="*|ARM64" Project="ARM64" />
+    <Platform Solution="*|x64" Project="x64" />
+    <Platform Solution="*|x86" Project="x86" />
+  </Project>
+  <Project Path="Elementary.Packaging/Elementary.Packaging.wapproj" Type="c7167f0d-bc9f-4e6e-afe1-012c56b48db5" Id="6d665454-24a9-453d-ada4-8b764c2979a0">
+    <Deploy />
+  </Project>
+  <Project Path="Elementary.Tests.UWP/Elementary.Tests.UWP.csproj" Id="752b2b04-6c6d-4aa2-ae81-e219442d243c">
+    <Platform Solution="*|ARM64" Project="ARM64" />
+    <Platform Solution="*|x64" Project="x64" />
+    <Platform Solution="*|x86" Project="x86" />
+    <Deploy />
+  </Project>
+  <Project Path="Elementary.Tests/Elementary.Tests.csproj" />
+  <Project Path="Elementary.VerseOfTheDay.ConsolePreview/Elementary.VerseOfTheDay.ConsolePreview.csproj" />
+  <Project Path="Elementary.UWP/Elementary.UWP.csproj" Id="0dfd8e50-61d0-4ff1-a1f2-c82423073e87">
+    <Platform Solution="*|ARM64" Project="ARM64" />
+    <Platform Solution="*|x64" Project="x64" />
+    <Platform Solution="*|x86" Project="x86" />
+    <Deploy />
+  </Project>
+</Solution>

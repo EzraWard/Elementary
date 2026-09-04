@@ -1,0 +1,281 @@
+<Page
+    x:Class="Elementary.StreakPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:Elementary.Core.Models"
+    xmlns:viewModels="using:Elementary.ViewModels"
+    xmlns:converters="using:Elementary.UWP.Converters"
+    mc:Ignorable="d"
+    Background="Transparent">
+
+    <Page.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converters:BoolToVisibilityConverter x:Key="InvertedBoolToVisibilityConverter" IsInverted="True" />
+        <Style x:Key="StreakBadgeListViewItemStyle" TargetType="ListViewItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,0,12,12" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="UseSystemFocusVisuals" Value="False" />
+            <Setter Property="IsTabStop" Value="False" />
+        </Style>
+
+        <DataTemplate x:Key="StreakBadgeGalleryItemTemplate" x:DataType="models:StreakBadgeProgress">
+            <Grid x:Name="BadgeCardRoot"
+                  Width="300"
+                  Height="108"
+                  Padding="8"
+                  HorizontalAlignment="Stretch"
+                  Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                  BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}"
+                  BorderThickness="1"
+                  ColumnSpacing="16"
+                  CornerRadius="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Width="56"
+                        Height="56"
+                        Margin="8,12,0,0"
+                        VerticalAlignment="Top"
+                        CornerRadius="12"
+                        BorderBrush="#66D67606"
+                        BorderThickness="1"
+                        Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}">
+                    <TextBlock Text="{x:Bind PlaceholderText}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               FontSize="{x:Bind PlaceholderFontSize}"
+                               FontWeight="SemiBold" />
+                </Border>
+
+                <Grid Grid.Column="1"
+                      Margin="0,12,8,12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="{x:Bind Title}"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               TextLineBounds="TrimToCapHeight"
+                               TextTrimming="CharacterEllipsis" />
+
+                    <TextBlock Grid.Row="1"
+                               Margin="0,4,0,0"
+                               Opacity="0.78"
+                               Text="{x:Bind Description}"
+                               TextTrimming="WordEllipsis"
+                               TextWrapping="WrapWholeWords"
+                               MaxLines="2" />
+
+                    <TextBlock Grid.Row="2"
+                               Margin="0,8,0,0"
+                               FontSize="12"
+                               Opacity="0.65"
+                               Text="{x:Bind StatusText}"
+                               TextTrimming="CharacterEllipsis" />
+                </Grid>
+
+                <VisualStateManager.VisualStateGroups>
+                    <VisualStateGroup x:Name="BadgeCardLayoutStates">
+                        <VisualState x:Name="WideBadgeCardLayout">
+                            <VisualState.StateTriggers>
+                                <AdaptiveTrigger MinWindowWidth="720" />
+                            </VisualState.StateTriggers>
+                        </VisualState>
+                        <VisualState x:Name="NarrowBadgeCardLayout">
+                            <VisualState.StateTriggers>
+                                <AdaptiveTrigger MinWindowWidth="0" />
+                            </VisualState.StateTriggers>
+                            <VisualState.Setters>
+                                <Setter Target="BadgeCardRoot.Width" Value="Auto" />
+                            </VisualState.Setters>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateManager.VisualStateGroups>
+            </Grid>
+        </DataTemplate>
+    </Page.Resources>
+
+    <Grid>
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+                <VisualState x:Name="VeryNarrowLayout" />
+                <VisualState x:Name="NarrowLayout">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="500" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="ContentStackPanel.Margin" Value="0" />
+                    </VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="WideLayout">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="720" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="ContentStackPanel.Margin" Value="0" />
+                        <Setter Target="CardsPrimaryColumn.Width" Value="320" />
+                        <Setter Target="CardsSecondaryColumn.Width" Value="*" />
+                        <Setter Target="StreakDetailsCard.(Grid.Column)" Value="1" />
+                        <Setter Target="StreakDetailsCard.(Grid.Row)" Value="0" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+        <ScrollViewer>
+            <Grid Padding="16">
+                <StackPanel x:Name="ContentStackPanel" MaxWidth="1000" Spacing="16">
+                    <TextBlock x:Name="HeaderTextBlock" Text="Reading Streak" FontSize="32" FontWeight="Bold" />
+                    <TextBlock Text="{x:Bind ViewModel.SummaryText, Mode=OneWay}" Opacity="0.8" TextWrapping="WrapWholeWords" />
+
+                    <Grid x:Name="CardsGrid" ColumnSpacing="12" RowSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition x:Name="CardsPrimaryColumn" Width="*" />
+                            <ColumnDefinition x:Name="CardsSecondaryColumn" Width="0" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Border x:Name="StreakHeroCard"
+                                Grid.Column="0"
+                                Grid.Row="0"
+                                Padding="16"
+                                CornerRadius="8"
+                                Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
+                            <StackPanel Spacing="10" HorizontalAlignment="Stretch">
+                                <TextBlock FontSize="72"
+                                           FontWeight="SemiBold"
+                                           Text="{x:Bind ViewModel.CurrentStreak, Mode=OneWay}"
+                                           TextAlignment="Center">
+                                    <TextBlock.Foreground>
+                                        <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                            <GradientStop Offset="1" Color="#FFFCC94E" />
+                                            <GradientStop Offset="0" Color="#FFD67606" />
+                                        </LinearGradientBrush>
+                                    </TextBlock.Foreground>
+                                </TextBlock>
+                                <TextBlock Text="{x:Bind ViewModel.StreakLabel, Mode=OneWay}"
+                                           TextAlignment="Center"
+                                           Opacity="0.85" />
+                                <ItemsControl ItemsSource="{x:Bind ViewModel.RecentActivity, Mode=OneWay}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="viewModels:StreakDayActivityViewModel">
+                                            <Grid Padding="2,4">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
+                                                <TextBlock Text="{x:Bind DayOfWeekShort}"
+                                                           FontSize="11"
+                                                           Opacity="0.6"
+                                                           TextAlignment="Center"
+                                                           Margin="0,0,0,6" />
+                                                <Ellipse Grid.Row="1"
+                                                         Width="18"
+                                                         Height="18"
+                                                         Fill="#FFD67606"
+                                                         Visibility="{x:Bind Active, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                                <Ellipse Grid.Row="1"
+                                                         Width="18"
+                                                         Height="18"
+                                                         Fill="{ThemeResource SystemControlForegroundBaseLowBrush}"
+                                                         Opacity="0.25"
+                                                         Visibility="{x:Bind Active, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Text="{x:Bind ViewModel.ThresholdHelpText, Mode=OneWay}"
+                                           FontSize="12"
+                                           Opacity="0.6"
+                                           TextAlignment="Center"
+                                           TextWrapping="WrapWholeWords" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border x:Name="StreakDetailsCard"
+                                Grid.Column="0"
+                                Grid.Row="1"
+                                Padding="16"
+                                CornerRadius="8"
+                                Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
+                            <Grid ColumnSpacing="16" RowSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <StackPanel>
+                                    <TextBlock Text="Current streak" FontSize="13" Opacity="0.65" />
+                                    <TextBlock Text="{x:Bind ViewModel.CurrentStreak, Mode=OneWay}" FontSize="18" FontWeight="SemiBold" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Longest streak" FontSize="13" Opacity="0.65" />
+                                    <TextBlock Text="{x:Bind ViewModel.LongestStreak, Mode=OneWay}" FontSize="18" FontWeight="SemiBold" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1" Grid.ColumnSpan="2">
+                                    <TextBlock Text="How it works" FontSize="13" Opacity="0.65" />
+                                    <TextBlock Text="{x:Bind ViewModel.HowItWorksText, Mode=OneWay}"
+                                               FontSize="18"
+                                               FontWeight="SemiBold"
+                                               TextWrapping="WrapWholeWords" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <Border Padding="16"
+                            CornerRadius="8"
+                            Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Streak badges" FontSize="20" FontWeight="SemiBold" />
+                            <TextBlock Text="{x:Bind ViewModel.BadgeSummaryText, Mode=OneWay}"
+                                       Opacity="0.8"
+                                       TextWrapping="WrapWholeWords" />
+                            <ListView ItemsSource="{x:Bind ViewModel.Badges, Mode=OneWay}"
+                                      ItemTemplate="{StaticResource StreakBadgeGalleryItemTemplate}"
+                                      ItemContainerStyle="{StaticResource StreakBadgeListViewItemStyle}"
+                                      SelectionMode="None"
+                                      IsItemClickEnabled="False"
+                                      IsSwipeEnabled="False"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      ScrollViewer.HorizontalScrollMode="Disabled"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                      ScrollViewer.VerticalScrollMode="Disabled"
+                                      ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                                <ListView.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <ItemsWrapGrid Orientation="Horizontal"
+                                                       MaximumRowsOrColumns="2" />
+                                    </ItemsPanelTemplate>
+                                </ListView.ItemsPanel>
+                            </ListView>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</Page>

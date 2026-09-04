@@ -1,0 +1,200 @@
+﻿<Page
+    x:Class="Elementary.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Elementary"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+    mc:Ignorable="d"
+    muxc:BackdropMaterial.ApplyToRootOrPageBackground="True">
+
+    <Page.Resources>
+        <Flyout x:Name="HistoryFlyout" Placement="Right" Closed="HistoryFlyout_Closed">
+            <Grid MinWidth="200">
+                <TextBlock x:Name="HistoryEmptyText"
+                           Text="No history yet"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Opacity="0.6"
+                           Visibility="Collapsed" />
+                <ListView x:Name="HistoryListView" IsItemClickEnabled="True" ItemClick="HistoryListView_ItemClick" DisplayMemberPath="DisplayText" />
+            </Grid>
+        </Flyout>
+
+        <DataTemplate x:Key="SearchResultTemplate">
+            <StackPanel Margin="0,4,0,4">
+                <TextBlock Text="{Binding ReferenceText}" FontWeight="SemiBold" FontSize="13" />
+                <TextBlock Text="{Binding VerseText}" TextTrimming="CharacterEllipsis" MaxLines="2" Opacity="0.75" FontSize="12" />
+            </StackPanel>
+        </DataTemplate>
+    </Page.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition x:Name="TitleBarRow" Height="32"/>
+            <RowDefinition x:Name="ContentRow" Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid x:Name="TitlebarGrid"  Height="32" Grid.Row="0" Padding="4,0,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="LeftPaddingColumn" Width="0"/>
+                <ColumnDefinition x:Name="ButtonColumn" Width="Auto"/>
+                <ColumnDefinition x:Name="IconColumn" Width="Auto"/>
+                <ColumnDefinition x:Name="TitleColumn" Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <Image Grid.Column="1"
+                   Width="16"
+                   Height="16"
+                   Margin="12,0,0,0"
+                   Stretch="None"
+                   Source="ms-appx:///Assets/TitleBarIcon.png" />
+            <TextBlock Grid.Column="2" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" VerticalAlignment="Center" Margin="16,0,0,1">Elementary</TextBlock>
+        </Grid>
+        <Grid Grid.Row="1">
+            <Grid>
+                <muxc:TeachingTip x:Name="StreakTeachingTip"
+                                  Title="Streak updated"
+                                  Subtitle="You unlocked today's streak."
+                                  IsOpen="False"
+                                  IsLightDismissEnabled="True"
+                                  PreferredPlacement="Right" />
+                <Button x:Name="InitialFocusStealer"
+                        IsTabStop="True"
+                        Opacity="0"
+                        Width="1"
+                        Height="1" />
+                <muxc:NavigationView Name="MainNavigationView"
+                                     ItemInvoked="NavigationView_ItemInvoked"
+                                     DisplayModeChanged="MainNavigationView_DisplayModeChanged"
+                                     IsTitleBarAutoPaddingEnabled="false"
+                                     IsBackButtonVisible="Collapsed"
+                                     IsPaneOpen="False"
+                                     IsSettingsVisible="True">
+                <muxc:NavigationView.MenuItems>
+                    <muxc:NavigationViewItem x:Name="BiblePageNavigationViewItem" Content="Bible" Tag="BiblePage">
+                        <muxc:NavigationViewItem.Icon>
+                            <!--Including the font file for Segoe Fluent Icons in project ensures that the font properly displays on Windows 10-->
+                            <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE736;"/>
+                        </muxc:NavigationViewItem.Icon>
+                    </muxc:NavigationViewItem>
+                    <muxc:NavigationViewItem x:Name="SearchNavigationViewItem" Content="Search" Tag="Search" SelectsOnInvoked="False">
+                        <muxc:NavigationViewItem.Icon>
+                            <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE721;"/>
+                        </muxc:NavigationViewItem.Icon>
+                    </muxc:NavigationViewItem>
+                    <muxc:NavigationViewItem x:Name="HistoryNavigationViewItem" Content="History" Tag="History" SelectsOnInvoked="False">
+                        <muxc:NavigationViewItem.Icon>
+                            <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE81C;"/>
+                        </muxc:NavigationViewItem.Icon>
+                    </muxc:NavigationViewItem>
+                </muxc:NavigationView.MenuItems>
+                <muxc:NavigationView.FooterMenuItems>
+                    <muxc:NavigationViewItem x:Name="StreakNavigationViewItem" Content="Streak" Tag="StreakPage">
+                        <muxc:NavigationViewItem.Icon>
+                            <FontIcon x:Name="StreakNavigationIcon"
+                                      FontFamily="Segoe UI Symbol"
+                                      Glyph="🔥"
+                                      FontSize="16"
+                                      RenderTransformOrigin="0.5,0.5">
+                                <FontIcon.RenderTransform>
+                                    <ScaleTransform ScaleX="1.5" ScaleY="1.5" />
+                                </FontIcon.RenderTransform>
+                            </FontIcon>
+                        </muxc:NavigationViewItem.Icon>
+                    </muxc:NavigationViewItem>
+                    <muxc:NavigationViewItem x:Name="VerseOfTheDayNavigationViewItem" Content="Verse of the Day" Tag="VerseOfTheDay" SelectsOnInvoked="False">
+                        <muxc:NavigationViewItem.Icon>
+                            <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE787;"/>
+                        </muxc:NavigationViewItem.Icon>
+                    </muxc:NavigationViewItem>
+                </muxc:NavigationView.FooterMenuItems>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border x:Name="SearchPanel"
+                            Width="320"
+                            Visibility="Collapsed"
+                            Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                            BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}"
+                            BorderThickness="0,0,1,0"
+                            Padding="12">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0" Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Search" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                <Button Grid.Column="1"
+                                        x:Name="CloseSearchPanelButton"
+                                        Click="CloseSearchPanelButton_Click"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Padding="4"
+                                        VerticalAlignment="Center">
+                                    <FontIcon FontFamily="/Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons" Glyph="&#xE711;" FontSize="12" />
+                                </Button>
+                            </Grid>
+
+                            <AutoSuggestBox x:Name="SearchBox"
+                                            Grid.Row="1"
+                                            PlaceholderText="Search the Bible..."
+                                            QueryIcon="Find"
+                                            QuerySubmitted="SearchBox_QuerySubmitted"
+                                            Margin="0,0,0,8" />
+
+                            <ComboBox x:Name="SearchScopeComboBox"
+                                      Grid.Row="2"
+                                      HorizontalAlignment="Stretch"
+                                      SelectedIndex="0"
+                                      Margin="0,0,0,8">
+                                <ComboBoxItem Content="Entire Bible" Tag="EntireBible" />
+                                <ComboBoxItem Content="Old Testament" Tag="OldTestament" />
+                                <ComboBoxItem Content="New Testament" Tag="NewTestament" />
+                            </ComboBox>
+
+                            <Grid Grid.Row="3">
+                                <muxc:ProgressRing x:Name="SearchProgressRing"
+                                                   IsActive="False"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   Height="40"
+                                                   Width="40" />
+                                <TextBlock x:Name="SearchEmptyText"
+                                           Text="No results"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Opacity="0.6"
+                                           Visibility="Collapsed" />
+                                <ListView x:Name="SearchResultsListView"
+                                          IsItemClickEnabled="True"
+                                          ItemClick="SearchResultsListView_ItemClick"
+                                          ItemTemplate="{StaticResource SearchResultTemplate}"
+                                          SelectionMode="Single"
+                                          Visibility="Collapsed" />
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <Frame Grid.Column="1"
+                           Name="ContentFrame"
+                           Navigated="ContentFrame_Navigated"
+                           NavigationFailed="ContentFrame_NavigationFailed" />
+                </Grid>
+            </muxc:NavigationView>
+        </Grid>
+        </Grid>
+    </Grid>
+</Page>

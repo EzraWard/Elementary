@@ -1,0 +1,155 @@
+<Page
+    x:Name="BiblePageRoot"
+    x:Class="Elementary.BiblePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Elementary"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+    xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+    xmlns:viewmodels="using:Elementary.ViewModels"
+    xmlns:converters="using:Elementary.UWP.Converters"
+    mc:Ignorable="d"
+    d:DataContext="{d:DesignInstance viewmodels:BiblePageViewModel, IsDesignTimeCreatable=True}"
+    Background="Transparent"
+    Tag="BiblePage">
+
+    <Page.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converters:BoolToVisibilityConverter x:Key="InvertedBoolToVisibilityConverter" IsInverted="True" />
+    </Page.Resources>
+
+    <Grid Width="Auto" Margin="22,0,22,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <ListView x:Name="BibleChaptersListView"
+                  Grid.RowSpan="2"
+                  ItemsSource="{Binding ReaderItems}"
+                  SelectionMode="None"
+                  IsItemClickEnabled="False"
+                  IsTabStop="False"
+                  Opacity="0"
+                  Padding="0"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                  ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                  ScrollViewer.IsVerticalScrollChainingEnabled="False"
+                  ScrollViewer.IsVerticalRailEnabled="True">
+            <ListView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <ItemsStackPanel Orientation="Vertical"/>
+                </ItemsPanelTemplate>
+            </ListView.ItemsPanel>
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="Margin" Value="0" />
+                    <Setter Property="MinHeight" Value="0" />
+                    <Setter Property="UseSystemFocusVisuals" Value="False" />
+                    <Setter Property="IsTabStop" Value="False" />
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid x:Name="ReaderItemGrid"
+                          Margin="0,0,0,20"
+                          Loaded="ReaderItemGrid_Loaded"
+                          Unloaded="ReaderItemGrid_Unloaded">
+                        <StackPanel MaxWidth="700"
+                                    HorizontalAlignment="Center">
+                            <TextBlock Text="{Binding BookTitle}"
+                                       Tag="bookheading"
+                                       FontSize="34"
+                                       FontWeight="Bold"
+                                       HorizontalAlignment="Center"
+                                       TextAlignment="Center"
+                                       Margin="0,68,0,0"
+                                       Visibility="{Binding IsBookHeader, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                            <Border Height="{Binding SpacerHeight}"
+                                    Visibility="{Binding IsBottomSpacer, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                            <TextBlock FontSize="28"
+                                        Tag="chapterheading"
+                                        FontWeight="Bold"
+                                        HorizontalAlignment="Center"
+                                        TextAlignment="Center"
+                                        Margin="0,24,0,8"
+                                        Visibility="{Binding IsChapter, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <Run Text="Chapter " />
+                                <Run Text="{Binding ChapterIndex}" />
+                            </TextBlock>
+                            <ItemsControl ItemsSource="{Binding DisplayLines}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Loaded="DisplayLineContainer_Loaded">
+                                            <Grid Visibility="{Binding IsVerse, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,6">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding VerseNumberText}" Tag="versenum" Margin="0,4,6,0" VerticalAlignment="Top" Opacity="0.72"/>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding Text}"
+                                                           Tag="body"
+                                                           TextWrapping="WrapWholeWords"/>
+                                            </Grid>
+                                            <TextBlock Text="{Binding Text}"
+                                                       Tag="heading"
+                                                       Visibility="{Binding IsHeading, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                       FontSize="20"
+                                                       FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center"
+                                                       TextAlignment="Center"
+                                                       Margin="0,14,0,8"
+                                                       TextWrapping="WrapWholeWords"/>
+                                            <TextBlock Text="{Binding Text}" Tag="body" Visibility="{Binding IsPoetry, Converter={StaticResource BoolToVisibilityConverter}}" Margin="20,0,0,6" TextWrapping="WrapWholeWords"/>
+                                            <TextBlock Text="{Binding Text}" Tag="body" Visibility="{Binding IsText, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,6" TextWrapping="WrapWholeWords"/>
+                                            <TextBlock Text="{Binding Text}" Tag="footnote" Visibility="{Binding IsFootnote, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,4,0,0" Opacity="0.75" TextWrapping="WrapWholeWords"/>
+                                            <Border Visibility="{Binding IsParagraphBreak, Converter={StaticResource BoolToVisibilityConverter}}" Height="8" Background="Transparent"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+		<!-- Blur layer behind the gradient and picker -->
+		<Border x:Name="BlurBorder" Grid.RowSpan="2" VerticalAlignment="Top"
+		        Height="65" IsHitTestVisible="False" Margin="-22,0,-22,0" />
+
+		<!-- Gradient fade behind the picker: z-order below ChooserBorder -->
+		<Border x:Name="TopFadeBorder" Grid.RowSpan="2" VerticalAlignment="Top"
+		        Height="90" IsHitTestVisible="False" Margin="-22,0,-22,0" />
+
+ 		<Border x:Name="ChooserBorder" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="12" Padding="6" CornerRadius="6" Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}" Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
+			<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                <ComboBox x:Name="BibleBookComboBox"
+                          Width="200"
+                          FontSize="12"
+                          IsEnabled="True"
+                          ItemsSource="{Binding Bible.Books}"
+                          DisplayMemberPath="Title"
+                          PlaceholderText="Bible" 
+                          Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
+                          SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged"/>
+
+                <ComboBox x:Name="BookChapterComboBox" 
+                          Width="100"
+                          FontSize="12"
+                          IsEnabled="True"
+                          PlaceholderText="Chapter" 
+                          Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
+                          DropDownClosed="BookChapterComboBox_DropDownClosed"
+                          SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged"/>
+			</StackPanel>
+		</Border>
+
+		<Grid Grid.RowSpan="2">
+            <muxc:ProgressRing x:Name="BiblePageProgressRing"  IsActive="True" HorizontalAlignment="Center" VerticalAlignment="Center" Height="75" Width="75"/>
+        </Grid>
+    </Grid>
+</Page>
