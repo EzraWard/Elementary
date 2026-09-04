@@ -1,156 +1,151 @@
 <a id="readme-top"></a>
 
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
-[![LinkedIn][linkedin-shield]][linkedin-url]
-
-<!-- PROJECT LOGO -->
-
-<br />
 <div align="center">
   <a href="https://github.com/EzraWard/Elementary">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+    <img src="src/Elementary.UWP/Assets/Square44x44Logo.altform-unplated_targetsize-256.png" alt="Elementary Bible app icon" width="112" height="112">
   </a>
 
-<h3 align="center">Elementary</h3>
+  <h1>Elementary Bible</h1>
 
-<p align="center">
-    Elementary is a very simple and usable Windows Bible app with a focus on the reading experience.
-    <br />
-    <br />
-    <a href="https://github.com/EzraWard/Elementary/issues/new?labels=bug">Report Bug</a>
+  <p>A calm, focused Bible reader built for Windows.</p>
+
+  <p>
+    <a href="https://github.com/EzraWard/Elementary/releases"><img src="https://img.shields.io/badge/version-1.0.0-2563eb?style=for-the-badge" alt="Version 1.0.0"></a>
+    <a href="https://github.com/EzraWard/Elementary/stargazers"><img src="https://img.shields.io/github/stars/EzraWard/Elementary.svg?style=for-the-badge" alt="GitHub stars"></a>
+    <a href="https://github.com/EzraWard/Elementary/issues"><img src="https://img.shields.io/github/issues/EzraWard/Elementary.svg?style=for-the-badge" alt="Open issues"></a>
+    <a href="LICENSE.txt"><img src="https://img.shields.io/github/license/EzraWard/Elementary.svg?style=for-the-badge" alt="MIT License"></a>
+  </p>
+
+  <p>
+    <a href="https://github.com/EzraWard/Elementary/releases">Releases</a>
     ·
-    <a href="https://github.com/EzraWard/Elementary/issues/new?labels=enhancement">Request Feature</a>
+    <a href="https://github.com/EzraWard/Elementary/issues/new?labels=bug">Report a bug</a>
+    ·
+    <a href="https://github.com/EzraWard/Elementary/issues/new?labels=enhancement">Request a feature</a>
   </p>
 </div>
 
-<!-- ABOUT THE PROJECT -->
-
-## About The Project
-
 <p align="center">
-  <img src="images/screenshot.png" alt="Screenshot" width="700">
+  <img src="store-assets/gallery/01-reader.png" alt="Elementary Bible reader showing Nehemiah chapter 2 in dark mode" width="900">
 </p>
 
-There is a lack of simple, well-designed, and easy-to-use Bible reading applications on Windows. This motivated me to begin building Elementary. The goal of this project is to continue to build out the application to include more features that improve the Bible reading experience.
+## About
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+Elementary is a distraction-free Bible reader for Windows. It opens directly to Scripture, works without an account, and keeps reading position, history, preferences, and streak progress on the device.
 
-### Built With
+Version 1.0.0 brings together offline translations, continuous reading across chapters and books, full-Bible search, reading history, reading streaks and badges, flexible typography, theme controls, and a refreshed Windows visual identity.
 
-* [Universal Windows Platform](https://learn.microsoft.com/en-us/windows/uwp/get-started/universal-application-platform-guide)
+## Features
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+- Read the NET Bible, King James Version, and American Standard Version offline.
+- Scroll continuously across chapter and book boundaries without losing your place.
+- Search the entire Bible or limit results to the Old or New Testament.
+- Return to any of the ten most recently visited chapters from reading history.
+- Build a private, on-device reading streak and unlock milestones from one day through one year.
+- Choose light, dark, or system themes; Segoe UI or Georgia; three text sizes; and optional verse numbers.
+- Keep the display awake during longer reading sessions when desired.
+- View Verse of the Day with locally rendered abstract artwork and an offline fallback.
+- Use the app without an account, advertisements, or sign-in.
 
-<!-- GETTING STARTED -->
+## Screenshots
 
-## Getting Started
+| Search | Reading history |
+| --- | --- |
+| <img src="store-assets/gallery/02-search.png" alt="Searching for love across the Bible" width="600"> | <img src="store-assets/gallery/03-reading-history.png" alt="Recently visited Bible chapters" width="600"> |
 
-To build and/or contribute to Elementary, you'll need:
+| Reading streak | Settings |
+| --- | --- |
+| <img src="store-assets/gallery/04-reading-streak.png" alt="Reading streak progress and achievement badges" width="600"> | <img src="store-assets/gallery/05-settings.png" alt="Elementary Bible reading and appearance settings" width="600"> |
 
-- Windows 10 v1809 or greater
+## Requirements
 
-- Visual Studio 2022 
+To run Elementary:
 
-- Windows 11 SDK version 10.0.26100.0.
-  
-  
+- Windows 10 version 1809 (build 17763) or later
+- An x86, x64, or ARM64 Windows device
 
-To run Elementary, you'll need:
+The Microsoft Store release is being prepared. Development and test builds are available by building the project from source.
 
-- Windows 10 v1809 or greater
+## Build from source
+
+You will need:
+
+- Visual Studio with the Universal Windows Platform development workload
+- Windows SDK 10.0.28000.0
+- .NET 10 SDK for the test and preview projects
+
+Clone the repository and open `src/Elementary.slnx` in Visual Studio. Build `Elementary.UWP` with Visual Studio MSBuild rather than `dotnet build`.
+
+From a Visual Studio Developer PowerShell prompt, an ARM64 Debug build can be run with:
+
+```powershell
+MSBuild src\Elementary.UWP\Elementary.UWP.csproj `
+  /t:Build `
+  /p:Configuration=Debug `
+  /p:Platform=ARM64 `
+  /p:AppxPackageValidationEnabled=false `
+  /p:AppxBundle=Never
+```
+
+Run the portable test suite with:
+
+```powershell
+dotnet test src\Elementary.Tests\Elementary.Tests.csproj
+```
+
+## Project structure
+
+- `src/Elementary.UWP` — Windows application, XAML UI, packaging manifest, and app assets
+- `src/Elementary.Core` — Bible loading, search, settings, history, and streak logic
+- `src/Elementary.VerseOfTheDay` — Verse retrieval, caching, and image composition
+- `src/Elementary.Tests` — portable unit tests
+- `src/Elementary.WidgetApp` — experimental future Windows Widget provider; not included in 1.0
+- `store-assets` — Microsoft Store listing copy, screenshots, icon, and promotional artwork
+
+## Privacy
+
+Elementary does not require an account. Reading position, history, settings, and streak data remain in the app's local Windows storage.
+
+The bundled Bible translations are available offline. Verse of the Day requests the daily verse from Bible.org over HTTPS and falls back gracefully when that service is unavailable. The artwork itself is generated locally; no third-party photography service is used.
+
+The working publication draft is available in [`store-assets/PRIVACY-POLICY-DRAFT.md`](store-assets/PRIVACY-POLICY-DRAFT.md). It must be finalized and published at a stable HTTPS URL before Store submission.
 
 ## Roadmap
 
-- [x] KJV, ASV translations
-- [x] Bible reading history
-- [x] Reading streak tracker
-- [ ] Infinite scrolling
-- [ ] ...and more!
+- [x] Offline NET, KJV, and ASV translations
+- [x] Full-Bible and testament-scoped search
+- [x] Reading history
+- [x] Reading streaks and badges
+- [x] Continuous reading across books and chapters
+- [x] Verse of the Day artwork without third-party photography
+- [ ] Windows Widget integration
+- [ ] Reading plans
+- [ ] Additional accessibility, localization, and performance improvements
 
-See the [open issues](https://github.com/EzraWard/Elementary/issues) for a full list of proposed features (and known issues).
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- CONTRIBUTING -->
+See the [open issues](https://github.com/EzraWard/Elementary/issues) for proposed features and known issues.
 
 ## Contributing
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+Contributions and thoughtful issue reports are welcome.
 
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement". 
+1. Fork the repository.
+2. Create a branch from `main`.
+3. Make and test your changes.
+4. Commit with a clear description.
+5. Open a pull request against `main`.
 
-Don't forget to give the project a star! Thanks again!
+Please do not commit generated packages, build output, logs, local databases, credentials, or Visual Studio state.
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+## Licensing and acknowledgements
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+Elementary's source code is available under the [MIT License](LICENSE.txt). Bundled Bible texts and third-party components remain subject to their respective copyright and license terms; the MIT license does not replace those terms.
 
-### Top contributors:
-
-<a href="https://github.com/EzraWard/Elementary/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=EzraWard/Elementary" alt="contrib.rocks image" />
-</a>
-
-<!-- LICENSE -->
-
-## License
-
-Distributed under the MIT License. See `LICENSE.txt` for more information.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- CONTACT -->
+Acknowledgements for the selected Bible translation are available from the app's Settings page.
 
 ## Contact
 
-Ezra Ward - ezra.ward@outlook.com
+Ezra Ward — [ezra.ward@outlook.com](mailto:ezra.ward@outlook.com)
 
-Project Link: [https://github.com/EzraWard/Elementary](https://github.com/EzraWard/Elementary)
+Project: [github.com/EzraWard/Elementary](https://github.com/EzraWard/Elementary)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- ACKNOWLEDGMENTS -->
-
-<!-- ## Acknowledgments
-
-* []()
-* []()
-* []() 
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p> -->
-
-<!-- MARKDOWN LINKS & IMAGES -->
-
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-
-[contributors-shield]: https://img.shields.io/github/contributors/EzraWard/Elementary.svg?style=for-the-badge
-
-[contributors-url]: https://github.com/EzraWard/Elementary/graphs/contributors
-
-[forks-shield]: https://img.shields.io/github/forks/EzraWard/Elementary.svg?style=for-the-badge
-
-[forks-url]: https://github.com/EzraWard/Elementary/network/members
-
-[stars-shield]: https://img.shields.io/github/stars/EzraWard/Elementary.svg?style=for-the-badge
-
-[stars-url]: https://github.com/EzraWard/Elementary/stargazers
-
-[issues-shield]: https://img.shields.io/github/issues/EzraWard/Elementary.svg?style=for-the-badge
-
-[issues-url]: https://github.com/EzraWard/Elementary/issues
-
-[license-shield]: https://img.shields.io/github/license/EzraWard/Elementary.svg?style=for-the-badge
-
-[license-url]: https://github.com/EzraWard/Elementary/blob/master/LICENSE.txt
-
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-
-[linkedin-url]: https://www.linkedin.com/in/ezra-ward-466a5038
