@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
     <LangVersion>8.0</LangVersion>
     <Nullable>enable</Nullable>
     <Platforms>AnyCPU</Platforms>
@@ -13,12 +13,24 @@
     <Compile Remove="ApiKeys.Template.cs" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
     <PackageReference Include="SkiaSharp" Version="4.151.2" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="4.151.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <!-- 2.88.9 is the latest release with matching UWP native assets. -->
+    <PackageReference Include="SkiaSharp" Version="2.88.9" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.9">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="System.Text.Json" Version="10.0.11" />
   </ItemGroup>
 

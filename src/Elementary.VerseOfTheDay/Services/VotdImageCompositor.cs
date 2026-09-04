@@ -94,12 +94,22 @@ namespace Elementary.VerseOfTheDay.Services
             for (var i = 0; i < 3; i++)
             {
                 var startY = NextFloat(random, -0.1f, 1.1f) * height;
+#if NET10_0_OR_GREATER
+                using var pathBuilder = new SKPathBuilder();
+                pathBuilder.MoveTo(-width * 0.15f, startY);
+                pathBuilder.CubicTo(
+                    width * 0.25f, NextFloat(random, -0.2f, 1.2f) * height,
+                    width * 0.65f, NextFloat(random, -0.2f, 1.2f) * height,
+                    width * 1.15f, NextFloat(random, -0.1f, 1.1f) * height);
+                using var path = pathBuilder.Detach();
+#else
                 using var path = new SKPath();
                 path.MoveTo(-width * 0.15f, startY);
                 path.CubicTo(
                     width * 0.25f, NextFloat(random, -0.2f, 1.2f) * height,
                     width * 0.65f, NextFloat(random, -0.2f, 1.2f) * height,
                     width * 1.15f, NextFloat(random, -0.1f, 1.1f) * height);
+#endif
 
                 using var ribbonPaint = new SKPaint
                 {
@@ -181,21 +191,17 @@ namespace Elementary.VerseOfTheDay.Services
             using var textPaint = new SKPaint
             {
                 Color = new SKColor(248, 244, 235),
-                TextSize = fontSize,
-                IsAntialias = true,
-                Typeface = SKTypeface.Default,
-                FilterQuality = SKFilterQuality.High
+                IsAntialias = true
             };
 
             using var shadowPaint = new SKPaint
             {
                 Color = new SKColor(0, 0, 0, 115),
-                TextSize = fontSize,
-                IsAntialias = true,
-                Typeface = SKTypeface.Default
+                IsAntialias = true
             };
+            using var font = new SKFont(SKTypeface.Default, fontSize);
 
-            var lines = WrapText(verse.VerseText, textPaint, textAreaWidth);
+            var lines = WrapText(verse.VerseText, font, textPaint, textAreaWidth);
             float lineHeight = fontSize * 1.35f;
             float totalTextHeight = lines.Count * lineHeight;
 
@@ -206,8 +212,8 @@ namespace Elementary.VerseOfTheDay.Services
             foreach (var line in lines)
             {
                 float shadowOffset = Math.Max(0.75f, fontSize * 0.025f);
-                canvas.DrawText(line, padding + shadowOffset, textStartY + shadowOffset, shadowPaint);
-                canvas.DrawText(line, padding, textStartY, textPaint);
+                DrawText(canvas, line, padding + shadowOffset, textStartY + shadowOffset, font, shadowPaint);
+                DrawText(canvas, line, padding, textStartY, font, textPaint);
                 textStartY += lineHeight;
             }
         }
@@ -258,13 +264,27 @@ namespace Elementary.VerseOfTheDay.Services
             using var refPaint = new SKPaint
             {
                 Color = new SKColor(238, 232, 220, 210),
-                TextSize = refFontSize,
-                IsAntialias = true,
-                Typeface = SKTypeface.Default
+                IsAntialias = true
             };
+            using var refFont = new SKFont(SKTypeface.Default, refFontSize);
 
             float y = height - padding;
-            canvas.DrawText(verse.Reference, padding, y, refPaint);
+            DrawText(canvas, verse.Reference, padding, y, refFont, refPaint);
+        }
+
+        private static void DrawText(
+            SKCanvas canvas,
+            string text,
+            float x,
+            float y,
+            SKFont font,
+            SKPaint paint)
+        {
+#if NET10_0_OR_GREATER
+            canvas.DrawText(text, x, y, SKTextAlign.Left, font, paint);
+#else
+            canvas.DrawText(text, x, y, font, paint);
+#endif
         }
 
         internal static float CalculateFontSize(string text, float textAreaWidth, float textAreaHeight, int imageWidth)
@@ -288,16 +308,17 @@ namespace Elementary.VerseOfTheDay.Services
 
             baseFontSize = Math.Max(minFontSize, Math.Min(baseFontSize, maxFontSize));
 
-            using var tempPaint = new SKPaint { TextSize = baseFontSize };
-            var lines = WrapText(text, tempPaint, textAreaWidth);
+            using var tempPaint = new SKPaint();
+            using var tempFont = new SKFont(SKTypeface.Default, baseFontSize);
+            var lines = WrapText(text, tempFont, tempPaint, textAreaWidth);
             float lineHeight = baseFontSize * 1.35f;
             float totalH = lines.Count * lineHeight;
 
-            while ((totalH > textAreaHeight || HasLineExceedingWidth(lines, tempPaint, textAreaWidth)) && baseFontSize > minFontSize)
+            while ((totalH > textAreaHeight || HasLineExceedingWidth(lines, tempFont, tempPaint, textAreaWidth)) && baseFontSize > minFontSize)
             {
                 baseFontSize -= 1f;
-                tempPaint.TextSize = baseFontSize;
-                lines = WrapText(text, tempPaint, textAreaWidth);
+                tempFont.Size = baseFontSize;
+                lines = WrapText(text, tempFont, tempPaint, textAreaWidth);
                 lineHeight = baseFontSize * 1.35f;
                 totalH = lines.Count * lineHeight;
             }
@@ -305,11 +326,15 @@ namespace Elementary.VerseOfTheDay.Services
             return baseFontSize;
         }
 
-        private static bool HasLineExceedingWidth(IReadOnlyList<string> lines, SKPaint paint, float maxWidth)
+        private static bool HasLineExceedingWidth(
+            IReadOnlyList<string> lines,
+            SKFont font,
+            SKPaint paint,
+            float maxWidth)
         {
             foreach (var line in lines)
             {
-                if (paint.MeasureText(line) > maxWidth)
+                if (MeasureText(line, font, paint) > maxWidth)
                 {
                     return true;
                 }
@@ -318,7 +343,7 @@ namespace Elementary.VerseOfTheDay.Services
             return false;
         }
 
-        private static List<string> WrapText(string text, SKPaint paint, float maxWidth)
+        private static List<string> WrapText(string text, SKFont font, SKPaint paint, float maxWidth)
         {
             var words = text.Split(' ');
             var lines = new List<string>();
@@ -327,7 +352,7 @@ namespace Elementary.VerseOfTheDay.Services
             foreach (var word in words)
             {
                 var test = current.Length > 0 ? $"{current} {word}" : word;
-                if (paint.MeasureText(test) > maxWidth && current.Length > 0)
+                if (MeasureText(test, font, paint) > maxWidth && current.Length > 0)
                 {
                     lines.Add(current.ToString());
                     current.Clear();
@@ -344,6 +369,18 @@ namespace Elementary.VerseOfTheDay.Services
                 lines.Add(current.ToString());
 
             return lines;
+        }
+
+        private static float MeasureText(string text, SKFont font, SKPaint paint)
+        {
+#if NET10_0_OR_GREATER
+            return font.MeasureText(text, paint);
+#else
+            var glyphCount = font.CountGlyphs(text);
+            var glyphs = new ushort[glyphCount];
+            font.GetGlyphs(text, glyphs);
+            return font.MeasureText(new ReadOnlySpan<ushort>(glyphs, 0, glyphCount), paint);
+#endif
         }
     }
 }

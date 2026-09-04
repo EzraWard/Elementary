@@ -7,14 +7,14 @@
   IgnorableNamespaces="uap mp">
 
   <Identity
-    Name="21366BowTieWorkshop.ElementaryBibleDev"
+    Name="21366BowTieWorkshop.ElementaryBible"
     Publisher="CN=16499A74-7239-425D-8D4D-A75684AF24BE"
     Version="1.0.0.0" />
 
-  <mp:PhoneIdentity PhoneProductId="2667bc56-bc11-4b7e-93bd-249407dd3231" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+  <mp:PhoneIdentity PhoneProductId="0fb78b33-05da-47fc-837a-442b42e59bd9" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>Elementary Dev</DisplayName>
+    <DisplayName>Elementary Bible</DisplayName>
     <PublisherDisplayName>Grant Street Design</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -32,7 +32,7 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="Elementary.App">
       <uap:VisualElements
-        DisplayName="Elementary Dev"
+        DisplayName="Elementary Bible"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png"
         Description="Elementary Dev"

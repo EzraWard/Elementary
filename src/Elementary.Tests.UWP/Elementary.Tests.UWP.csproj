@@ -125,6 +125,8 @@
     <PackageReference Include="MSTest.TestFramework">
       <Version>4.4.0</Version>
     </PackageReference>
+    <!-- TestPlatform.Universal supplies these runtime assemblies to the AppX payload. -->
+    <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="18.9.0" ExcludeAssets="runtime" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Elementary.Core\Elementary.Core.csproj">

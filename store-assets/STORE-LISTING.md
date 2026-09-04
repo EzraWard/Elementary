@@ -63,7 +63,7 @@ Leave this field blank for the first Store submission. For the first update afte
 
 ## Screenshot order and captions
 
-All screenshots use unmodified captures of the running app, centered on a plain neutral wallpaper background at 1600×1200. The taskbar and desktop clutter are excluded, and the app UI contains no added logos or marketing overlays.
+All screenshots use unmodified captures of the running app, centered on the matching blue hero artwork at 1600×1200. The taskbar and desktop clutter are excluded, and the app UI contains no added logos or marketing overlays.
 
 1. `gallery/01-reader.png`
    Read offline in a focused, distraction-free view designed for comfortable time in Scripture.

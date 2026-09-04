@@ -1,5 +1,6 @@
 param(
-    [string]$OutputDirectory = (Join-Path $PSScriptRoot 'gallery')
+    [string]$OutputDirectory = (Join-Path $PSScriptRoot 'gallery'),
+    [string]$BackdropPath = (Join-Path $PSScriptRoot 'hero\elementary-super-hero-1920x1080.png')
 )
 
 Set-StrictMode -Version Latest
@@ -105,7 +106,7 @@ function Invoke-NamedElement($Root, [string]$Name) {
 function Save-StoreCapture(
     [IntPtr]$WindowHandle,
     [string]$Path,
-    [System.Drawing.Color]$WallpaperColor
+    [string]$BackgroundImagePath
 ) {
     $rect = New-Object ElementaryStoreCaptureNative+RECT
     if (-not [ElementaryStoreCaptureNative]::GetWindowRect($WindowHandle, [ref]$rect)) {
@@ -132,17 +133,56 @@ function Save-StoreCapture(
 
     $canvas = New-Object System.Drawing.Bitmap(1600, 1200)
     $graphics = [System.Drawing.Graphics]::FromImage($canvas)
+    $backgroundBitmap = [System.Drawing.Bitmap]::new($BackgroundImagePath)
 
     try {
-        $graphics.Clear($WallpaperColor)
+        # The hero source includes partial alpha. Flatten it over the darkest
+        # navy from the artwork so every Store screenshot is fully opaque.
+        $graphics.Clear([System.Drawing.Color]::FromArgb(255, 0, 18, 48))
         $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
         $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
         $graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
 
-        # A subtle shadow separates the real app window from the plain wallpaper.
-        $shadowBrush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(42, 0, 0, 0))
+        # Center-crop the 16:9 hero to fill the 4:3 Store canvas without
+        # distorting it. The app window remains a direct, unmodified capture.
+        $targetAspect = 1600.0 / 1200.0
+        $sourceAspect = $backgroundBitmap.Width / $backgroundBitmap.Height
+        if ($sourceAspect -gt $targetAspect) {
+            $cropHeight = $backgroundBitmap.Height
+            $cropWidth = [int][Math]::Round($cropHeight * $targetAspect)
+            $cropX = [int][Math]::Round(($backgroundBitmap.Width - $cropWidth) / 2.0)
+            $cropY = 0
+        }
+        else {
+            $cropWidth = $backgroundBitmap.Width
+            $cropHeight = [int][Math]::Round($cropWidth / $targetAspect)
+            $cropX = 0
+            $cropY = [int][Math]::Round(($backgroundBitmap.Height - $cropHeight) / 2.0)
+        }
+
+        $graphics.DrawImage(
+            $backgroundBitmap,
+            (New-Object System.Drawing.Rectangle(0, 0, 1600, 1200)),
+            $cropX,
+            $cropY,
+            $cropWidth,
+            $cropHeight,
+            [System.Drawing.GraphicsUnit]::Pixel)
+
+        # Slightly subdue the backdrop so the captured UI remains dominant.
+        $shadeBrush = New-Object System.Drawing.SolidBrush(
+            [System.Drawing.Color]::FromArgb(28, 0, 0, 0))
         try {
-            $graphics.FillRectangle($shadowBrush, 66, 117, 1480, 980)
+            $graphics.FillRectangle($shadeBrush, 0, 0, 1600, 1200)
+        }
+        finally {
+            $shadeBrush.Dispose()
+        }
+
+        # A subtle shadow separates the real app window from the hero backdrop.
+        $shadowBrush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(78, 0, 0, 0))
+        try {
+            $graphics.FillRectangle($shadowBrush, 68, 120, 1480, 980)
         }
         finally {
             $shadowBrush.Dispose()
@@ -165,6 +205,7 @@ function Save-StoreCapture(
     finally {
         $graphics.Dispose()
         $canvas.Dispose()
+        $backgroundBitmap.Dispose()
         $windowBitmap.Dispose()
     }
 }
@@ -194,13 +235,15 @@ $windowY = $workingArea.Top + [int](($workingArea.Height - $captureWindowHeight)
 Start-Sleep -Seconds 2
 
 $root = Get-AutomationRoot $handle
-$wallpaper = [System.Drawing.Color]::FromArgb(232, 237, 240)
+if (-not (Test-Path -LiteralPath $BackdropPath -PathType Leaf)) {
+    throw "The Store screenshot backdrop was not found: $BackdropPath"
+}
 
 # Reset navigation to a known state so a previously open flyout cannot leak into
 # the first frame when the script is re-run during review.
 Invoke-NamedElement $root 'Settings'
 Invoke-NamedElement $root 'Bible'
-Save-StoreCapture $handle (Join-Path $OutputDirectory '01-reader.png') $wallpaper
+Save-StoreCapture $handle (Join-Path $OutputDirectory '01-reader.png') $BackdropPath
 
 Invoke-NamedElement $root 'Search'
 $root = Get-AutomationRoot $handle
@@ -222,18 +265,18 @@ if ($searchBox) {
     } while (-not $firstSearchResult -and [DateTime]::UtcNow -lt $searchDeadline)
     Start-Sleep -Milliseconds 800
 }
-Save-StoreCapture $handle (Join-Path $OutputDirectory '02-search.png') $wallpaper
+Save-StoreCapture $handle (Join-Path $OutputDirectory '02-search.png') $BackdropPath
 Invoke-NamedElement $root 'Search'
 
 Invoke-NamedElement $root 'History'
-Save-StoreCapture $handle (Join-Path $OutputDirectory '03-reading-history.png') $wallpaper
+Save-StoreCapture $handle (Join-Path $OutputDirectory '03-reading-history.png') $BackdropPath
 Invoke-NamedElement $root 'History'
 
 Invoke-NamedElement $root 'Streak'
-Save-StoreCapture $handle (Join-Path $OutputDirectory '04-reading-streak.png') $wallpaper
+Save-StoreCapture $handle (Join-Path $OutputDirectory '04-reading-streak.png') $BackdropPath
 
 Invoke-NamedElement $root 'Settings'
-Save-StoreCapture $handle (Join-Path $OutputDirectory '05-settings.png') $wallpaper
+Save-StoreCapture $handle (Join-Path $OutputDirectory '05-settings.png') $BackdropPath
 
 $captureNames = @(
     '01-reader.png',
