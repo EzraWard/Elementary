@@ -7,14 +7,23 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Threading.Tasks;
+using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.Effects;
+using Microsoft.Graphics.Canvas.UI.Composition;
 using Microsoft.Extensions.DependencyInjection;
 using Windows.ApplicationModel;
+using Windows.Graphics.DirectX;
+using Windows.Graphics.Display;
 using Windows.System.Display;
 using Windows.UI;
+using Windows.UI.Composition;
 using Windows.UI.Core;
+using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Hosting;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
@@ -22,9 +31,9 @@ namespace Elementary
 {
     public sealed partial class BiblePage : Page
     {
-        // End the preceding chapter inside the 90px top fade. The heading supplies another
+        // End the preceding chapter inside the 78px top fade. The heading supplies another
         // 24px top margin, placing "Chapter N" just below the overlay and fully readable.
-        private const double ChapterTopOffset = 72d;
+        private const double ChapterTopOffset = 78d;
         private const double ScrollAnchorY = ChapterTopOffset + 8d;
         private const int LayoutSettleDelayMs = 100;
         private const int NavigationSpinnerDelayMs = 120;
@@ -74,6 +83,28 @@ namespace Elementary
         private bool _isApplicationSuspended;
         private bool _areReadingLifecycleHandlersAttached;
         private bool _isDisplayRequestActive;
+        private readonly CompositionCapabilities _compositionCapabilities;
+        private readonly UISettings _uiSettings;
+        private CanvasDevice _topFadeCanvasDevice;
+        private CompositionGraphicsDevice _topFadeGraphicsDevice;
+        private ContainerVisual _topFadeBlurContainer;
+        private SpriteVisual _topFadeBlurVisual;
+        private SpriteVisual _topFadeStrongBlurVisual;
+        private SpriteVisual _topFadeTintVisual;
+        private CompositionDrawingSurface _topFadeBlurMaskSurface;
+        private CompositionDrawingSurface _topFadeStrongBlurMaskSurface;
+        private CompositionSurfaceBrush _topFadeBlurMask;
+        private CompositionSurfaceBrush _topFadeStrongBlurMask;
+        private Color _topFadeTintColor;
+        private byte _topFadeMaximumTintAlpha;
+        private int _topFadeMaskPixelWidth;
+        private int _topFadeMaskPixelHeight;
+        private bool _areTopFadeEffectHandlersAttached;
+
+        private static readonly float[] TopFadeOffsets = { 0.00f, 0.15f, 0.30f, 0.45f, 0.60f, 0.75f, 0.90f, 1.00f };
+        private static readonly byte[] TopFadeAlphas = { 255, 243, 205, 155, 105, 55, 18, 0 };
+        private static readonly float[] TopFadeStrongOffsets = { 0.00f, 0.12f, 0.25f, 0.38f, 0.50f, 1.00f };
+        private static readonly byte[] TopFadeStrongAlphas = { 255, 255, 210, 100, 0, 0 };
 
         public BiblePage()
         {
@@ -86,8 +117,12 @@ namespace Elementary
             Loaded += BiblePage_Loaded;
             Unloaded += BiblePage_Unloaded;
             ActualThemeChanged += BiblePage_ActualThemeChanged;
+            TopFadeBlurHost.SizeChanged += TopFadeBlurHost_SizeChanged;
             ChooserBorder.RenderTransform = _chooserTranslate;
             SetReaderVisualState(showContent: false, showSpinner: true);
+
+            _compositionCapabilities = CompositionCapabilities.GetForCurrentView();
+            _uiSettings = new UISettings();
 
             _readingSessionTimer = new DispatcherTimer
             {
@@ -151,6 +186,7 @@ namespace Elementary
         private async void BiblePage_Loaded(object sender, RoutedEventArgs e)
         {
             AttachReadingLifecycleHandlers();
+            AttachTopFadeEffectHandlers();
 
             // This page is navigation-cached. A theme can change while Settings is visible,
             // when ActualThemeChanged is not delivered to the detached page.
@@ -246,6 +282,7 @@ namespace Elementary
         private void BiblePage_Unloaded(object sender, RoutedEventArgs e)
         {
             DetachReadingLifecycleHandlers();
+            DetachTopFadeEffectHandlers();
             StopReadingSession("reader-unloaded");
         }
 
@@ -286,28 +323,264 @@ namespace Elementary
                 ? Color.FromArgb(255, 32, 32, 32)
                 : Color.FromArgb(255, 243, 243, 243);
 
-            // Gradient shadow layer
-            var gradient = new LinearGradientBrush
-            {
-                StartPoint = new Windows.Foundation.Point(0, 0),
-                EndPoint = new Windows.Foundation.Point(0, 1)
-            };
-            // Gradient shadow layer — lighter tint, extended fade to soften blur edge
-            gradient.GradientStops.Add(new GradientStop { Color = Color.FromArgb(160, baseColor.R, baseColor.G, baseColor.B), Offset = 0 });
-            gradient.GradientStops.Add(new GradientStop { Color = Color.FromArgb(120, baseColor.R, baseColor.G, baseColor.B), Offset = 0.55 });
-            gradient.GradientStops.Add(new GradientStop { Color = Color.FromArgb(60, baseColor.R, baseColor.G, baseColor.B), Offset = 0.75 });
-            gradient.GradientStops.Add(new GradientStop { Color = Color.FromArgb(20, baseColor.R, baseColor.G, baseColor.B), Offset = 0.9 });
-            gradient.GradientStops.Add(new GradientStop { Color = Color.FromArgb(0, baseColor.R, baseColor.G, baseColor.B), Offset = 1.0 });
-            TopFadeBorder.Background = gradient;
+            // The tint and both blur masks use the same spatially dithered surface.
+            // Dithering preserves the curve while preventing 8-bit alpha values from
+            // resolving into horizontal stripes on lower-bit-depth displays.
+            _topFadeTintColor = baseColor;
+            _topFadeMaximumTintAlpha = isDark ? (byte)112 : (byte)128;
+            TopFadeBorder.Background = null;
 
-            // Blur layer behind the gradient
-            BlurBorder.Background = new AcrylicBrush
+            RefreshTopFadeBlur();
+        }
+
+        private void AttachTopFadeEffectHandlers()
+        {
+            if (_areTopFadeEffectHandlersAttached) return;
+
+            _compositionCapabilities.Changed += CompositionCapabilities_Changed;
+            _uiSettings.AdvancedEffectsEnabledChanged += UISettings_AdvancedEffectsEnabledChanged;
+            _areTopFadeEffectHandlersAttached = true;
+        }
+
+        private void DetachTopFadeEffectHandlers()
+        {
+            if (!_areTopFadeEffectHandlersAttached) return;
+
+            _compositionCapabilities.Changed -= CompositionCapabilities_Changed;
+            _uiSettings.AdvancedEffectsEnabledChanged -= UISettings_AdvancedEffectsEnabledChanged;
+            _areTopFadeEffectHandlersAttached = false;
+        }
+
+        private async void CompositionCapabilities_Changed(CompositionCapabilities sender, object args)
+        {
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, RefreshTopFadeBlur);
+        }
+
+        private async void UISettings_AdvancedEffectsEnabledChanged(UISettings sender, object args)
+        {
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, RefreshTopFadeBlur);
+        }
+
+        private void TopFadeBlurHost_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            UpdateTopFadeBlurSize(e.NewSize);
+        }
+
+        private void RefreshTopFadeBlur()
+        {
+            EnsureTopFadeBlurVisual();
+            UpdateTopFadeBlurSize(new Windows.Foundation.Size(
+                TopFadeBlurHost.ActualWidth,
+                TopFadeBlurHost.ActualHeight));
+
+            if (!_uiSettings.AdvancedEffectsEnabled || !_compositionCapabilities.AreEffectsSupported())
             {
-                BackgroundSource = AcrylicBackgroundSource.Backdrop,
-                TintColor = baseColor,
-                TintOpacity = isDark ? 0.30 : 0.20,
-                FallbackColor = Color.FromArgb(isDark ? (byte)210 : (byte)225, baseColor.R, baseColor.G, baseColor.B)
+                _topFadeBlurVisual.Brush = null;
+                _topFadeStrongBlurVisual.Brush = null;
+                return;
+            }
+
+            var compositor = _topFadeBlurVisual.Compositor;
+            var blurEffect = new GaussianBlurEffect
+            {
+                Name = "TopFadeBlur",
+                BlurAmount = _compositionCapabilities.AreEffectsFast() ? 32f : 16f,
+                BorderMode = EffectBorderMode.Hard,
+                Optimization = _compositionCapabilities.AreEffectsFast()
+                    ? EffectOptimization.Balanced
+                    : EffectOptimization.Speed,
+                Source = new CompositionEffectSourceParameter("Backdrop")
             };
+
+            var effectBrush = compositor.CreateEffectFactory(blurEffect).CreateBrush();
+            effectBrush.SetSourceParameter("Backdrop", compositor.CreateBackdropBrush());
+
+            var maskedBlur = compositor.CreateMaskBrush();
+            maskedBlur.Source = effectBrush;
+            maskedBlur.Mask = _topFadeBlurMask;
+            _topFadeBlurVisual.Brush = maskedBlur;
+
+            // Add a second, stronger pass only near the picker. The original mask is
+            // left unchanged so the already-smooth transition at the content edge
+            // remains intact while the top resolves to a substantially heavier blur.
+            var strongBlurEffect = new GaussianBlurEffect
+            {
+                Name = "TopFadeStrongBlur",
+                BlurAmount = _compositionCapabilities.AreEffectsFast() ? 64f : 32f,
+                BorderMode = EffectBorderMode.Hard,
+                Optimization = _compositionCapabilities.AreEffectsFast()
+                    ? EffectOptimization.Balanced
+                    : EffectOptimization.Speed,
+                Source = new CompositionEffectSourceParameter("Backdrop")
+            };
+
+            var strongEffectBrush = compositor.CreateEffectFactory(strongBlurEffect).CreateBrush();
+            strongEffectBrush.SetSourceParameter("Backdrop", compositor.CreateBackdropBrush());
+
+            var maskedStrongBlur = compositor.CreateMaskBrush();
+            maskedStrongBlur.Source = strongEffectBrush;
+            maskedStrongBlur.Mask = _topFadeStrongBlurMask;
+            _topFadeStrongBlurVisual.Brush = maskedStrongBlur;
+        }
+
+        private void EnsureTopFadeBlurVisual()
+        {
+            if (_topFadeBlurVisual != null) return;
+
+            var hostVisual = ElementCompositionPreview.GetElementVisual(TopFadeBlurHost);
+            _topFadeBlurContainer = hostVisual.Compositor.CreateContainerVisual();
+            _topFadeBlurVisual = hostVisual.Compositor.CreateSpriteVisual();
+            _topFadeStrongBlurVisual = hostVisual.Compositor.CreateSpriteVisual();
+            _topFadeTintVisual = hostVisual.Compositor.CreateSpriteVisual();
+            _topFadeBlurContainer.Children.InsertAtBottom(_topFadeBlurVisual);
+            _topFadeBlurContainer.Children.InsertAtTop(_topFadeStrongBlurVisual);
+            _topFadeBlurContainer.Children.InsertAtTop(_topFadeTintVisual);
+            ElementCompositionPreview.SetElementChildVisual(TopFadeBlurHost, _topFadeBlurContainer);
+        }
+
+        private void UpdateTopFadeBlurSize(Windows.Foundation.Size size)
+        {
+            if (_topFadeBlurVisual == null || size.Width <= 0 || size.Height <= 0) return;
+
+            _topFadeBlurContainer.Size = new Vector2((float)size.Width, (float)size.Height);
+            _topFadeBlurVisual.Size = new Vector2((float)size.Width, (float)size.Height);
+            _topFadeStrongBlurVisual.Size = new Vector2((float)size.Width, (float)size.Height);
+            _topFadeTintVisual.Size = new Vector2((float)size.Width, (float)size.Height);
+            RenderTopFadeMasks(size);
+        }
+
+        private void RenderTopFadeMasks(Windows.Foundation.Size size)
+        {
+            var scale = DisplayInformation.GetForCurrentView().RawPixelsPerViewPixel;
+            var pixelWidth = Math.Max(1, (int)Math.Ceiling(size.Width * scale));
+            var pixelHeight = Math.Max(1, (int)Math.Ceiling(size.Height * scale));
+            var compositor = _topFadeBlurVisual.Compositor;
+
+            EnsureTopFadeMaskResources(compositor, pixelWidth, pixelHeight);
+
+            if (_topFadeMaskPixelWidth != pixelWidth || _topFadeMaskPixelHeight != pixelHeight)
+            {
+                CanvasComposition.Resize(_topFadeBlurMaskSurface, new Windows.Foundation.Size(pixelWidth, pixelHeight));
+                CanvasComposition.Resize(_topFadeStrongBlurMaskSurface, new Windows.Foundation.Size(pixelWidth, pixelHeight));
+                _topFadeMaskPixelWidth = pixelWidth;
+                _topFadeMaskPixelHeight = pixelHeight;
+            }
+
+            DrawDitheredMask(_topFadeBlurMaskSurface, pixelWidth, pixelHeight, TopFadeOffsets, TopFadeAlphas);
+            DrawDitheredMask(_topFadeStrongBlurMaskSurface, pixelWidth, pixelHeight, TopFadeStrongOffsets, TopFadeStrongAlphas);
+
+            var tintBrush = compositor.CreateMaskBrush();
+            tintBrush.Source = compositor.CreateColorBrush(Color.FromArgb(
+                _topFadeMaximumTintAlpha,
+                _topFadeTintColor.R,
+                _topFadeTintColor.G,
+                _topFadeTintColor.B));
+            tintBrush.Mask = _topFadeBlurMask;
+            _topFadeTintVisual.Brush = tintBrush;
+        }
+
+        private void EnsureTopFadeMaskResources(Compositor compositor, int pixelWidth, int pixelHeight)
+        {
+            if (_topFadeGraphicsDevice == null)
+            {
+                _topFadeCanvasDevice = CanvasDevice.GetSharedDevice();
+                _topFadeGraphicsDevice = CanvasComposition.CreateCompositionGraphicsDevice(compositor, _topFadeCanvasDevice);
+            }
+
+            if (_topFadeBlurMaskSurface != null) return;
+
+            var surfaceSize = new Windows.Foundation.Size(pixelWidth, pixelHeight);
+            _topFadeBlurMaskSurface = _topFadeGraphicsDevice.CreateDrawingSurface(
+                surfaceSize,
+                DirectXPixelFormat.B8G8R8A8UIntNormalized,
+                DirectXAlphaMode.Premultiplied);
+            _topFadeStrongBlurMaskSurface = _topFadeGraphicsDevice.CreateDrawingSurface(
+                surfaceSize,
+                DirectXPixelFormat.B8G8R8A8UIntNormalized,
+                DirectXAlphaMode.Premultiplied);
+
+            _topFadeBlurMask = compositor.CreateSurfaceBrush(_topFadeBlurMaskSurface);
+            _topFadeStrongBlurMask = compositor.CreateSurfaceBrush(_topFadeStrongBlurMaskSurface);
+            _topFadeBlurMask.Stretch = CompositionStretch.Fill;
+            _topFadeStrongBlurMask.Stretch = CompositionStretch.Fill;
+            _topFadeBlurMask.BitmapInterpolationMode = CompositionBitmapInterpolationMode.NearestNeighbor;
+            _topFadeStrongBlurMask.BitmapInterpolationMode = CompositionBitmapInterpolationMode.NearestNeighbor;
+
+            _topFadeMaskPixelWidth = pixelWidth;
+            _topFadeMaskPixelHeight = pixelHeight;
+        }
+
+        private void DrawDitheredMask(
+            CompositionDrawingSurface surface,
+            int width,
+            int height,
+            float[] offsets,
+            byte[] alphas)
+        {
+            var pixels = new byte[width * height * 4];
+            for (var y = 0; y < height; y++)
+            {
+                var position = height > 1 ? (float)y / (height - 1) : 0f;
+                var desiredAlpha = SampleTopFadeAlpha(position, offsets, alphas);
+                var lowerAlpha = (byte)Math.Floor(desiredAlpha);
+                var alphaFraction = desiredAlpha - lowerAlpha;
+
+                for (var x = 0; x < width; x++)
+                {
+                    var alpha = lowerAlpha;
+                    if (alpha < byte.MaxValue && GetDitherThreshold(x, y) < alphaFraction)
+                    {
+                        alpha++;
+                    }
+
+                    var index = ((y * width) + x) * 4;
+                    pixels[index] = alpha;
+                    pixels[index + 1] = alpha;
+                    pixels[index + 2] = alpha;
+                    pixels[index + 3] = alpha;
+                }
+            }
+
+            using (var bitmap = CanvasBitmap.CreateFromBytes(
+                _topFadeCanvasDevice,
+                pixels,
+                width,
+                height,
+                DirectXPixelFormat.B8G8R8A8UIntNormalized,
+                96f,
+                CanvasAlphaMode.Premultiplied))
+            using (var drawingSession = CanvasComposition.CreateDrawingSession(surface))
+            {
+                drawingSession.Clear(Colors.Transparent);
+                drawingSession.DrawImage(bitmap);
+            }
+        }
+
+        private static float SampleTopFadeAlpha(float position, float[] offsets, byte[] alphas)
+        {
+            for (var index = 1; index < offsets.Length; index++)
+            {
+                if (position > offsets[index]) continue;
+
+                var segmentLength = offsets[index] - offsets[index - 1];
+                var progress = segmentLength > 0
+                    ? (position - offsets[index - 1]) / segmentLength
+                    : 0;
+                return alphas[index - 1] + ((alphas[index] - alphas[index - 1]) * progress);
+            }
+
+            return alphas[alphas.Length - 1];
+        }
+
+        private static float GetDitherThreshold(int x, int y)
+        {
+            unchecked
+            {
+                var value = ((uint)x * 374761393u) + ((uint)y * 668265263u);
+                value = (value ^ (value >> 13)) * 1274126177u;
+                value ^= value >> 16;
+                return (value & 0xffffu) / 65536f;
+            }
         }
 
         private void DisplayLineContainer_Loaded(object sender, RoutedEventArgs e)
