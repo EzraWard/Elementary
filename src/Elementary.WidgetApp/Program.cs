@@ -19,7 +19,7 @@ namespace Elementary.WidgetApp
             {
                 using var lifetime = new WidgetServerLifetime(TimeSpan.FromSeconds(10));
                 var httpClient = new HttpClient();
-                httpClient.DefaultRequestHeaders.Add("User-Agent", "Elementary-WidgetApp/1.0");
+                httpClient.DefaultRequestHeaders.Add("User-Agent", "Elementary-WidgetApp/1.0.1");
 
                 var cache = new VotdCacheService();
                 var storage = new WinAppSdkVotdStorageService();

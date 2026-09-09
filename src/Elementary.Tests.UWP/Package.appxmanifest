@@ -7,7 +7,7 @@
 
   <Identity Name="7208e7df-b58e-4bc9-bdf5-27daad386ef5"
             Publisher="CN=EzraW"
-            Version="1.0.0.0" />
+            Version="1.0.1.0" />
 
   <mp:PhoneIdentity PhoneProductId="7208e7df-b58e-4bc9-bdf5-27daad386ef5" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 

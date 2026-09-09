@@ -9,7 +9,7 @@
   <Identity
     Name="21366BowTieWorkshop.ElementaryBible"
     Publisher="CN=16499A74-7239-425D-8D4D-A75684AF24BE"
-    Version="1.0.0.0" />
+    Version="1.0.1.0" />
 
   <mp:PhoneIdentity PhoneProductId="0fb78b33-05da-47fc-837a-442b42e59bd9" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
@@ -32,12 +32,12 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="Elementary.App">
       <uap:VisualElements
-        DisplayName="Elementary Bible"
+        DisplayName="Elementary"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png"
-        Description="Elementary Dev"
+        Description="Elementary is a simple and clean Bible application for Microsoft Windows."
         BackgroundColor="transparent">
-        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" Square71x71Logo="Assets\SmallTile.png" Square310x310Logo="Assets\LargeTile.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" Square71x71Logo="Assets\SmallTile.png" Square310x310Logo="Assets\LargeTile.png" ShortName="Elementary">
           <uap:ShowNameOnTiles>
             <uap:ShowOn Tile="square150x150Logo"/>
             <uap:ShowOn Tile="wide310x150Logo"/>

@@ -1,6 +1,8 @@
 param(
     [string]$OutputDirectory = (Join-Path $PSScriptRoot 'gallery'),
-    [string]$BackdropPath = (Join-Path $PSScriptRoot 'hero\elementary-super-hero-1920x1080.png')
+    [string]$BackdropPath = (Join-Path $PSScriptRoot 'hero\elementary-super-hero-1920x1080.png'),
+    [int]$CanvasWidth = 1920,
+    [int]$CanvasHeight = 1080
 )
 
 Set-StrictMode -Version Latest
@@ -16,8 +18,20 @@ using System.Runtime.InteropServices;
 
 public static class ElementaryStoreCaptureNative
 {
+    public const int DWMWA_EXTENDED_FRAME_BOUNDS = 9;
+
     [DllImport("user32.dll")]
     public static extern bool GetWindowRect(IntPtr hWnd, out RECT rect);
+
+    [DllImport("user32.dll")]
+    public static extern bool PrintWindow(IntPtr hWnd, IntPtr deviceContext, uint flags);
+
+    [DllImport("dwmapi.dll")]
+    public static extern int DwmGetWindowAttribute(
+        IntPtr hWnd,
+        int attribute,
+        out RECT value,
+        int valueSize);
 
     [DllImport("user32.dll")]
     public static extern bool SetForegroundWindow(IntPtr hWnd);
@@ -48,6 +62,46 @@ public static class ElementaryStoreCaptureNative
     }
 }
 '@
+
+function Get-VisibleWindowRect([IntPtr]$WindowHandle) {
+    $rect = New-Object ElementaryStoreCaptureNative+RECT
+    $result = [ElementaryStoreCaptureNative]::DwmGetWindowAttribute(
+        $WindowHandle,
+        [ElementaryStoreCaptureNative]::DWMWA_EXTENDED_FRAME_BOUNDS,
+        [ref]$rect,
+        [Runtime.InteropServices.Marshal]::SizeOf($rect))
+
+    if ($result -ne 0) {
+        if (-not [ElementaryStoreCaptureNative]::GetWindowRect($WindowHandle, [ref]$rect)) {
+            throw 'Could not read the Elementary window bounds.'
+        }
+    }
+
+    return $rect
+}
+
+function New-RoundedRectanglePath(
+    [System.Drawing.Rectangle]$Rectangle,
+    [int]$Radius
+) {
+    $path = New-Object System.Drawing.Drawing2D.GraphicsPath
+    $diameter = $Radius * 2
+    $arc = New-Object System.Drawing.Rectangle(
+        $Rectangle.X,
+        $Rectangle.Y,
+        $diameter,
+        $diameter)
+
+    $path.AddArc($arc, 180, 90)
+    $arc.X = $Rectangle.Right - $diameter
+    $path.AddArc($arc, 270, 90)
+    $arc.Y = $Rectangle.Bottom - $diameter
+    $path.AddArc($arc, 0, 90)
+    $arc.X = $Rectangle.Left
+    $path.AddArc($arc, 90, 90)
+    $path.CloseFigure()
+    return $path
+}
 
 function Get-AppFrame {
     $deadline = [DateTime]::UtcNow.AddSeconds(15)
@@ -108,30 +162,52 @@ function Save-StoreCapture(
     [string]$Path,
     [string]$BackgroundImagePath
 ) {
-    $rect = New-Object ElementaryStoreCaptureNative+RECT
-    if (-not [ElementaryStoreCaptureNative]::GetWindowRect($WindowHandle, [ref]$rect)) {
+    $visibleRect = Get-VisibleWindowRect $WindowHandle
+    $rawRect = New-Object ElementaryStoreCaptureNative+RECT
+    if (-not [ElementaryStoreCaptureNative]::GetWindowRect($WindowHandle, [ref]$rawRect)) {
         throw 'Could not read the Elementary window bounds.'
     }
 
-    $windowWidth = $rect.Right - $rect.Left
-    $windowHeight = $rect.Bottom - $rect.Top
-    $windowBitmap = New-Object System.Drawing.Bitmap($windowWidth, $windowHeight)
-    $windowGraphics = [System.Drawing.Graphics]::FromImage($windowBitmap)
+    $windowWidth = $visibleRect.Right - $visibleRect.Left
+    $windowHeight = $visibleRect.Bottom - $visibleRect.Top
+    $rawWidth = $rawRect.Right - $rawRect.Left
+    $rawHeight = $rawRect.Bottom - $rawRect.Top
+    $rawBitmap = New-Object System.Drawing.Bitmap($rawWidth, $rawHeight)
+    $rawGraphics = [System.Drawing.Graphics]::FromImage($rawBitmap)
+    $deviceContext = $rawGraphics.GetHdc()
 
     try {
-        $windowGraphics.CopyFromScreen(
-            $rect.Left,
-            $rect.Top,
-            0,
-            0,
-            (New-Object System.Drawing.Size($windowWidth, $windowHeight)),
-            [System.Drawing.CopyPixelOperation]::SourceCopy)
+        # PrintWindow renders the actual DWM frame even when the capture script
+        # runs without an interactive foreground desktop.
+        if (-not [ElementaryStoreCaptureNative]::PrintWindow($WindowHandle, $deviceContext, 2)) {
+            throw 'Could not render the Elementary window.'
+        }
+    }
+    finally {
+        $rawGraphics.ReleaseHdc($deviceContext)
+        $rawGraphics.Dispose()
+    }
+
+    $windowBitmap = New-Object System.Drawing.Bitmap($windowWidth, $windowHeight)
+    $windowGraphics = [System.Drawing.Graphics]::FromImage($windowBitmap)
+    try {
+        $sourceX = $visibleRect.Left - $rawRect.Left
+        $sourceY = $visibleRect.Top - $rawRect.Top
+        $windowGraphics.DrawImage(
+            $rawBitmap,
+            (New-Object System.Drawing.Rectangle(0, 0, $windowWidth, $windowHeight)),
+            $sourceX,
+            $sourceY,
+            $windowWidth,
+            $windowHeight,
+            [System.Drawing.GraphicsUnit]::Pixel)
     }
     finally {
         $windowGraphics.Dispose()
+        $rawBitmap.Dispose()
     }
 
-    $canvas = New-Object System.Drawing.Bitmap(1600, 1200)
+    $canvas = New-Object System.Drawing.Bitmap($CanvasWidth, $CanvasHeight)
     $graphics = [System.Drawing.Graphics]::FromImage($canvas)
     $backgroundBitmap = [System.Drawing.Bitmap]::new($BackgroundImagePath)
 
@@ -142,10 +218,11 @@ function Save-StoreCapture(
         $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
         $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
         $graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+        $graphics.CompositingQuality = [System.Drawing.Drawing2D.CompositingQuality]::HighQuality
 
-        # Center-crop the 16:9 hero to fill the 4:3 Store canvas without
-        # distorting it. The app window remains a direct, unmodified capture.
-        $targetAspect = 1600.0 / 1200.0
+        # Center-crop the hero only when a non-default canvas aspect ratio is
+        # requested. The default 1920x1080 canvas uses every source pixel.
+        $targetAspect = $CanvasWidth / [double]$CanvasHeight
         $sourceAspect = $backgroundBitmap.Width / $backgroundBitmap.Height
         if ($sourceAspect -gt $targetAspect) {
             $cropHeight = $backgroundBitmap.Height
@@ -162,7 +239,7 @@ function Save-StoreCapture(
 
         $graphics.DrawImage(
             $backgroundBitmap,
-            (New-Object System.Drawing.Rectangle(0, 0, 1600, 1200)),
+            (New-Object System.Drawing.Rectangle(0, 0, $CanvasWidth, $CanvasHeight)),
             $cropX,
             $cropY,
             $cropWidth,
@@ -173,32 +250,55 @@ function Save-StoreCapture(
         $shadeBrush = New-Object System.Drawing.SolidBrush(
             [System.Drawing.Color]::FromArgb(28, 0, 0, 0))
         try {
-            $graphics.FillRectangle($shadeBrush, 0, 0, 1600, 1200)
+            $graphics.FillRectangle($shadeBrush, 0, 0, $CanvasWidth, $CanvasHeight)
         }
         finally {
             $shadeBrush.Dispose()
         }
 
-        # A subtle shadow separates the real app window from the hero backdrop.
+        # Keep the captured window at its native size and center it on the Store
+        # canvas. DWM's extended frame bounds exclude the invisible resize border
+        # and drop shadow, so no source pixels need to be cropped or stretched.
+        if ($windowWidth -gt $CanvasWidth -or $windowHeight -gt $CanvasHeight) {
+            throw "The captured app window (${windowWidth}x${windowHeight}) does not fit the Store canvas (${CanvasWidth}x${CanvasHeight})."
+        }
+
+        $destinationX = [int][Math]::Round(($CanvasWidth - $windowWidth) / 2.0)
+        $destinationY = [int][Math]::Round(($CanvasHeight - $windowHeight) / 2.0)
+        $destinationRect = New-Object System.Drawing.Rectangle(
+            $destinationX,
+            $destinationY,
+            $windowWidth,
+            $windowHeight)
+
+        # A subtle rounded shadow separates the real app window from the hero.
+        $shadowRect = New-Object System.Drawing.Rectangle(
+            ($destinationRect.X + 8),
+            ($destinationRect.Y + 12),
+            $destinationRect.Width,
+            $destinationRect.Height)
+        $shadowPath = New-RoundedRectanglePath $shadowRect 12
         $shadowBrush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(78, 0, 0, 0))
         try {
-            $graphics.FillRectangle($shadowBrush, 68, 120, 1480, 980)
+            $graphics.FillPath($shadowBrush, $shadowPath)
         }
         finally {
             $shadowBrush.Dispose()
+            $shadowPath.Dispose()
         }
 
-        # Trim the transparent DWM shadow around the source window. Without this,
-        # pixels from the user's real desktop wallpaper can bleed into the art.
-        $sourceInset = 10
-        $graphics.DrawImage(
-            $windowBitmap,
-            (New-Object System.Drawing.Rectangle(60, 110, 1480, 980)),
-            $sourceInset,
-            $sourceInset,
-            ($windowWidth - (2 * $sourceInset)),
-            ($windowHeight - (2 * $sourceInset)),
-            [System.Drawing.GraphicsUnit]::Pixel)
+        # The pixels outside Windows 11's rounded DWM corners contain whatever
+        # was behind the live window. Clip them away so the hero shows through.
+        $windowPath = New-RoundedRectanglePath $destinationRect 10
+        $graphicsState = $graphics.Save()
+        try {
+            $graphics.SetClip($windowPath)
+            $graphics.DrawImageUnscaled($windowBitmap, $destinationX, $destinationY)
+        }
+        finally {
+            $graphics.Restore($graphicsState)
+            $windowPath.Dispose()
+        }
 
         $canvas.Save($Path, [System.Drawing.Imaging.ImageFormat]::Png)
     }
@@ -214,13 +314,13 @@ New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 
 $frame = Get-AppFrame
 $handle = $frame.MainWindowHandle
+$automationHandle = $handle
 
 # Center the live app on the primary display's usable area before every capture.
-# The 1500x1000 source leaves equal margins around the centered app in the
-# final 1600x1200 Store image after the transparent DWM shadow is trimmed.
+# DWM's exact visible bounds are then placed at native resolution on the canvas.
 $workingArea = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
 $captureWindowWidth = 1500
-$captureWindowHeight = 1000
+$captureWindowHeight = 900
 $windowX = $workingArea.Left + [int](($workingArea.Width - $captureWindowWidth) / 2)
 $windowY = $workingArea.Top + [int](($workingArea.Height - $captureWindowHeight) / 2)
 [ElementaryStoreCaptureNative]::SetWindowPos(
@@ -234,7 +334,7 @@ $windowY = $workingArea.Top + [int](($workingArea.Height - $captureWindowHeight)
 [ElementaryStoreCaptureNative]::SetForegroundWindow($handle) | Out-Null
 Start-Sleep -Seconds 2
 
-$root = Get-AutomationRoot $handle
+$root = Get-AutomationRoot $automationHandle
 if (-not (Test-Path -LiteralPath $BackdropPath -PathType Leaf)) {
     throw "The Store screenshot backdrop was not found: $BackdropPath"
 }
@@ -246,7 +346,7 @@ Invoke-NamedElement $root 'Bible'
 Save-StoreCapture $handle (Join-Path $OutputDirectory '01-reader.png') $BackdropPath
 
 Invoke-NamedElement $root 'Search'
-$root = Get-AutomationRoot $handle
+$root = Get-AutomationRoot $automationHandle
 $searchBox = $root.FindFirst(
     [System.Windows.Automation.TreeScope]::Descendants,
     (New-Object System.Windows.Automation.PropertyCondition(
@@ -260,7 +360,7 @@ if ($searchBox) {
     $searchDeadline = [DateTime]::UtcNow.AddSeconds(15)
     do {
         Start-Sleep -Milliseconds 500
-        $root = Get-AutomationRoot $handle
+        $root = Get-AutomationRoot $automationHandle
         $firstSearchResult = Find-NamedElement $root 'Genesis 22:2'
     } while (-not $firstSearchResult -and [DateTime]::UtcNow -lt $searchDeadline)
     Start-Sleep -Milliseconds 800

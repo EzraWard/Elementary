@@ -18,7 +18,7 @@ namespace Elementary.VerseOfTheDay.ConsolePreview
             Directory.CreateDirectory(outputDir);
 
             var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Add("User-Agent", "Elementary-ConsolePreview/1.0");
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "Elementary-ConsolePreview/1.0.1");
 
             var cache = new VotdCacheService();
             var verseFetch = new VerseFetchService(httpClient);

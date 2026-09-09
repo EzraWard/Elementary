@@ -2,17 +2,17 @@
 
 ## Ready-to-upload files
 
-- `gallery/01-reader.png` — 1600×1200
-- `gallery/02-search.png` — 1600×1200
-- `gallery/03-reading-history.png` — 1600×1200
-- `gallery/04-reading-streak.png` — 1600×1200
-- `gallery/05-settings.png` — 1600×1200
+- `gallery/01-reader.png` — 1920×1080
+- `gallery/02-search.png` — 1920×1080
+- `gallery/03-reading-history.png` — 1920×1080
+- `gallery/04-reading-streak.png` — 1920×1080
+- `gallery/05-settings.png` — 1920×1080
 - `icon/app-tile-300x300.png` — 300×300
 - `hero/elementary-super-hero-1920x1080.png` — 1920×1080
 
 The gallery images show direct captures of the running UWP app centered over the matching blue hero artwork. The app UI is unmodified; no marketing copy, extra logos, device frames, simulated UI, taskbar, or desktop clutter were added.
 
-Run `Capture-StoreScreenshots.ps1` while Elementary is running to reproduce the five gallery captures. The script centers the live app window in the primary display's working area, navigates the real app using Windows UI Automation, trims the transparent Windows shadow that can reveal the desktop, composites the capture over the hero artwork, and writes upload-ready 1600×1200 PNG files.
+Run `Capture-StoreScreenshots.ps1` while Elementary is running to reproduce the five gallery captures. The script centers the live app window in the primary display's working area, navigates the real app using Windows UI Automation, preserves the complete rounded frame, composites the capture over the hero artwork, and writes upload-ready 1920×1080 PNG files.
 
 The 300×300 tile is copied from the current UWP `Square150x150Logo.scale-200.png` asset and retains its transparent background.
 
