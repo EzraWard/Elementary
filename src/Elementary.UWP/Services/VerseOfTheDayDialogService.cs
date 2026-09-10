@@ -43,15 +43,6 @@ namespace Elementary.Services
                 Visibility = Visibility.Collapsed
             };
 
-            var loadingRing = new ProgressRing
-            {
-                IsActive = true,
-                Width = 48,
-                Height = 48,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-
             var failureText = new TextBlock
             {
                 Text = "Unable to load verse image.",
@@ -68,13 +59,11 @@ namespace Elementary.Services
                 MinHeight = 500
             };
             container.Children.Add(image);
-            container.Children.Add(loadingRing);
             container.Children.Add(failureText);
 
             dialog.Content = container;
 
-            // Fetch and display composited image without blocking the dialog opening
-            _ = LoadImageAsync(image, imageBrush, loadingRing, failureText);
+            _ = LoadImageAsync(image, imageBrush, failureText);
 
             await dialog.ShowAsync();
         }
@@ -82,7 +71,6 @@ namespace Elementary.Services
         private async Task LoadImageAsync(
             Border image,
             ImageBrush imageBrush,
-            ProgressRing loadingRing,
             TextBlock failureText)
         {
             try
@@ -97,26 +85,17 @@ namespace Elementary.Services
                     await bitmap.SetSourceAsync(ras);
 
                     imageBrush.ImageSource = bitmap;
-                    loadingRing.IsActive = false;
-                    loadingRing.Visibility = Visibility.Collapsed;
                     image.Visibility = Visibility.Visible;
                 }
                 else
                 {
-                    ShowFailure(loadingRing, failureText);
+                    failureText.Visibility = Visibility.Visible;
                 }
             }
             catch (Exception)
             {
-                ShowFailure(loadingRing, failureText);
+                failureText.Visibility = Visibility.Visible;
             }
-        }
-
-        private static void ShowFailure(ProgressRing loadingRing, TextBlock failureText)
-        {
-            loadingRing.IsActive = false;
-            loadingRing.Visibility = Visibility.Collapsed;
-            failureText.Visibility = Visibility.Visible;
         }
     }
 }
