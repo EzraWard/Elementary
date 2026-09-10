@@ -65,8 +65,8 @@ namespace Elementary
                 using var ms = new MemoryStream(result.ImageBytes);
                 using var ras = ms.AsRandomAccessStream();
                 await bitmap.SetSourceAsync(ras);
-                VerseImage.Source = bitmap;
-                VerseImage.Visibility = Visibility.Visible;
+                VerseImageBrush.ImageSource = bitmap;
+                VerseImageContainer.Visibility = Visibility.Visible;
             }
 
             Debug.WriteLine($"[VerseOfTheDayPage] Showing generated VOTD image. Bytes={result.ImageBytes?.Length ?? 0}.");
@@ -77,7 +77,7 @@ namespace Elementary
             LoadingRing.IsActive = true;
             LoadingRing.Visibility = Visibility.Visible;
             ErrorPanel.Visibility = Visibility.Collapsed;
-            VerseImage.Visibility = Visibility.Collapsed;
+            VerseImageContainer.Visibility = Visibility.Collapsed;
         }
 
         private void SetErrorState()
@@ -85,7 +85,7 @@ namespace Elementary
             LoadingRing.IsActive = false;
             LoadingRing.Visibility = Visibility.Collapsed;
             ErrorPanel.Visibility = Visibility.Visible;
-            VerseImage.Visibility = Visibility.Collapsed;
+            VerseImageContainer.Visibility = Visibility.Collapsed;
         }
 
 #if DEBUG

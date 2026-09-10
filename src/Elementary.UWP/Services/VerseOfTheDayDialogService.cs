@@ -29,11 +29,17 @@ namespace Elementary.Services
                 RequestedTheme = ((FrameworkElement)Window.Current.Content).RequestedTheme
             };
 
-            var image = new Image
+            var imageBrush = new ImageBrush
             {
-                Width = 500,
-                Height = 500,
-                Stretch = Stretch.Uniform,
+                Stretch = Stretch.Uniform
+            };
+
+            var image = new Border
+            {
+                Width = 490,
+                Height = 490,
+                CornerRadius = new CornerRadius(10),
+                Background = imageBrush,
                 Visibility = Visibility.Collapsed
             };
 
@@ -68,12 +74,16 @@ namespace Elementary.Services
             dialog.Content = container;
 
             // Fetch and display composited image without blocking the dialog opening
-            _ = LoadImageAsync(image, loadingRing, failureText);
+            _ = LoadImageAsync(image, imageBrush, loadingRing, failureText);
 
             await dialog.ShowAsync();
         }
 
-        private async Task LoadImageAsync(Image image, ProgressRing loadingRing, TextBlock failureText)
+        private async Task LoadImageAsync(
+            Border image,
+            ImageBrush imageBrush,
+            ProgressRing loadingRing,
+            TextBlock failureText)
         {
             try
             {
@@ -86,7 +96,7 @@ namespace Elementary.Services
                     using var ras = ms.AsRandomAccessStream();
                     await bitmap.SetSourceAsync(ras);
 
-                    image.Source = bitmap;
+                    imageBrush.ImageSource = bitmap;
                     loadingRing.IsActive = false;
                     loadingRing.Visibility = Visibility.Collapsed;
                     image.Visibility = Visibility.Visible;

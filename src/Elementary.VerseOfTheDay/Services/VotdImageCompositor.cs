@@ -183,8 +183,12 @@ namespace Elementary.VerseOfTheDay.Services
         {
             float padding = width * 0.06f;
             float textAreaWidth = width - padding * 2;
-            // Reserve bottom 20% for the reference
-            float textAreaHeight = height * 0.75f;
+            // Keep the complete rounded backdrop inside a safe content band. Previously
+            // the text was centered from y=0 and only line height was fitted, so the
+            // backdrop padding could extend above the canvas and lose its top corners.
+            float textAreaTop = height * 0.06f;
+            float textAreaBottom = height * 0.75f;
+            float textAreaHeight = textAreaBottom - textAreaTop;
 
             float fontSize = CalculateFontSize(verse.VerseText, textAreaWidth, textAreaHeight, width);
 
@@ -203,10 +207,14 @@ namespace Elementary.VerseOfTheDay.Services
 
             var lines = WrapText(verse.VerseText, font, textPaint, textAreaWidth);
             float lineHeight = fontSize * 1.35f;
-            float totalTextHeight = lines.Count * lineHeight;
 
-            // Centre the text block vertically in the upper 75% of the image
-            float textStartY = ((textAreaHeight - totalTextHeight) / 2f) + fontSize;
+            // Centre the complete backdrop, rather than only the text lines.
+            float textStartY = CalculateFirstTextBaseline(
+                textAreaTop,
+                textAreaHeight,
+                lines.Count,
+                fontSize,
+                lineHeight);
             DrawTextBackdrop(canvas, padding, textStartY, lines.Count, fontSize, lineHeight, textAreaWidth);
 
             foreach (var line in lines)
@@ -229,15 +237,13 @@ namespace Elementary.VerseOfTheDay.Services
         {
             if (lineCount <= 0) return;
 
-            float horizontalInset = fontSize * 0.35f;
-            float verticalInset = fontSize * 0.28f;
-            float top = firstBaseline - fontSize - verticalInset;
-            float bottom = firstBaseline + ((lineCount - 1) * lineHeight) + (fontSize * 0.35f) + verticalInset;
-            var rect = new SKRect(
-                x - horizontalInset,
-                top,
-                x + width + horizontalInset,
-                bottom);
+            var rect = CalculateTextBackdropBounds(
+                x,
+                firstBaseline,
+                lineCount,
+                fontSize,
+                lineHeight,
+                width);
             float radius = Math.Max(4f, fontSize * 0.18f);
 
             using var glowPaint = new SKPaint
@@ -259,7 +265,7 @@ namespace Elementary.VerseOfTheDay.Services
         private static void DrawReference(SKCanvas canvas, BibleVerseData verse, int width, int height)
         {
             float padding = width * 0.06f;
-            float refFontSize = Math.Max(8f, width * 0.035f);
+            float refFontSize = Math.Max(8f, width * 0.0425f);
 
             using var refPaint = new SKPaint
             {
@@ -268,8 +274,10 @@ namespace Elementary.VerseOfTheDay.Services
             };
             using var refFont = new SKFont(SKTypeface.Default, refFontSize);
 
+            float referenceWidth = MeasureText(verse.Reference, refFont, refPaint);
+            float x = (width - referenceWidth) / 2f;
             float y = height - padding;
-            DrawText(canvas, verse.Reference, padding, y, refFont, refPaint);
+            DrawText(canvas, verse.Reference, x, y, refFont, refPaint);
         }
 
         private static void DrawText(
@@ -312,7 +320,7 @@ namespace Elementary.VerseOfTheDay.Services
             using var tempFont = new SKFont(SKTypeface.Default, baseFontSize);
             var lines = WrapText(text, tempFont, tempPaint, textAreaWidth);
             float lineHeight = baseFontSize * 1.35f;
-            float totalH = lines.Count * lineHeight;
+            float totalH = CalculateTextBackdropHeight(lines.Count, baseFontSize, lineHeight);
 
             while ((totalH > textAreaHeight || HasLineExceedingWidth(lines, tempFont, tempPaint, textAreaWidth)) && baseFontSize > minFontSize)
             {
@@ -320,10 +328,51 @@ namespace Elementary.VerseOfTheDay.Services
                 tempFont.Size = baseFontSize;
                 lines = WrapText(text, tempFont, tempPaint, textAreaWidth);
                 lineHeight = baseFontSize * 1.35f;
-                totalH = lines.Count * lineHeight;
+                totalH = CalculateTextBackdropHeight(lines.Count, baseFontSize, lineHeight);
             }
 
             return baseFontSize;
+        }
+
+        internal static float CalculateFirstTextBaseline(
+            float textAreaTop,
+            float textAreaHeight,
+            int lineCount,
+            float fontSize,
+            float lineHeight)
+        {
+            float verticalInset = fontSize * 0.28f;
+            float backdropHeight = CalculateTextBackdropHeight(lineCount, fontSize, lineHeight);
+            float backdropTop = textAreaTop + Math.Max(0, (textAreaHeight - backdropHeight) / 2f);
+            return backdropTop + fontSize + verticalInset;
+        }
+
+        internal static float CalculateTextBackdropHeight(int lineCount, float fontSize, float lineHeight)
+        {
+            if (lineCount <= 0) return 0;
+
+            float verticalInset = fontSize * 0.28f;
+            return fontSize
+                   + ((lineCount - 1) * lineHeight)
+                   + (fontSize * 0.35f)
+                   + (verticalInset * 2f);
+        }
+
+        internal static SKRect CalculateTextBackdropBounds(
+            float x,
+            float firstBaseline,
+            int lineCount,
+            float fontSize,
+            float lineHeight,
+            float width)
+        {
+            float horizontalInset = fontSize * 0.35f;
+            float verticalInset = fontSize * 0.28f;
+            return new SKRect(
+                x - horizontalInset,
+                firstBaseline - fontSize - verticalInset,
+                x + width + horizontalInset,
+                firstBaseline + ((lineCount - 1) * lineHeight) + (fontSize * 0.35f) + verticalInset);
         }
 
         private static bool HasLineExceedingWidth(

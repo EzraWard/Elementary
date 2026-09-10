@@ -108,6 +108,33 @@ namespace Elementary.Tests.Services
         }
 
         [TestMethod]
+        public void TextBackdrop_ShouldStayInsideSafeContentBand()
+        {
+            const float safeTop = 48f;
+            const float contentHeight = 552f;
+            const float fontSize = 32f;
+            const float lineHeight = fontSize * 1.35f;
+            const int lineCount = 10;
+
+            var firstBaseline = VotdImageCompositor.CalculateFirstTextBaseline(
+                safeTop,
+                contentHeight,
+                lineCount,
+                fontSize,
+                lineHeight);
+            var bounds = VotdImageCompositor.CalculateTextBackdropBounds(
+                48f,
+                firstBaseline,
+                lineCount,
+                fontSize,
+                lineHeight,
+                704f);
+
+            Assert.IsTrue(bounds.Top >= safeTop);
+            Assert.IsTrue(bounds.Bottom <= safeTop + contentHeight);
+        }
+
+        [TestMethod]
         public void Compose_WithSameSeed_ShouldReturnIdenticalArtwork()
         {
             var compositor = new VotdImageCompositor();
