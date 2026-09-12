@@ -47,6 +47,23 @@ namespace Elementary.Tests.Services
         }
 
         [TestMethod]
+        public void HasCompletedDailyGoal_ShouldNotTreatYesterdayAsCompletedToday()
+        {
+            _storedProgress.ActiveDates.Add(DateTime.Today.AddDays(-1));
+
+            Assert.IsFalse(_readingStreakService.HasCompletedDailyGoal());
+            Assert.IsTrue(_readingStreakService.HasCompletedDailyGoal(DateTime.Today.AddDays(-1)));
+        }
+
+        [TestMethod]
+        public void HasCompletedDailyGoal_ShouldReturnTrueForToday()
+        {
+            _storedProgress.ActiveDates.Add(DateTime.Today);
+
+            Assert.IsTrue(_readingStreakService.HasCompletedDailyGoal());
+        }
+
+        [TestMethod]
         public void AddReadingTime_ShouldNotActivateStreakBeforeThreshold()
         {
             var today = new DateTime(2026, 5, 28);

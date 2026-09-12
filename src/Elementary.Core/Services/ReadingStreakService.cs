@@ -31,6 +31,12 @@ namespace Elementary.Core.Services
             return TimeSpan.FromSeconds(DailyStreakThresholdSeconds);
         }
 
+        public bool HasCompletedDailyGoal(DateTime? activityDate = null)
+        {
+            var date = (activityDate ?? DateTime.Today).Date;
+            return GetProgress().ActiveDates.Contains(date);
+        }
+
         public void AddReadingTime(TimeSpan readingTime, DateTime? activityDate = null)
         {
             var secondsToAdd = Math.Max(0, (int)Math.Floor(readingTime.TotalSeconds));

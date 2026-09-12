@@ -10,6 +10,7 @@ namespace Elementary.Core.Interfaces
 
         ReadingStreakProgress GetProgress();
         TimeSpan GetDailyThreshold();
+        bool HasCompletedDailyGoal(DateTime? activityDate = null);
         void AddReadingTime(TimeSpan readingTime, DateTime? activityDate = null);
         int GetCurrentStreak();
         int GetLongestStreak();

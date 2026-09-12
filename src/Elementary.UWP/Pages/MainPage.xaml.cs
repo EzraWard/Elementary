@@ -200,8 +200,8 @@ namespace Elementary
 
         private void UpdateStreakNavigationIcon()
         {
-            var hasActiveStreak = _readingStreakService.GetCurrentStreak() > 0;
-            StreakNavigationIcon.FontFamily = hasActiveStreak
+            var hasCompletedTodaysGoal = _readingStreakService.HasCompletedDailyGoal();
+            StreakNavigationIcon.FontFamily = hasCompletedTodaysGoal
                 ? new Windows.UI.Xaml.Media.FontFamily("Segoe UI Emoji")
                 : new Windows.UI.Xaml.Media.FontFamily("Segoe UI Symbol");
             StreakNavigationIcon.Glyph = "🔥";
