@@ -7,7 +7,7 @@
   IgnorableNamespaces="uap mp">
 
   <Identity
-    Name="21366BowTieWorkshop.ElementaryBibleDev"
+    Name="21366BowTieWorkshop.ElementaryBible"
     Publisher="CN=16499A74-7239-425D-8D4D-A75684AF24BE"
     Version="1.0.1.0" />
 
