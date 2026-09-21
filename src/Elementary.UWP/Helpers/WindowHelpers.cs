@@ -9,19 +9,18 @@ namespace Elementary.Helpers
         public  static void SetCaptionButtonColors(ApplicationTheme currentTheme)
         {
             var titleBar = ApplicationView.GetForCurrentView().TitleBar;
+            // Let the extended title bar and dialog overlay show through the caption buttons.
+            titleBar.ButtonBackgroundColor = Colors.Transparent;
+            titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
 
             switch (currentTheme)
             {
                 case ApplicationTheme.Dark:
                     titleBar.BackgroundColor = Color.FromArgb(255, 32, 32, 32);
-                    titleBar.ButtonBackgroundColor = Color.FromArgb(255, 32, 32, 32);
-                    titleBar.ButtonInactiveBackgroundColor = Color.FromArgb(255, 32, 32, 32);
                     break;
 
                 case ApplicationTheme.Light:
                     titleBar.BackgroundColor = Color.FromArgb(255, 243, 243, 243);
-                    titleBar.ButtonBackgroundColor = Color.FromArgb(255, 243, 243, 243);
-                    titleBar.ButtonInactiveBackgroundColor = Color.FromArgb(255, 243, 243, 243);
                     break;
             }
         }
