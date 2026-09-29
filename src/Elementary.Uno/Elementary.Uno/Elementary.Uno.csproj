@@ -1,0 +1,57 @@
+<Project Sdk="Uno.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-browserwasm</TargetFrameworks>
+
+    <OutputType>Exe</OutputType>
+    <UnoSingleProject>true</UnoSingleProject>
+    <DefineConstants>$(DefineConstants);UNO_SKIA3</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <UnoIconBackgroundFile>Assets\Icons\appicon.png</UnoIconBackgroundFile>
+    <UnoIconForegroundFile>Assets\Icons\unused.svg</UnoIconForegroundFile>
+    <UnoSplashScreenFile>Assets\Splash\elementary.png</UnoSplashScreenFile>
+    <UnoSplashScreenColor>#202020</UnoSplashScreenColor>
+
+    <!-- Display name -->
+    <ApplicationTitle>Elementary Bible</ApplicationTitle>
+    <!-- App Identifier -->
+    <ApplicationId>com.grantstreetdesign.elementary</ApplicationId>
+    <!-- Versions -->
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>1</ApplicationVersion>
+    <!-- Package Publisher -->
+    <ApplicationPublisher>Elementary.Uno</ApplicationPublisher>
+    <!-- Package Description -->
+    <Description>Elementary.Uno powered by Uno Platform.</Description>
+
+    <!--
+      UnoFeatures are used to quickly add and manage features enabled for your app.
+      https://aka.platform.uno/singleproject-features
+    -->
+    <UnoFeatures>
+      Hosting;
+      Mvvm;
+      SkiaRenderer;
+    </UnoFeatures>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Elementary.Core\Elementary.Core.csproj" />
+    <UnoIcon Include="Assets\Icons\appicon.png" />
+    <Content Include="..\..\Elementary.UWP\Assets\TitleBarIcon.scale-*.png" Link="Assets\%(Filename)%(Extension)" />
+    <Content Include="..\..\Elementary.UWP\Assets\Fonts\Segoe Fluent Icons.ttf" Link="Assets\Fonts\Segoe Fluent Icons.ttf" />
+    <Content Include="..\..\Elementary.UWP\Assets\Square44x44Logo.targetsize-256.png" Link="Assets\Elementary.png" />
+    <!-- Reuse the same verse source and artwork implementation without introducing a second Skia runtime. -->
+    <Compile Include="..\..\Elementary.VerseOfTheDay\Models\*.cs" Link="Shared\Votd\%(Filename)%(Extension)" />
+    <Compile Include="..\..\Elementary.VerseOfTheDay\Interfaces\IVerseFetchService.cs" Link="Shared\Votd\IVerseFetchService.cs" />
+    <Compile Include="..\..\Elementary.VerseOfTheDay\Interfaces\IVotdImageCompositor.cs" Link="Shared\Votd\IVotdImageCompositor.cs" />
+    <Compile Include="..\..\Elementary.VerseOfTheDay\Services\VerseFetchService.cs" Link="Shared\Votd\VerseFetchService.cs" />
+    <Compile Include="..\..\Elementary.VerseOfTheDay\Services\VotdImageCompositor.cs" Link="Shared\Votd\VotdImageCompositor.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\Elementary.UWP\Content\KJV\02-GENeng-kjv2006.usfm">
+      <LogicalName>Elementary.Uno.Scripture.Genesis.usfm</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

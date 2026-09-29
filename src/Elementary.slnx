@@ -5,6 +5,7 @@
     <Platform Name="x86" />
   </Configurations>
   <Project Path="Elementary.Core/Elementary.Core.csproj" />
+  <Project Path="Elementary.Uno/Elementary.Uno/Elementary.Uno.csproj" />
   <Project Path="Elementary.VerseOfTheDay/Elementary.VerseOfTheDay.csproj" />
   <Project Path="Elementary.WidgetApp/Elementary.WidgetApp.csproj">
     <Platform Solution="*|ARM64" Project="ARM64" />
