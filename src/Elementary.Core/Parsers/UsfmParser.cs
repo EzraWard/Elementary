@@ -123,6 +123,20 @@ namespace Elementary.Core.Parsers
 
     public static class UsfmParser
     {
+        // Parsing a verse uses more patterns than Regex's small global cache holds.
+        // Retain these immutable patterns to avoid rebuilding them for every verse,
+        // especially in the WebAssembly interpreter.
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<Tuple<string, RegexOptions>, Regex> Patterns = new System.Collections.Concurrent.ConcurrentDictionary<Tuple<string, RegexOptions>, Regex>();
+        private static Regex Pattern(string pattern, RegexOptions options) =>
+            Patterns.GetOrAdd(Tuple.Create(pattern, options), key => new Regex(key.Item1, key.Item2));
+        private static string ReplaceCached(string input, string pattern, string replacement, RegexOptions options = RegexOptions.None) =>
+            Pattern(pattern, options).Replace(input, replacement);
+        private static string ReplaceCached(string input, string pattern, MatchEvaluator replacement, RegexOptions options = RegexOptions.None) =>
+            Pattern(pattern, options).Replace(input, replacement);
+        private static Match MatchCached(string input, string pattern, RegexOptions options = RegexOptions.None) =>
+            Pattern(pattern, options).Match(input);
+        private static string[] SplitCached(string input, string pattern, RegexOptions options = RegexOptions.None) =>
+            Pattern(pattern, options).Split(input);
         // Lightweight USFM parser that supports: \id, \h, \mt, \c, \p, \s, \v, inline \em/\em* (italics), \it/\it*, \f ... \f* (footnotes), \x ... \x* (cross-refs), \q (poetic)
         public static UsfmBook ParseBook(string content)
         {
@@ -132,18 +146,18 @@ namespace Elementary.Core.Parsers
 
             // Normalize line endings and convert escaped \n sequences used in tests to actual newlines.
             // Only convert when \n is used as an escaped line break (e.g. "\n\h"), not USFM markers like "\nd".
-            content = Regex.Replace(content, @"\\n(?=\\|$)", "\n");
+            content = ReplaceCached(content, @"\\n(?=\\|$)", "\n");
             content = content.Replace("\r\n", "\n").Replace("\r", "\n");
 
             // Extract title from \h or \mt or \id
-            var titleMatch = Regex.Match(content, @"\\h\s+([^\\\n\r]+)", RegexOptions.IgnoreCase);
+            var titleMatch = MatchCached(content, @"\\h\s+([^\\\n\r]+)", RegexOptions.IgnoreCase);
             if (!titleMatch.Success)
             {
-                titleMatch = Regex.Match(content, @"\\mt\s+([^\\\n\r]+)", RegexOptions.IgnoreCase);
+                titleMatch = MatchCached(content, @"\\mt\s+([^\\\n\r]+)", RegexOptions.IgnoreCase);
             }
             if (!titleMatch.Success)
             {
-                titleMatch = Regex.Match(content, @"\\id\s+([^\\\n\r]+)", RegexOptions.IgnoreCase);
+                titleMatch = MatchCached(content, @"\\id\s+([^\\\n\r]+)", RegexOptions.IgnoreCase);
             }
             if (titleMatch.Success)
             {
@@ -151,13 +165,13 @@ namespace Elementary.Core.Parsers
             }
 
             // Process sequentially: find chapters by \c markers
-            var chapterSplits = Regex.Split(content, @"(?=\\c\s+\d+)", RegexOptions.Multiline);
+            var chapterSplits = SplitCached(content, @"(?=\\c\s+\d+)", RegexOptions.Multiline);
 
             foreach (var chunk in chapterSplits)
             {
                 if (string.IsNullOrWhiteSpace(chunk)) continue;
 
-                var cMatch = Regex.Match(chunk, @"\\c\s+(\d+)", RegexOptions.IgnoreCase);
+                var cMatch = MatchCached(chunk, @"\\c\s+(\d+)", RegexOptions.IgnoreCase);
                 if (!cMatch.Success)
                 {
                     // if no chapter marker, skip
@@ -195,7 +209,7 @@ namespace Elementary.Core.Parsers
                     if (string.IsNullOrEmpty(trimmed)) continue;
 
                     // Verse line
-                    var vMatch = Regex.Match(trimmed, @"\\v\s+(\d+)\s*(.*)", RegexOptions.Singleline);
+                    var vMatch = MatchCached(trimmed, @"\\v\s+(\d+)\s*(.*)", RegexOptions.Singleline);
                     if (vMatch.Success)
                     {
                         var vnum = int.Parse(vMatch.Groups[1].Value);
@@ -204,7 +218,7 @@ namespace Elementary.Core.Parsers
                         vtext = ProcessInline(vtext);
 
                         // Replace footnote placeholders like <fn id="n"/> with reference numbers anchored to chapter footnotes
-                        vtext = Regex.Replace(vtext, "<fn id=\\\"(\\d+)\\\"/>", m =>
+                        vtext = ReplaceCached(vtext, "<fn id=\\\"(\\d+)\\\"/>", m =>
                         {
                             var idx = int.Parse(m.Groups[1].Value) - 1;
                             if (idx >= 0 && idx < chapter.Footnotes.Count)
@@ -220,7 +234,7 @@ namespace Elementary.Core.Parsers
                     }
 
                     // Section heading \s, \s1, \s2, etc.
-                    var sMatch = Regex.Match(trimmed, @"\\s\d*\s*(.*)", RegexOptions.Singleline);
+                    var sMatch = MatchCached(trimmed, @"\\s\d*\s*(.*)", RegexOptions.Singleline);
                     if (sMatch.Success)
                     {
                         var stext = ProcessInline(sMatch.Groups[1].Value.Trim());
@@ -230,7 +244,7 @@ namespace Elementary.Core.Parsers
                     }
 
                     // Paragraph marker \p - continue as paragraph separator (no specific verse)
-                    var pMatch = Regex.Match(trimmed, @"^\\p$", RegexOptions.IgnoreCase);
+                    var pMatch = MatchCached(trimmed, @"^\\p$", RegexOptions.IgnoreCase);
                     if (pMatch.Success)
                     {
                         chapter.Verses.Add(new UsfmVerse { Number = 0, Text = "<p></p>" });
@@ -238,7 +252,7 @@ namespace Elementary.Core.Parsers
                     }
 
                     // Poetic lines \q, \q1, \q2, etc - preserve indent level
-                    var qMatch = Regex.Match(trimmed, @"\\q(\d*)\s*(.*)", RegexOptions.Singleline);
+                    var qMatch = MatchCached(trimmed, @"\\q(\d*)\s*(.*)", RegexOptions.Singleline);
                     if (qMatch.Success)
                     {
                         var qtext = ProcessInline(qMatch.Groups[2].Value.Trim());
@@ -263,7 +277,7 @@ namespace Elementary.Core.Parsers
             // If no title found, try to infer from first non-empty book-level marker
             if (string.IsNullOrEmpty(book.Title))
             {
-                var idMatch = Regex.Match(content, @"\\id\s+([A-Za-z0-9_-]+)", RegexOptions.IgnoreCase);
+                var idMatch = MatchCached(content, @"\\id\s+([A-Za-z0-9_-]+)", RegexOptions.IgnoreCase);
                 if (idMatch.Success) book.Title = idMatch.Groups[1].Value.Trim();
             }
 
@@ -275,28 +289,28 @@ namespace Elementary.Core.Parsers
             if (string.IsNullOrEmpty(text)) return string.Empty;
 
             // Remove word markers (\w ... \w* and \+w ... \+w*) keeping only display text.
-            text = Regex.Replace(text, @"\\\+?w\s+([^|\\]+?)(?:\|.*?)?\\\+?w\*", m => m.Groups[1].Value.Trim(), RegexOptions.Singleline);
+            text = ReplaceCached(text, @"\\\+?w\s+([^|\\]+?)(?:\|.*?)?\\\+?w\*", m => m.Groups[1].Value.Trim(), RegexOptions.Singleline);
 
             // Replace quote markers \qt ... \qt*
-            text = Regex.Replace(text, @"\\qt\s+", "<qt>", RegexOptions.IgnoreCase);
-            text = Regex.Replace(text, @"\\qt\*", "</qt>", RegexOptions.IgnoreCase);
+            text = ReplaceCached(text, @"\\qt\s+", "<qt>", RegexOptions.IgnoreCase);
+            text = ReplaceCached(text, @"\\qt\*", "</qt>", RegexOptions.IgnoreCase);
 
             // Replace cross-references \x ... \x*
-            text = Regex.Replace(text, @"\\x\s+(.*?)\\x\*", m => $"<xr>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value.Trim())}</xr>", RegexOptions.Singleline);
+            text = ReplaceCached(text, @"\\x\s+(.*?)\\x\*", m => $"<xr>{System.Net.WebUtility.HtmlEncode(m.Groups[1].Value.Trim())}</xr>", RegexOptions.Singleline);
 
             // Replace emphasis \em ... \em* and \it ... \it*
-            text = Regex.Replace(text, @"\\em\s+", "<em>", RegexOptions.IgnoreCase);
-            text = Regex.Replace(text, @"\\em\*", "</em>", RegexOptions.IgnoreCase);
-            text = Regex.Replace(text, @"\\it\s+", "<em>", RegexOptions.IgnoreCase);
-            text = Regex.Replace(text, @"\\it\*", "</em>", RegexOptions.IgnoreCase);
+            text = ReplaceCached(text, @"\\em\s+", "<em>", RegexOptions.IgnoreCase);
+            text = ReplaceCached(text, @"\\em\*", "</em>", RegexOptions.IgnoreCase);
+            text = ReplaceCached(text, @"\\it\s+", "<em>", RegexOptions.IgnoreCase);
+            text = ReplaceCached(text, @"\\it\*", "</em>", RegexOptions.IgnoreCase);
 
             // Bold markers (some USFM use \bd ... \bd*)
-            text = Regex.Replace(text, @"\\bd\s+", "<b>", RegexOptions.IgnoreCase);
-            text = Regex.Replace(text, @"\\bd\*", "</b>", RegexOptions.IgnoreCase);
+            text = ReplaceCached(text, @"\\bd\s+", "<b>", RegexOptions.IgnoreCase);
+            text = ReplaceCached(text, @"\\bd\*", "</b>", RegexOptions.IgnoreCase);
 
             // Remove any other remaining USFM markers to prevent leakage (e.g. \nd, \nd*, \q1, \+w),
             // even when followed by punctuation like \nd*!
-            text = Regex.Replace(text, @"\\\+?[a-z]+\d*\*?(?=[^A-Za-z0-9]|$)", "", RegexOptions.IgnoreCase);
+            text = ReplaceCached(text, @"\\\+?[a-z]+\d*\*?(?=[^A-Za-z0-9]|$)", "", RegexOptions.IgnoreCase);
 
             // HTML-encode the remainder then un-encode known tags
             var encoded = System.Net.WebUtility.HtmlEncode(text);
@@ -309,7 +323,7 @@ namespace Elementary.Core.Parsers
             encoded = encoded.Replace("&lt;h1&gt;", "<h1>").Replace("&lt;/h1&gt;", "</h1>");
             encoded = encoded.Replace("&lt;quote&gt;", "<quote>").Replace("&lt;/quote&gt;", "</quote>");
             // Restore poetry div with inline style (Regex pattern to handle variable pixel values)
-            encoded = Regex.Replace(encoded, @"&lt;div class=&quot;poetry&quot; style=&quot;margin-left:(\d+)px&quot;&gt;", "<div class=\"poetry\" style=\"margin-left:$1px\">");
+            encoded = ReplaceCached(encoded, @"&lt;div class=&quot;poetry&quot; style=&quot;margin-left:(\d+)px&quot;&gt;", "<div class=\"poetry\" style=\"margin-left:$1px\">");
             encoded = encoded.Replace("&lt;/div&gt;", "</div>");
 
             return encoded;

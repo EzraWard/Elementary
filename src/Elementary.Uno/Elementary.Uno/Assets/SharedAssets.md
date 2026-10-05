@@ -9,6 +9,15 @@ The streak PathIcon preserves the outline of the UWP app's Segoe UI Symbol
 U+1F525 glyph. This avoids relying on a Windows system font being installed in
 the browser runtime.
 
+The Bible PathIcon is the exact E736 outline from the linked Segoe Fluent Icons
+font, translated to positive coordinates. This keeps its initial layout independent
+of asynchronous font loading. The web splash displays the original logo in a
+128-pixel box (about 92 pixels of visible artwork), close to the native UWP splash.
+
+Browser favicons link directly to the UWP 16, 32, and 48 pixel target-size PNGs.
+
+ASV, KJV, and NET are prepared from the UWP USFM content during the build using the shared parser. Generated resources stay in obj/Scripture; no separate scripture source is maintained.
+
 See documentation about assets here: https://github.com/unoplatform/uno/blob/master/doc/articles/features/working-with-assets.md
 
 ## Here is a cheat sheet

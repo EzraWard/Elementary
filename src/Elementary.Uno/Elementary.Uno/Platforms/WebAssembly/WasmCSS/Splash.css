@@ -1,0 +1,7 @@
+/* Keep the original Elementary artwork at the UWP splash's apparent size.
+   Uno serves a scale-200 image; constrain its CSS size independently of DPI. */
+.uno-loader .logo {
+    width: 128px;
+    height: 128px;
+    object-fit: contain;
+}

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -30,4 +30,8 @@
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\Elementary.Uno\Elementary.Uno\Services\EmbeddedBibleCatalog.cs" Link="Shared\EmbeddedBibleCatalog.cs" />
+    <EmbeddedResource Include="..\Elementary.UWP\Content\KJV\*.usfm" LogicalName="Elementary.Uno.Scripture.%(Filename)%(Extension)" />
+  </ItemGroup>
 </Project>

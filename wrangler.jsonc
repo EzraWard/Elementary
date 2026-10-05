@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "elementary-bible",
+  "compatibility_date": "2026-10-02",
+  "assets": {
+    "directory": "./src/Elementary.Uno/Elementary.Uno/bin/Cloudflare/wwwroot"
+  },
+  "build": {
+    "command": "dotnet publish src/Elementary.Uno/Elementary.Uno/Elementary.Uno.csproj -c Release -f net10.0-browserwasm -p:RunAOTCompilation=false -o src/Elementary.Uno/Elementary.Uno/bin/Cloudflare"
+  }
+}

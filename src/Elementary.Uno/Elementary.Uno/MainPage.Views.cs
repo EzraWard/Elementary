@@ -2,6 +2,8 @@ using Elementary.Core.Enums;
 using Elementary.Core.Models;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
+using ToolkitSettingsCard = CommunityToolkit.WinUI.Controls.SettingsCard;
+using CommunityToolkit.WinUI.Controls;
 
 namespace Elementary.Uno;
 
@@ -12,8 +14,24 @@ public sealed partial class MainPage
         _initializingSettings = true;
         var panel = new StackPanel { Spacing = 4, MaxWidth = 1000, Margin = new Thickness(16) };
         panel.Children.Add(SectionHeading("Reading"));
-        panel.Children.Add(SettingsCard("Translation", "The translation of the Bible you would like to use",
-            new TextBlock { Text = "KJV", VerticalAlignment = VerticalAlignment.Center }, "\uE736"));
+        var translation = new ComboBox { ItemsSource = new[] { ETranslation.ASV, ETranslation.KJV, ETranslation.NET }, SelectedItem = _settings.Translation };
+        translation.SelectionChanged += async (_, _) =>
+        {
+            if (_initializingSettings || translation.SelectedItem is not ETranslation selected || selected == _catalog.Translation) return;
+            ++_searchVersion;
+            SearchResultsListView.ItemsSource = null;
+            SearchEmptyText.Visibility = Visibility.Collapsed;
+            var bookId = _settings.Book;
+            var chapter = _settings.Chapter;
+            _catalog.SetTranslation(selected);
+            _settings.Translation = selected;
+            _settingsService.SaveSettings(_settings);
+            _changingBook = true;
+            BibleBookComboBox.ItemsSource = _catalog.Books;
+            _changingBook = false;
+            await NavigateToBookAsync(_catalog.Books.FirstOrDefault(book => book.Id == bookId) ?? _catalog.Books[0], chapter);
+        };
+        panel.Children.Add(SettingsCard("Translation", "The translation of the Bible you would like to use", translation, "\uE736"));
         var numbers = new ToggleSwitch { IsOn = _settings.ShowVerseNumbers ?? true };
         numbers.Toggled += (_, _) => { if (_initializingSettings) return; _settings.ShowVerseNumbers = numbers.IsOn; ApplyReaderSettings(); };
         panel.Children.Add(SettingsCard("Show verse numbers", "Choose whether to show verse numbers inline", numbers, "\uE8A4"));
@@ -32,13 +50,26 @@ public sealed partial class MainPage
             ApplyReaderSettings();
         };
         panel.Children.Add(SettingsCard("Theme", "Set the color scheme you prefer", theme, "\uE790"));
+        panel.Children.Add(SectionHeading("Acknowledgements"));
+        var acknowledgement = new SettingsExpander
+        {
+            Header = "NET Bible", Description = "Acknowledgement for the NET Bible",
+            HeaderIcon = new FontIcon { FontFamily = new FontFamily("ms-appx:///Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons"), Glyph = "\uE716" }
+        };
+        acknowledgement.Items.Add(new ToolkitSettingsCard
+        {
+            Header = "Scripture quoted by permission. Quotations designated (NET) are from the NET Bible® copyright ©1996, 2019 by Biblical Studies Press, L.L.C. http://netbible.com All rights reserved."
+        });
+        panel.Children.Add(acknowledgement);
         panel.Children.Add(SectionHeading("About"));
-        var about = new StackPanel { Spacing = 8 };
-        about.Children.Add(new Image { Source = new BitmapImage(new Uri("ms-appx:///Assets/Elementary.png")), Width = 48, Height = 48, HorizontalAlignment = HorizontalAlignment.Left });
-        about.Children.Add(new TextBlock { Text = "Elementary", FontSize = 20, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
-        about.Children.Add(new TextBlock { Text = "© 2026. All rights reserved.", Opacity = 0.75 });
-        about.Children.Add(new TextBlock { Text = "Version 1.0.0 • Web", Opacity = 0.75 });
-        panel.Children.Add(Card(about));
+        var about = new SettingsExpander
+        {
+            Header = "Elementary", Description = "© 2026. All rights reserved.",
+            HeaderIcon = new BitmapIcon { UriSource = new Uri("ms-appx:///Assets/Elementary.png"), ShowAsMonochrome = false },
+            Content = new TextBlock { Text = "Version 1.0.0 • Web", IsTextSelectionEnabled = true, Opacity = 0.75 }
+        };
+        about.Items.Add(new ToolkitSettingsCard { Header = "Hello from Williamstown" });
+        panel.Children.Add(about);
         panel.Children.Add(new HyperlinkButton { Content = "Send feedback", NavigateUri = new Uri("mailto:ezra.ward@outlook.com") });
         _initializingSettings = false;
         return new ScrollViewer { Content = panel, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
@@ -110,6 +141,27 @@ public sealed partial class MainPage
             badgeGrid.Children.Add(card);
         }
         panel.Children.Add(badgeGrid);
+        panel.SizeChanged += (_, _) =>
+        {
+            var useTwoColumns = panel.ActualWidth >= 688;
+            if (useTwoColumns == wide) return;
+            wide = useTwoColumns;
+            cards.ColumnDefinitions.Clear();
+            cards.ColumnDefinitions.Add(new ColumnDefinition { Width = wide ? new GridLength(320) : new GridLength(1, GridUnitType.Star) });
+            if (wide) cards.ColumnDefinitions.Add(new ColumnDefinition());
+            Grid.SetColumn(detailCard, wide ? 1 : 0);
+            Grid.SetRow(detailCard, wide ? 0 : 1);
+            columns = wide ? 2 : 1;
+            badgeGrid.ColumnDefinitions.Clear();
+            badgeGrid.RowDefinitions.Clear();
+            for (var column = 0; column < columns; column++) badgeGrid.ColumnDefinitions.Add(new ColumnDefinition());
+            for (var row = 0; row < (badges.Count + columns - 1) / columns; row++) badgeGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            for (var index = 0; index < badgeGrid.Children.Count; index++)
+            {
+                Grid.SetColumn((FrameworkElement)badgeGrid.Children[index], index % columns);
+                Grid.SetRow((FrameworkElement)badgeGrid.Children[index], index / columns);
+            }
+        };
         return new ScrollViewer { Content = panel, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
     }
 
@@ -129,24 +181,17 @@ public sealed partial class MainPage
         return card;
     }
 
-    private Border SettingsCard(string title, string description, FrameworkElement control, string glyph)
+    private ToolkitSettingsCard SettingsCard(string title, string description, FrameworkElement control, string glyph)
     {
-        var grid = new Grid { ColumnSpacing = 16, MinHeight = 48 };
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        grid.ColumnDefinitions.Add(new ColumnDefinition());
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        var icon = new FontIcon { FontFamily = new FontFamily("ms-appx:///Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons"), Glyph = glyph, FontSize = 20 };
-        grid.Children.Add(icon);
-        var label = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 2 };
-        label.Children.Add(new TextBlock { Text = title, TextWrapping = TextWrapping.Wrap });
-        label.Children.Add(new TextBlock { Text = description, TextWrapping = TextWrapping.Wrap, FontSize = 12, Opacity = 0.75 });
-        Grid.SetColumn(label, 1);
-        grid.Children.Add(label);
-        control.VerticalAlignment = VerticalAlignment.Center;
-        control.MinWidth = 100;
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(control, title);
-        Grid.SetColumn(control, 2);
-        grid.Children.Add(control);
-        return Card(grid);
+        return new ToolkitSettingsCard
+        {
+            Header = title, Description = description, Content = control,
+            HeaderIcon = new FontIcon
+            {
+                FontFamily = new FontFamily("ms-appx:///Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons"),
+                Glyph = glyph
+            }
+        };
     }
 }
