@@ -19,17 +19,19 @@
   </Page.Resources>
   <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
     <Grid.RowDefinitions>
-      <RowDefinition Height="32" />
+      <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
 
-    <!-- The compact title strip mirrors the native app's Windows title bar. -->
+    <!-- Keep the title strip disabled to give the web reader more space, including on iPhone.
+         Restore this markup if a future display mode needs an app title bar.
     <Grid Grid.Row="0" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Padding="16,0">
       <StackPanel Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
         <Image Source="ms-appx:///Assets/TitleBarIcon.png" Width="16" Height="16" />
         <TextBlock Text="Elementary" FontSize="12" Foreground="{ThemeResource TextFillColorPrimaryBrush}" VerticalAlignment="Center" />
       </StackPanel>
     </Grid>
+    -->
 
     <NavigationView x:Name="MainNavigationView" Grid.Row="1" IsPaneOpen="False" PaneDisplayMode="LeftCompact"
                     CompactPaneLength="48" OpenPaneLength="260" IsBackButtonVisible="Collapsed"

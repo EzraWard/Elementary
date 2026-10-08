@@ -38,6 +38,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" />
+    <EmbeddedResource Include="Platforms\WebAssembly\WasmCSS\SafeArea.css" />
     <ProjectReference Include="..\..\Elementary.Core\Elementary.Core.csproj" />
     <UnoIcon Include="Assets\Icons\appicon.png" />
     <Content Include="..\..\Elementary.UWP\Assets\TitleBarIcon.scale-*.png" Link="Assets\%(Filename)%(Extension)" />
