@@ -1,14 +1,17 @@
-/* Reserve the home-indicator area without adding space on other devices.
-   Uno Skia measures documentElement, so shrink that element as well as the
-   fixed canvas and accessibility overlay; wrapper padding alone is ignored.
-   Keep the default viewport fit so the browser still protects the top notch. */
-html {
-  --elementary-bottom-inset: env(safe-area-inset-bottom, 0px);
-  height: calc(100% - var(--elementary-bottom-inset));
+/* Temporary iOS Home Screen gesture shim. It overlays the full-height reader;
+   it must not reserve layout space or paint over the content below it. */
+#elementary-system-gesture-area {
+  display: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: max(34px, env(safe-area-inset-bottom, 0px));
+  background: transparent;
+  z-index: 2147483647;
+  pointer-events: auto;
 }
 
-#uno-canvas,
-#uno-semantics-root,
-#uno-loading {
-  height: calc(100% - var(--elementary-bottom-inset));
+html.elementary-ios-standalone #elementary-system-gesture-area {
+  display: block;
 }

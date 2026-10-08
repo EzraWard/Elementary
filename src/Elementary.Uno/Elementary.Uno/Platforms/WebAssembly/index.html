@@ -15,6 +15,24 @@
     $(ADDITIONAL_HEAD)
 </head>
 <body>
+    <div id="elementary-system-gesture-area" aria-hidden="true"></div>
+    <script>
+        // This temporary shim is only for iOS/iPadOS Home Screen apps.
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+            || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+        const standaloneMode = window.matchMedia("(display-mode: standalone)");
+        const updateGestureShim = () => document.documentElement.classList.toggle(
+            "elementary-ios-standalone", isIOS && (navigator.standalone === true || standaloneMode.matches));
+        updateGestureShim();
+        standaloneMode.addEventListener("change", updateGestureShim);
+        // Keep touches beginning in the transparent system-gesture overlay out of
+        // Uno's document handlers. Do not preventDefault: iOS owns the gesture.
+        const gestureArea = document.getElementById("elementary-system-gesture-area");
+        for (const eventName of ["pointerdown", "pointermove", "pointerup", "pointercancel",
+                                 "touchstart", "touchmove", "touchend", "touchcancel"]) {
+            gestureArea.addEventListener(eventName, event => event.stopPropagation(), { passive: true });
+        }
+    </script>
     <div id="uno-body" class="container-fluid uno-body">
         <div class="uno-loader"
              loading-position="bottom"
