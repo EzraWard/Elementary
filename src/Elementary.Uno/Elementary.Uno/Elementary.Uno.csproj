@@ -18,7 +18,12 @@
     <!-- App Identifier -->
     <ApplicationId>com.grantstreetdesign.elementary</ApplicationId>
     <!-- Versions -->
-    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <!-- UWP's package manifest is the canonical product version for both apps. -->
+    <ElementaryPackageVersion>$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/../../Elementary.UWP/Package.appxmanifest')), '(?&lt;=Version=&quot;)[0-9.]+').Value)</ElementaryPackageVersion>
+    <ApplicationDisplayVersion>$([System.Version]::Parse('$(ElementaryPackageVersion)').ToString(3))</ApplicationDisplayVersion>
+    <Version>$(ApplicationDisplayVersion)</Version>
+    <AssemblyVersion>$(ElementaryPackageVersion)</AssemblyVersion>
+    <FileVersion>$(ElementaryPackageVersion)</FileVersion>
     <ApplicationVersion>1</ApplicationVersion>
     <!-- Package Publisher -->
     <ApplicationPublisher>Elementary.Uno</ApplicationPublisher>
@@ -44,6 +49,7 @@
     <Content Include="..\..\Elementary.UWP\Assets\TitleBarIcon.scale-*.png" Link="Assets\%(Filename)%(Extension)" />
     <Content Include="..\..\Elementary.UWP\Assets\Fonts\Segoe Fluent Icons.ttf" Link="Assets\Fonts\Segoe Fluent Icons.ttf" />
     <Content Include="..\..\Elementary.UWP\Assets\Square44x44Logo.targetsize-256.png" Link="Assets\Elementary.png" />
+    <Content Include="..\..\Elementary.UWP\Assets\StoreLogo.scale-*.png" Link="Assets\%(Filename)%(Extension)" />
     <Content Include="..\..\Elementary.UWP\Assets\Square44x44Logo.targetsize-16.png" Link="Assets\favicon-16.png" />
     <Content Include="..\..\Elementary.UWP\Assets\Square44x44Logo.targetsize-32.png" Link="Assets\favicon-32.png" />
     <Content Include="..\..\Elementary.UWP\Assets\Square44x44Logo.targetsize-48.png" Link="Assets\favicon-48.png" />

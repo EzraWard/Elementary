@@ -65,10 +65,10 @@ public sealed partial class MainPage
         var about = new SettingsExpander
         {
             Header = "Elementary", Description = "© 2026. All rights reserved.",
-            HeaderIcon = new BitmapIcon { UriSource = new Uri("ms-appx:///Assets/Elementary.png"), ShowAsMonochrome = false },
-            Content = new TextBlock { Text = "Version 1.0.0 • Web", IsTextSelectionEnabled = true, Opacity = 0.75 }
+            HeaderIcon = new BitmapIcon { UriSource = new Uri("ms-appx:///Assets/StoreLogo.png"), ShowAsMonochrome = false, Width = 32, Height = 32 },
+            Content = new TextBlock { Text = typeof(MainPage).Assembly.GetName().Version!.ToString(3), IsTextSelectionEnabled = true, Opacity = 0.75 }
         };
-        about.Items.Add(new ToolkitSettingsCard { Header = "Hello from Williamstown" });
+        about.Items.Add(new ToolkitSettingsCard { Header = new TextBlock { Text = "👨🏻‍👩🏻‍👧🏻‍👦🏻 Hello from Williamstown", TextWrapping = TextWrapping.Wrap } });
         panel.Children.Add(about);
         panel.Children.Add(new HyperlinkButton { Content = "Send feedback", NavigateUri = new Uri("mailto:ezra.ward@outlook.com") });
         _initializingSettings = false;
