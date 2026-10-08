@@ -25,11 +25,29 @@
             "elementary-ios-standalone", isIOS && (navigator.standalone === true || standaloneMode.matches));
         updateGestureShim();
         standaloneMode.addEventListener("change", updateGestureShim);
-        // Keep touches beginning in the transparent system-gesture overlay out of
-        // Uno's document handlers. Do not preventDefault: iOS owns the gesture.
+        // Uno listens on BODY in capture phase, so target/bubble handlers on the
+        // overlay run too late. Intercept at WINDOW before Uno sees pointerdown,
+        // then suppress that pointer's whole sequence even after it leaves the strip.
+        // Do not preventDefault: the system still owns the home/app-switch gesture.
         const gestureArea = document.getElementById("elementary-system-gesture-area");
-        for (const eventName of ["pointerdown", "pointermove", "pointerup", "pointercancel",
-                                 "touchstart", "touchmove", "touchend", "touchcancel"]) {
+        const systemGesturePointers = new Set();
+        for (const eventName of ["pointerover", "pointerout", "pointerdown", "pointermove", "pointerup", "pointercancel"]) {
+            window.addEventListener(eventName, event => {
+                if (!document.documentElement.classList.contains("elementary-ios-standalone")) return;
+                const inStrip = event.target === gestureArea;
+                if (event.type === "pointerdown") {
+                    systemGesturePointers.delete(event.pointerId);
+                    if (inStrip && event.pointerType === "touch") systemGesturePointers.add(event.pointerId);
+                }
+                if (systemGesturePointers.has(event.pointerId)
+                    || (inStrip && (event.type === "pointerover" || event.type === "pointerout"))) {
+                    event.stopImmediatePropagation();
+                }
+                if (event.type === "pointerup" || event.type === "pointercancel") systemGesturePointers.delete(event.pointerId);
+            }, { capture: true, passive: true });
+        }
+        window.addEventListener("pagehide", () => systemGesturePointers.clear());
+        for (const eventName of ["touchstart", "touchmove", "touchend", "touchcancel"]) {
             gestureArea.addEventListener(eventName, event => event.stopPropagation(), { passive: true });
         }
     </script>
