@@ -39,7 +39,7 @@ public sealed partial class MainPage
         Loaded += (_, _) => DispatcherQueue.TryEnqueue(() =>
         {
             MainNavigationView.UpdateLayout();
-            if (BrowserNavigationGesture.IsIosStandalone() &&
+            if (BrowserNavigationGesture.IsIos() &&
                 FindTemplateElement(MainNavigationView, "TogglePaneButton") is Button toggle &&
                 FindTemplateElement(toggle, "Icon") is AnimatedIcon icon)
             {

@@ -18,16 +18,17 @@
 <body>
     <div id="elementary-system-gesture-area" aria-hidden="true"></div>
     <script>
-        // This temporary shim is only for iOS/iPadOS Home Screen apps.
+        // The navigation layout is shared by iOS browsers and Home Screen apps.
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
             || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+        globalThis.elementaryIsIos = () => isIOS;
+
+        // The gesture shim is only for iOS/iPadOS Home Screen apps.
         const standaloneMode = window.matchMedia("(display-mode: standalone)");
         const updateGestureShim = () => document.documentElement.classList.toggle(
             "elementary-ios-standalone", isIOS && (navigator.standalone === true || standaloneMode.matches));
         updateGestureShim();
         standaloneMode.addEventListener("change", updateGestureShim);
-        globalThis.elementaryIsIosStandalone = () =>
-            document.documentElement.classList.contains("elementary-ios-standalone");
         // Uno listens on BODY in capture phase, so target/bubble handlers on the
         // overlay run too late. Intercept at WINDOW before Uno sees pointerdown,
         // then suppress that pointer's whole sequence even after it leaves the strip.
