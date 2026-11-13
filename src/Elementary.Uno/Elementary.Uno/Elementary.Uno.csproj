@@ -5,6 +5,10 @@
     <OutputType>Exe</OutputType>
     <UnoSingleProject>true</UnoSingleProject>
     <WasmShellIndexHtmlPath>Platforms\WebAssembly\index.html</WasmShellIndexHtmlPath>
+    <ElementaryWebName>Elementary Web</ElementaryWebName>
+    <ElementaryWebShortName>Elementary Web</ElementaryWebShortName>
+    <ElementaryWebName Condition="'$(ElementaryWebPreview)' == 'true'">Elementary Web Preview</ElementaryWebName>
+    <ElementaryWebShortName Condition="'$(ElementaryWebPreview)' == 'true'">Elem Preview</ElementaryWebShortName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <UnoIconBackgroundFile>Assets\Icons\appicon.png</UnoIconBackgroundFile>
     <UnoIconForegroundFile>Assets\Icons\unused.svg</UnoIconForegroundFile>
@@ -61,6 +65,20 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Release' and '$(TargetFramework)' == 'net11.0-browserwasm'">
     <RunAOTCompilation>true</RunAOTCompilation>
   </PropertyGroup>
+
+  <!-- Brand the manifest before Uno adds the generated install icons. -->
+  <Target Name="PrepareElementaryWebShell" BeforeTargets="UnoResizetizeImages">
+    <PropertyGroup>
+      <_ElementaryWebShellDirectory>$(IntermediateOutputPath)elementary-web\</_ElementaryWebShellDirectory>
+      <_ElementaryWebIndex>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/Platforms/WebAssembly/index.html').Replace('__ELEMENTARY_WEB_NAME__', '$(ElementaryWebName)'))</_ElementaryWebIndex>
+      <_ElementaryWebManifest>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/Platforms/WebAssembly/manifest.webmanifest').Replace('__ELEMENTARY_WEB_NAME__', '$(ElementaryWebName)').Replace('__ELEMENTARY_WEB_SHORT_NAME__', '$(ElementaryWebShortName)'))</_ElementaryWebManifest>
+      <WasmShellIndexHtmlPath>$(_ElementaryWebShellDirectory)index.html</WasmShellIndexHtmlPath>
+      <_WasmPwaManifestPath>$(_ElementaryWebShellDirectory)manifest.webmanifest</_WasmPwaManifestPath>
+    </PropertyGroup>
+    <MakeDir Directories="$(_ElementaryWebShellDirectory)" />
+    <WriteLinesToFile File="$(WasmShellIndexHtmlPath)" Lines="$([MSBuild]::Escape($(_ElementaryWebIndex)))" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <WriteLinesToFile File="$(_WasmPwaManifestPath)" Lines="$([MSBuild]::Escape($(_ElementaryWebManifest)))" Overwrite="true" WriteOnlyWhenDifferent="true" />
+  </Target>
 
   <ItemGroup>
     <EmbeddedResource Include="Platforms\WebAssembly\WasmCSS\Splash.css" />

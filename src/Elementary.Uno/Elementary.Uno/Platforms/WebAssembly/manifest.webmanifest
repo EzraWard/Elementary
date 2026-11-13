@@ -2,8 +2,9 @@
   "background_color": "#202020",
   "description": "A calm, focused Bible reader.",
   "display": "standalone",
-  "name": "Elementary Bible",
-  "short_name": "Elementary",
+  "id": "/index.html",
+  "name": "__ELEMENTARY_WEB_NAME__",
+  "short_name": "__ELEMENTARY_WEB_SHORT_NAME__",
   "start_url": "/index.html",
   "theme_color": "#202020",
   "scope": "/"

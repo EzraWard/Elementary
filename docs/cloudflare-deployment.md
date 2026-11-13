@@ -6,7 +6,7 @@ This configuration publishes all three translations as static assets. No Worker 
 
 - A Cloudflare account.
 - Node.js with npm/npx installed.
-- The .NET 10 SDK and Uno WebAssembly workload already used to build this project locally.
+- The .NET 11 SDK and WebAssembly workload already used to build this project locally.
 
 ## Deploy from PowerShell
 
@@ -15,20 +15,29 @@ Open PowerShell in the repository root:
 ```powershell
 cd C:\Users\EzraW\Documents\GitHub\Elementary
 npx wrangler@4 login
-npx wrangler@4 deploy
+npx wrangler@4 deploy --env=
 ```
 
 Login opens a browser for Cloudflare authorization. Deploy reads `wrangler.jsonc`, runs the non-AOT Release publish, and uploads the generated `bin/Cloudflare/wwwroot` assets. It prints the public workers.dev URL. The configured Worker name is `elementary-bible`; change `name` before deployment if you want a different name. Subsequent deploys update that same Worker.
 
-Repeat `npx wrangler@4 deploy` after app changes. You do not need to log in again while your authorization remains valid. Build and upload may take several minutes.
+Repeat `npx wrangler@4 deploy --env=` after app changes. You do not need to log in again while your authorization remains valid. Build and upload may take several minutes.
+
+## Deploy the preview
+
+```powershell
+npx wrangler@4 deploy --env preview
+```
+
+This publishes **Elementary Web Preview** to the separate `elementary-bible-preview` Worker. Install it from that Worker's stable URL and install **Elementary Web** from the production Worker's URL. Each origin has its own install and browser-local settings and history. Use the stable Worker URLs for installs you want to keep across deployments.
 
 ## Review before publishing
 
 ```powershell
-npx wrangler@4 deploy --dry-run
+npx wrangler@4 deploy --env= --dry-run
+npx wrangler@4 deploy --env preview --dry-run
 ```
 
-This prepares the deployment without publishing. To review the generated files locally after publishing/building, serve `src/Elementary.Uno/Elementary.Uno/bin/Cloudflare/wwwroot` with a static web server.
+These commands prepare the deployments without publishing. To review the generated files locally, serve `src/Elementary.Uno/Elementary.Uno/bin/Cloudflare/wwwroot` for production and `src/Elementary.Uno/Elementary.Uno/bin/CloudflarePreview/wwwroot` for preview on separate ports.
 
 The existing AOT Release setting is retained for other deployment targets; the Cloudflare command overrides it. Do not upload the `aot-preview` folder to Workers Static Assets.
 

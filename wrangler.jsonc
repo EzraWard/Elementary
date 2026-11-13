@@ -7,5 +7,16 @@
   },
   "build": {
     "command": "dotnet publish src/Elementary.Uno/Elementary.Uno/Elementary.Uno.csproj -c Release -f net11.0-browserwasm -p:RunAOTCompilation=false -o src/Elementary.Uno/Elementary.Uno/bin/Cloudflare"
+  },
+  "env": {
+    "preview": {
+      "name": "elementary-bible-preview",
+      "assets": {
+        "directory": "./src/Elementary.Uno/Elementary.Uno/bin/CloudflarePreview/wwwroot"
+      },
+      "build": {
+        "command": "dotnet publish src/Elementary.Uno/Elementary.Uno/Elementary.Uno.csproj -c Release -f net11.0-browserwasm -p:RunAOTCompilation=false -p:ElementaryWebPreview=true -o src/Elementary.Uno/Elementary.Uno/bin/CloudflarePreview"
+      }
+    }
   }
 }
