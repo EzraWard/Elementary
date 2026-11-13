@@ -1,17 +1,16 @@
 <Project Sdk="Uno.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net10.0-browserwasm</TargetFrameworks>
+    <TargetFrameworks>net11.0-browserwasm</TargetFrameworks>
 
     <OutputType>Exe</OutputType>
     <UnoSingleProject>true</UnoSingleProject>
     <WasmShellIndexHtmlPath>Platforms\WebAssembly\index.html</WasmShellIndexHtmlPath>
-    <DefineConstants>$(DefineConstants);UNO_SKIA3</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <UnoIconBackgroundFile>Assets\Icons\appicon.png</UnoIconBackgroundFile>
     <UnoIconForegroundFile>Assets\Icons\unused.svg</UnoIconForegroundFile>
     <UnoSplashScreenFile>Assets\Splash\elementary.png</UnoSplashScreenFile>
     <UnoSplashScreenBaseSize>128,128</UnoSplashScreenBaseSize>
-    <UnoSplashScreenColor>#202020</UnoSplashScreenColor>
+    <UnoSplashScreenBackgroundColor>#202020</UnoSplashScreenBackgroundColor>
 
     <!-- Display name -->
     <ApplicationTitle>Elementary Bible</ApplicationTitle>
@@ -37,12 +36,10 @@
     <UnoFeatures>
       Hosting;
       Mvvm;
-      SkiaRenderer;
     </UnoFeatures>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" />
     <EmbeddedResource Include="Platforms\WebAssembly\WasmCSS\SafeArea.css" />
     <ProjectReference Include="..\..\Elementary.Core\Elementary.Core.csproj" />
     <UnoIcon Include="Assets\Icons\appicon.png" />
@@ -61,7 +58,7 @@
     <Compile Include="..\..\Elementary.VerseOfTheDay\Services\VotdImageCompositor.cs" Link="Shared\Votd\VotdImageCompositor.cs" />
   </ItemGroup>
 
-  <PropertyGroup Condition="'$(Configuration)' == 'Release' and '$(TargetFramework)' == 'net10.0-browserwasm'">
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' and '$(TargetFramework)' == 'net11.0-browserwasm'">
     <RunAOTCompilation>true</RunAOTCompilation>
   </PropertyGroup>
 

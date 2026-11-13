@@ -6,6 +6,6 @@
     "directory": "./src/Elementary.Uno/Elementary.Uno/bin/Cloudflare/wwwroot"
   },
   "build": {
-    "command": "dotnet publish src/Elementary.Uno/Elementary.Uno/Elementary.Uno.csproj -c Release -f net10.0-browserwasm -p:RunAOTCompilation=false -o src/Elementary.Uno/Elementary.Uno/bin/Cloudflare"
+    "command": "dotnet publish src/Elementary.Uno/Elementary.Uno/Elementary.Uno.csproj -c Release -f net11.0-browserwasm -p:RunAOTCompilation=false -o src/Elementary.Uno/Elementary.Uno/bin/Cloudflare"
   }
 }

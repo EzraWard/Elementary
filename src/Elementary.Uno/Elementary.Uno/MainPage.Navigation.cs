@@ -46,7 +46,7 @@ public sealed partial class MainPage
         {
             window.Activated += (_, e) =>
             {
-                _windowActive = e.WindowActivationState != Windows.UI.Core.CoreWindowActivationState.Deactivated;
+                _windowActive = e.WindowActivationState != WindowActivationState.Deactivated;
                 _readingClock.Restart();
             };
         }

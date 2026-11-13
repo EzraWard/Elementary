@@ -94,7 +94,7 @@ namespace Elementary.VerseOfTheDay.Services
             for (var i = 0; i < 3; i++)
             {
                 var startY = NextFloat(random, -0.1f, 1.1f) * height;
-#if NET10_0_OR_GREATER && !UNO_SKIA3
+#if NET11_0_OR_GREATER
                 using var pathBuilder = new SKPathBuilder();
                 pathBuilder.MoveTo(-width * 0.15f, startY);
                 pathBuilder.CubicTo(

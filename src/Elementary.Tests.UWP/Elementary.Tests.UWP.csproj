@@ -117,16 +117,16 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
-      <Version>6.2.14</Version>
+      <Version>6.2.15</Version>
     </PackageReference>
     <PackageReference Include="MSTest.TestAdapter">
-      <Version>4.4.0</Version>
+      <Version>4.5.3</Version>
     </PackageReference>
     <PackageReference Include="MSTest.TestFramework">
-      <Version>4.4.0</Version>
+      <Version>4.5.3</Version>
     </PackageReference>
     <!-- TestPlatform.Universal supplies these runtime assemblies to the AppX payload. -->
-    <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="18.9.0" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="18.12.0" ExcludeAssets="runtime" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Elementary.Core\Elementary.Core.csproj">
@@ -142,6 +142,12 @@
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.CSharp.targets" />
+  <!-- TestPlatform.Universal supplies these DLLs. MSTest also adds them as Content. -->
+  <Target Name="RemoveDuplicateMSTestPlatformPayload" BeforeTargets="AssignTargetPaths">
+    <ItemGroup>
+      <Content Remove="@(Content)" Condition="'%(Content.Filename)' == 'Microsoft.TestPlatform.CoreUtilities' Or '%(Content.Filename)' == 'Microsoft.TestPlatform.PlatformAbstractions' Or '%(Content.Filename)' == 'Microsoft.VisualStudio.TestPlatform.ObjectModel'" />
+    </ItemGroup>
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

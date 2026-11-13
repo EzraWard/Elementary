@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net11.0</TargetFrameworks>
     <LangVersion>8.0</LangVersion>
     <Nullable>enable</Nullable>
     <Platforms>AnyCPU</Platforms>
@@ -13,9 +13,9 @@
     <Compile Remove="ApiKeys.Template.cs" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <PackageReference Include="SkiaSharp" Version="4.151.2" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="4.151.2">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net11.0'">
+    <PackageReference Include="SkiaSharp" Version="4.156.0" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="4.156.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime</IncludeAssets>
     </PackageReference>
@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Text.Json" Version="10.0.11" />
+    <PackageReference Include="System.Text.Json" Version="11.0.0" />
   </ItemGroup>
 
   <ItemGroup>

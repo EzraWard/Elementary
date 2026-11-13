@@ -2,8 +2,6 @@ using Elementary.Core.Enums;
 using Elementary.Core.Models;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-using ToolkitSettingsCard = CommunityToolkit.WinUI.Controls.SettingsCard;
-using CommunityToolkit.WinUI.Controls;
 
 namespace Elementary.Uno;
 
@@ -51,25 +49,14 @@ public sealed partial class MainPage
         };
         panel.Children.Add(SettingsCard("Theme", "Set the color scheme you prefer", theme, "\uE790"));
         panel.Children.Add(SectionHeading("Acknowledgements"));
-        var acknowledgement = new SettingsExpander
-        {
-            Header = "NET Bible", Description = "Acknowledgement for the NET Bible",
-            HeaderIcon = new FontIcon { FontFamily = new FontFamily("ms-appx:///Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons"), Glyph = "\uE716" }
-        };
-        acknowledgement.Items.Add(new ToolkitSettingsCard
-        {
-            Header = "Scripture quoted by permission. Quotations designated (NET) are from the NET Bible® copyright ©1996, 2019 by Biblical Studies Press, L.L.C. http://netbible.com All rights reserved."
-        });
-        panel.Children.Add(acknowledgement);
+        panel.Children.Add(SettingsExpander(
+            "NET Bible", "Acknowledgement for the NET Bible", SettingsIcon("\uE716"),
+            "Scripture quoted by permission. Quotations designated (NET) are from the NET Bible® copyright ©1996, 2019 by Biblical Studies Press, L.L.C. http://netbible.com All rights reserved."));
         panel.Children.Add(SectionHeading("About"));
-        var about = new SettingsExpander
-        {
-            Header = "Elementary", Description = "© 2026. All rights reserved.",
-            HeaderIcon = new BitmapIcon { UriSource = new Uri("ms-appx:///Assets/StoreLogo.png"), ShowAsMonochrome = false, Width = 32, Height = 32 },
-            Content = new TextBlock { Text = typeof(MainPage).Assembly.GetName().Version!.ToString(3), IsTextSelectionEnabled = true, Opacity = 0.75 }
-        };
-        about.Items.Add(new ToolkitSettingsCard { Header = new TextBlock { Text = "👨🏻‍👩🏻‍👧🏻‍👦🏻 Hello from Williamstown", TextWrapping = TextWrapping.Wrap } });
-        panel.Children.Add(about);
+        var logo = new BitmapIcon { UriSource = new Uri("ms-appx:///Assets/StoreLogo.png"), ShowAsMonochrome = false, Width = 32, Height = 32 };
+        var version = new TextBlock { Text = typeof(MainPage).Assembly.GetName().Version!.ToString(3), IsTextSelectionEnabled = true, Opacity = 0.75 };
+        panel.Children.Add(SettingsExpander("Elementary", "© 2026. All rights reserved.", logo,
+            "👨🏻‍👩🏻‍👧🏻‍👦🏻 Hello from Williamstown", version));
         panel.Children.Add(new HyperlinkButton { Content = "Send feedback", NavigateUri = new Uri("mailto:ezra.ward@outlook.com") });
         _initializingSettings = false;
         return new ScrollViewer { Content = panel, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
@@ -181,17 +168,51 @@ public sealed partial class MainPage
         return card;
     }
 
-    private ToolkitSettingsCard SettingsCard(string title, string description, FrameworkElement control, string glyph)
+    private Border SettingsCard(string title, string description, FrameworkElement control, string glyph)
     {
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(control, title);
-        return new ToolkitSettingsCard
+        return Card(SettingsHeader(title, description, SettingsIcon(glyph), control));
+    }
+
+    private static Expander SettingsExpander(string title, string description, IconElement icon, string details, FrameworkElement? trailing = null)
+    {
+        return new Expander
         {
-            Header = title, Description = description, Content = control,
-            HeaderIcon = new FontIcon
-            {
-                FontFamily = new FontFamily("ms-appx:///Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons"),
-                Glyph = glyph
-            }
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            Header = SettingsHeader(title, description, icon, trailing),
+            Content = new TextBlock { Text = details, TextWrapping = TextWrapping.Wrap }
         };
     }
+
+    private static Grid SettingsHeader(string title, string description, IconElement icon, FrameworkElement? trailing)
+    {
+        var row = new Grid { ColumnSpacing = 16, MinHeight = 36 };
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        icon.Width = 32;
+        icon.VerticalAlignment = VerticalAlignment.Center;
+        row.Children.Add(icon);
+        var labels = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 2 };
+        labels.Children.Add(new TextBlock { Text = title, TextWrapping = TextWrapping.Wrap });
+        labels.Children.Add(new TextBlock { Text = description, TextWrapping = TextWrapping.Wrap, FontSize = 12, Opacity = 0.75 });
+        Grid.SetColumn(labels, 1);
+        row.Children.Add(labels);
+        if (trailing is not null)
+        {
+            trailing.VerticalAlignment = VerticalAlignment.Center;
+            Grid.SetColumn(trailing, 2);
+            row.Children.Add(trailing);
+        }
+
+        return row;
+    }
+
+    private static FontIcon SettingsIcon(string glyph) => new()
+    {
+        FontFamily = new FontFamily("ms-appx:///Assets/Fonts/Segoe Fluent Icons.ttf#Segoe Fluent Icons"),
+        Glyph = glyph
+    };
 }
