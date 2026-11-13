@@ -17,3 +17,5 @@ dotnet publish src/Elementary.Uno/Elementary.Uno/Elementary.Uno.csproj -c Releas
 ```
 
 AOT improves managed-code execution but can increase download size. Compare initial load separately from chapter navigation, scrolling, and full-Bible searches. Local hosting does not measure real-world network latency. Separate localhost ports have separate saved settings and reading history.
+
+See the [iPhone 11 Home Screen adjustments](ios-home-screen.md) for the iOS behavior and rollback steps.
