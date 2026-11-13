@@ -6,7 +6,7 @@ Publish from the repository root:
 dotnet publish src/Elementary.Uno/Elementary.Uno/Elementary.Uno.csproj -c Release -f net11.0-browserwasm -p:ElementaryWebPreview=true
 ```
 
-This build is named **Elementary Web Preview** when installed. Release publishes enable ahead-of-time compilation. The first publish can take several minutes; subsequent publishes reuse compiler caches.
+This build is named **Elementary Beta** when installed. Release publishes enable ahead-of-time compilation. The first publish can take several minutes; subsequent publishes reuse compiler caches.
 
 Serve the generated `src/Elementary.Uno/Elementary.Uno/bin/Release/net11.0-browserwasm/publish/wwwroot` directory with a static web server that supports WebAssembly MIME types and Brotli/gzip compression. Do not serve the repository root.
 

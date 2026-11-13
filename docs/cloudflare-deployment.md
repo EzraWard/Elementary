@@ -28,7 +28,7 @@ Repeat `npx wrangler@4 deploy --env=` after app changes. You do not need to log 
 npx wrangler@4 deploy --env preview
 ```
 
-This publishes **Elementary Web Preview** to the separate `elementary-bible-preview` Worker. Install it from that Worker's stable URL and install **Elementary Web** from the production Worker's URL. Each origin has its own install and browser-local settings and history. Use the stable Worker URLs for installs you want to keep across deployments.
+This publishes **Elementary Beta** to the separate `elementary-bible-preview` Worker. Install it from that Worker's stable URL and install **Elementary** from the production Worker's URL. Each origin has its own install and browser-local settings and history. Use the stable Worker URLs for installs you want to keep across deployments.
 
 ## Review before publishing
 

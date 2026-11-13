@@ -5,10 +5,10 @@
     <OutputType>Exe</OutputType>
     <UnoSingleProject>true</UnoSingleProject>
     <WasmShellIndexHtmlPath>Platforms\WebAssembly\index.html</WasmShellIndexHtmlPath>
-    <ElementaryWebName>Elementary Web</ElementaryWebName>
-    <ElementaryWebShortName>Elementary Web</ElementaryWebShortName>
-    <ElementaryWebName Condition="'$(ElementaryWebPreview)' == 'true'">Elementary Web Preview</ElementaryWebName>
-    <ElementaryWebShortName Condition="'$(ElementaryWebPreview)' == 'true'">Elem Preview</ElementaryWebShortName>
+    <ElementaryWebName>Elementary</ElementaryWebName>
+    <ElementaryWebShortName>Elementary</ElementaryWebShortName>
+    <ElementaryWebName Condition="'$(ElementaryWebPreview)' == 'true'">Elementary Beta</ElementaryWebName>
+    <ElementaryWebShortName Condition="'$(ElementaryWebPreview)' == 'true'">Elem Beta</ElementaryWebShortName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <UnoIconBackgroundFile>Assets\Icons\appicon.png</UnoIconBackgroundFile>
     <UnoIconForegroundFile>Assets\Icons\unused.svg</UnoIconForegroundFile>

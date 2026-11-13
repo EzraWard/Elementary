@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>__ELEMENTARY_WEB_NAME__</title>
+    <link rel="apple-touch-icon" sizes="256x256" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="./Assets/favicon-16.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="./Assets/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="48x48" href="./Assets/favicon-48.png" />
@@ -50,6 +51,48 @@
         for (const eventName of ["touchstart", "touchmove", "touchend", "touchcancel"]) {
             gestureArea.addEventListener(eventName, event => event.stopPropagation(), { passive: true });
         }
+
+        // Observe an inward swipe without taking over normal scrolling or system gestures.
+        let leftEdgeSwipeHandler;
+        let leftEdgeTouch;
+        globalThis.elementarySetLeftEdgeSwipeHandler = handler => {
+            leftEdgeSwipeHandler = handler;
+            leftEdgeTouch = undefined;
+        };
+        window.addEventListener("touchstart", event => {
+            leftEdgeTouch = undefined;
+            if (!leftEdgeSwipeHandler || !document.documentElement.classList.contains("elementary-ios-standalone")
+                || event.touches.length !== 1 || event.target === gestureArea) return;
+
+            const touch = event.touches[0];
+            if (touch.clientX <= 28) {
+                leftEdgeTouch = { id: touch.identifier, x: touch.clientX, y: touch.clientY };
+            }
+        }, { capture: true, passive: true });
+        window.addEventListener("touchmove", event => {
+            if (!leftEdgeTouch) return;
+            const touch = event.touches[0];
+            if (event.touches.length !== 1 || touch.identifier !== leftEdgeTouch.id) {
+                leftEdgeTouch = undefined;
+                return;
+            }
+            const dx = touch.clientX - leftEdgeTouch.x;
+            const dy = Math.abs(touch.clientY - leftEdgeTouch.y);
+            if (dx < -12 || (dy > 12 && dy > dx)) leftEdgeTouch = undefined;
+        }, { capture: true, passive: true });
+        window.addEventListener("touchend", event => {
+            const start = leftEdgeTouch;
+            leftEdgeTouch = undefined;
+            if (!start || event.touches.length !== 0) return;
+
+            const touch = event.changedTouches[0];
+            const dx = touch.clientX - start.x;
+            const dy = Math.abs(touch.clientY - start.y);
+            if (touch.identifier === start.id && dx >= 56 && dx >= 2 * dy) leftEdgeSwipeHandler?.();
+        }, { capture: true, passive: true });
+        const resetLeftEdgeTouch = () => { leftEdgeTouch = undefined; };
+        window.addEventListener("touchcancel", resetLeftEdgeTouch, { capture: true, passive: true });
+        window.addEventListener("pagehide", resetLeftEdgeTouch);
     </script>
     <div id="uno-body" class="container-fluid uno-body">
         <div class="uno-loader"

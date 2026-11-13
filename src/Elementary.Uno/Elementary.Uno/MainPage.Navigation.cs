@@ -34,6 +34,8 @@ public sealed partial class MainPage
         MainNavigationView.DisplayModeChanged += (_, _) => UpdateNavigationContentBorder();
         MainNavigationView.RegisterPropertyChangedCallback(NavigationView.IsPaneOpenProperty,
             (_, _) => UpdateNavigationContentBorder());
+        Loaded += (_, _) => BrowserNavigationGesture.SetLeftEdgeSwipeHandler(OpenNavigationPaneFromSwipe);
+        Unloaded += (_, _) => BrowserNavigationGesture.SetLeftEdgeSwipeHandler(null);
         Loaded += (_, _) => DispatcherQueue.TryEnqueue(() =>
         {
             MainNavigationView.UpdateLayout();
@@ -59,6 +61,12 @@ public sealed partial class MainPage
                 ? NavigationViewPaneDisplayMode.LeftMinimal : NavigationViewPaneDisplayMode.LeftCompact;
             SearchPanel.Width = Math.Min(320, Math.Max(200, ActualWidth - 90));
         };
+    }
+
+    private void OpenNavigationPaneFromSwipe()
+    {
+        if (!_dialogOpen && !_historyOpen && MainNavigationView.IsPaneVisible && !MainNavigationView.IsPaneOpen)
+            MainNavigationView.IsPaneOpen = true;
     }
 
     private void UpdateNavigationContentBorder()
