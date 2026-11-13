@@ -26,6 +26,8 @@
             "elementary-ios-standalone", isIOS && (navigator.standalone === true || standaloneMode.matches));
         updateGestureShim();
         standaloneMode.addEventListener("change", updateGestureShim);
+        globalThis.elementaryIsIosStandalone = () =>
+            document.documentElement.classList.contains("elementary-ios-standalone");
         // Uno listens on BODY in capture phase, so target/bubble handlers on the
         // overlay run too late. Intercept at WINDOW before Uno sees pointerdown,
         // then suppress that pointer's whole sequence even after it leaves the strip.

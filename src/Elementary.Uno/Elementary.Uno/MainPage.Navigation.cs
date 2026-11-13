@@ -39,6 +39,19 @@ public sealed partial class MainPage
         Loaded += (_, _) => DispatcherQueue.TryEnqueue(() =>
         {
             MainNavigationView.UpdateLayout();
+            if (BrowserNavigationGesture.IsIosStandalone() &&
+                FindTemplateElement(MainNavigationView, "TogglePaneButton") is Button toggle &&
+                FindTemplateElement(toggle, "Icon") is AnimatedIcon icon)
+            {
+                // Scale the glyph without changing the button's layout or tap area.
+                const double scale = 22.0 / 16.0;
+                icon.RenderTransformOrigin = new Windows.Foundation.Point(0.5, 0.5);
+                icon.RenderTransform = new ScaleTransform { ScaleX = scale, ScaleY = scale };
+
+                var offset = new TranslateTransform();
+                toggle.RenderTransform = offset;
+                LayoutUpdated += (_, _) => UpdateIosNavigationLayout(toggle, icon, offset);
+            }
             MainNavigationView.SelectedItem = BibleNavigationItem;
             BibleNavigationItem.InvalidateMeasure();
             BibleNavigationItem.UpdateLayout();
@@ -61,6 +74,53 @@ public sealed partial class MainPage
                 ? NavigationViewPaneDisplayMode.LeftMinimal : NavigationViewPaneDisplayMode.LeftCompact;
             SearchPanel.Width = Math.Min(320, Math.Max(200, ActualWidth - 90));
         };
+    }
+
+    private void UpdateIosNavigationLayout(Button toggle, AnimatedIcon icon, TranslateTransform offset)
+    {
+        bool reading = ReaderLayout.Visibility == Visibility.Visible;
+        bool minimal = MainNavigationView.DisplayMode == NavigationViewDisplayMode.Minimal;
+        if (!reading || !minimal || MainNavigationView.IsPaneOpen ||
+            BibleBookComboBox.ActualHeight == 0 || icon.ActualHeight == 0)
+        {
+            offset.Y = 0;
+        }
+        else
+        {
+            var bookCenter = BibleBookComboBox.TransformToVisual(MainNavigationView)
+                .TransformPoint(new Windows.Foundation.Point(0, BibleBookComboBox.ActualHeight / 2));
+            var iconCenter = icon.TransformToVisual(MainNavigationView)
+                .TransformPoint(new Windows.Foundation.Point(0, icon.ActualHeight / 2));
+            // Compare the laid-out centers without counting the translation already applied.
+            double alignedOffset = Math.Round(bookCenter.Y - iconCenter.Y + offset.Y, 2);
+            if (Math.Abs(alignedOffset - offset.Y) > 0.01)
+                offset.Y = alignedOffset;
+        }
+
+        // Minimal mode puts the toggle above the page content instead of beside it.
+        double topInset = 0;
+        if (!reading && minimal)
+        {
+            var toggleBottom = toggle.TransformToVisual(NavigationContent)
+                .TransformPoint(new Windows.Foundation.Point(0, toggle.ActualHeight));
+            topInset = Math.Max(0, Math.Ceiling(toggleBottom.Y));
+        }
+        if (SecondaryContent.Margin.Top != topInset)
+            SecondaryContent.Margin = new Thickness(0, topInset, 0, 0);
+    }
+
+    private static FrameworkElement? FindTemplateElement(DependencyObject root, string name)
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is FrameworkElement element && element.Name == name)
+                return element;
+            if (FindTemplateElement(child, name) is { } descendant)
+                return descendant;
+        }
+
+        return null;
     }
 
     private void OpenNavigationPaneFromSwipe()
