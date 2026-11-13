@@ -31,6 +31,9 @@ public sealed partial class MainPage
         if (_settings.Translation == ETranslation.NotSet) _settings.Translation = ETranslation.KJV;
         _catalog.SetTranslation(_settings.Translation);
         _streakService = new ReadingStreakService(_settingsService);
+        MainNavigationView.DisplayModeChanged += (_, _) => UpdateNavigationContentBorder();
+        MainNavigationView.RegisterPropertyChangedCallback(NavigationView.IsPaneOpenProperty,
+            (_, _) => UpdateNavigationContentBorder());
         Loaded += (_, _) => DispatcherQueue.TryEnqueue(() =>
         {
             MainNavigationView.UpdateLayout();
@@ -56,6 +59,15 @@ public sealed partial class MainPage
                 ? NavigationViewPaneDisplayMode.LeftMinimal : NavigationViewPaneDisplayMode.LeftCompact;
             SearchPanel.Width = Math.Min(320, Math.Max(200, ActualWidth - 90));
         };
+    }
+
+    private void UpdateNavigationContentBorder()
+    {
+        // Compact mode keeps the icon rail and its template border even when the pane is closed.
+        NavigationContent.BorderThickness =
+            MainNavigationView.DisplayMode == NavigationViewDisplayMode.Minimal && MainNavigationView.IsPaneOpen
+                ? new Thickness(0, 1, 0, 0)
+                : new Thickness(0);
     }
 
     private async void NavigationView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
