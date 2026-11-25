@@ -34,11 +34,14 @@ public sealed partial class MainPage
         MainNavigationView.DisplayModeChanged += (_, _) => UpdateNavigationContentBorder();
         MainNavigationView.RegisterPropertyChangedCallback(NavigationView.IsPaneOpenProperty,
             (_, _) => UpdateNavigationContentBorder());
+#if !WINDOWS
         Loaded += (_, _) => BrowserNavigationGesture.SetLeftEdgeSwipeHandler(OpenNavigationPaneFromSwipe);
         Unloaded += (_, _) => BrowserNavigationGesture.SetLeftEdgeSwipeHandler(null);
+#endif
         Loaded += (_, _) => DispatcherQueue.TryEnqueue(() =>
         {
             MainNavigationView.UpdateLayout();
+#if !WINDOWS
             if (BrowserNavigationGesture.IsIos() &&
                 FindTemplateElement(MainNavigationView, "TogglePaneButton") is Button toggle &&
                 FindTemplateElement(toggle, "Icon") is AnimatedIcon icon)
@@ -52,6 +55,7 @@ public sealed partial class MainPage
                 toggle.RenderTransform = offset;
                 LayoutUpdated += (_, _) => UpdateIosNavigationLayout(toggle, icon, offset);
             }
+#endif
             MainNavigationView.SelectedItem = BibleNavigationItem;
             BibleNavigationItem.InvalidateMeasure();
             BibleNavigationItem.UpdateLayout();
@@ -248,7 +252,11 @@ public sealed partial class MainPage
         var elapsed = _readingClock.Elapsed;
         _readingClock.Restart();
         // A suspended or throttled browser must not accrue time for an inactive reader.
-        if (_currentPage != "Bible" || !_windowActive || !BrowserActivity.HasFocus() || _historyOpen || _dialogOpen
+        if (_currentPage != "Bible" || !_windowActive
+#if !WINDOWS
+            || !BrowserActivity.HasFocus()
+#endif
+            || _historyOpen || _dialogOpen
             || SearchPanel.Visibility == Visibility.Visible || _loadedBook is null || _positioningReader || _pendingBook is not null
             || elapsed.TotalSeconds > 2.5) return;
         _streakService.AddReadingTime(TimeSpan.FromSeconds(1));
@@ -341,6 +349,10 @@ public sealed partial class MainPage
             _ => ElementTheme.Default
         };
         _settingsService.SaveSettings(_settings);
+#if WINDOWS
+        if (App.MainWindow?.Content is FrameworkElement root)
+            root.RequestedTheme = RequestedTheme;
+#endif
         RefreshReaderTypography();
     }
 }

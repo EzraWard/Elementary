@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFrameworks>net11.0-browserwasm</TargetFrameworks>
 
+    <TargetFrameworks Condition="'$(ElementaryWindowsHead)' == 'true'">net11.0-windows10.0.26100.0</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <UnoSingleProject>true</UnoSingleProject>
     <WasmShellIndexHtmlPath>Platforms\WebAssembly\index.html</WasmShellIndexHtmlPath>
@@ -10,6 +11,7 @@
     <ElementaryWebName Condition="'$(ElementaryWebPreview)' == 'true'">Elementary Beta</ElementaryWebName>
     <ElementaryWebShortName Condition="'$(ElementaryWebPreview)' == 'true'">Elem Beta</ElementaryWebShortName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <SkiaSharpVersion>4.157.0</SkiaSharpVersion>
     <UnoIconBackgroundFile>Assets\Icons\appicon.png</UnoIconBackgroundFile>
     <UnoIconForegroundFile>Assets\Icons\unused.svg</UnoIconForegroundFile>
     <UnoSplashScreenFile>Assets\Splash\elementary.png</UnoSplashScreenFile>
@@ -27,6 +29,7 @@
     <Version>$(ApplicationDisplayVersion)</Version>
     <AssemblyVersion>$(ElementaryPackageVersion)</AssemblyVersion>
     <FileVersion>$(ElementaryPackageVersion)</FileVersion>
+    <UnoDisableGenerateAssemblyInfoWorkaround>true</UnoDisableGenerateAssemblyInfoWorkaround>
     <ApplicationVersion>1</ApplicationVersion>
     <!-- Package Publisher -->
     <ApplicationPublisher>Elementary.Uno</ApplicationPublisher>
@@ -43,13 +46,31 @@
     </UnoFeatures>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net11.0-windows10.0.26100.0' and ('$(Configuration)' == 'Debug' or '$(ElementaryDevelopmentPackage)' == 'true')">
+    <ApplicationId>com.grantstreetdesign.elementary.uno.dev</ApplicationId>
+    <ApplicationTitle>Elementary Uno Dev</ApplicationTitle>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(ElementaryWindowsHead)' == 'true' and '$(PublishAot)' == 'true'">
+    <ApplicationId Condition="'$(ElementaryDevelopmentPackage)' == 'true'">com.grantstreetdesign.elementary.uno.dev.aot</ApplicationId>
+    <ApplicationTitle Condition="'$(ElementaryDevelopmentPackage)' == 'true'">Elementary Uno Dev (AOT)</ApplicationTitle>
+    <ApplicationVersion Condition="'$(ElementaryDevelopmentPackage)' == 'true'">2</ApplicationVersion>
+    <PublishReadyToRun>false</PublishReadyToRun>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(ElementaryWindowsHead)' == 'true'">
+    <Content Include="..\..\Elementary.UWP\Assets\Square44x44Logo*.png" Link="Assets\%(Filename)%(Extension)" />
+  </ItemGroup>
+
   <ItemGroup>
+    <PackageReference Include="SkiaSharp" VersionOverride="$(SkiaSharpVersion)" />
     <EmbeddedResource Include="Platforms\WebAssembly\WasmCSS\SafeArea.css" />
     <ProjectReference Include="..\..\Elementary.Core\Elementary.Core.csproj" />
     <UnoIcon Include="Assets\Icons\appicon.png" />
     <Content Include="..\..\Elementary.UWP\Assets\TitleBarIcon.scale-*.png" Link="Assets\%(Filename)%(Extension)" />
     <Content Include="..\..\Elementary.UWP\Assets\Fonts\Segoe Fluent Icons.ttf" Link="Assets\Fonts\Segoe Fluent Icons.ttf" />
     <Content Include="..\..\Elementary.UWP\Assets\Square44x44Logo.targetsize-256.png" Link="Assets\Elementary.png" />
+    <Content Include="..\..\Elementary.UWP\Assets\Square44x44Logo.altform-unplated_targetsize-256.png" Link="Assets\AboutIcon.png" />
     <Content Include="..\..\Elementary.UWP\Assets\StoreLogo.scale-*.png" Link="Assets\%(Filename)%(Extension)" />
     <Content Include="..\..\Elementary.UWP\Assets\Square44x44Logo.targetsize-16.png" Link="Assets\favicon-16.png" />
     <Content Include="..\..\Elementary.UWP\Assets\Square44x44Logo.targetsize-32.png" Link="Assets\favicon-32.png" />
@@ -66,8 +87,12 @@
     <RunAOTCompilation>true</RunAOTCompilation>
   </PropertyGroup>
 
+  <Target Name="IncludeNativeDevelopmentManifest" AfterTargets="Publish" Condition="'$(ElementaryWindowsHead)' == 'true' and '$(ElementaryDevelopmentPackage)' == 'true' and '$(PublishAot)' == 'true'">
+    <Copy SourceFiles="$(TargetDir)AppxManifest.xml" DestinationFolder="$(PublishDir)" />
+  </Target>
+
   <!-- Brand the manifest before Uno adds the generated install icons. -->
-  <Target Name="PrepareElementaryWebShell" BeforeTargets="UnoResizetizeImages">
+  <Target Name="PrepareElementaryWebShell" BeforeTargets="UnoResizetizeImages" Condition="'$(TargetFramework)' == 'net11.0-browserwasm'">
     <PropertyGroup>
       <_ElementaryWebShellDirectory>$(IntermediateOutputPath)elementary-web\</_ElementaryWebShellDirectory>
       <_ElementaryWebIndex>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/Platforms/WebAssembly/index.html').Replace('__ELEMENTARY_WEB_NAME__', '$(ElementaryWebName)'))</_ElementaryWebIndex>

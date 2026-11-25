@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
@@ -9,7 +9,7 @@
   <Identity
     Name="21366BowTieWorkshop.ElementaryBible"
     Publisher="CN=16499A74-7239-425D-8D4D-A75684AF24BE"
-    Version="1.0.1.0" />
+    Version="1.1.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="0fb78b33-05da-47fc-837a-442b42e59bd9" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 

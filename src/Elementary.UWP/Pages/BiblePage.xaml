@@ -8,6 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     xmlns:viewmodels="using:Elementary.ViewModels"
+    xmlns:models="using:Elementary.Core.Models"
     xmlns:converters="using:Elementary.UWP.Converters"
     mc:Ignorable="d"
     d:DataContext="{d:DesignInstance viewmodels:BiblePageViewModel, IsDesignTimeCreatable=True}"
@@ -26,7 +27,7 @@
         </Grid.RowDefinitions>
         <ListView x:Name="BibleChaptersListView"
                   Grid.RowSpan="2"
-                  ItemsSource="{Binding ReaderItems}"
+                  ItemsSource="{x:Bind ViewModel.ReaderItems, Mode=OneWay}"
                   SelectionMode="None"
                   IsItemClickEnabled="False"
                   IsTabStop="False"
@@ -52,61 +53,61 @@
                 </Style>
             </ListView.ItemContainerStyle>
             <ListView.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="viewmodels:BibleReaderItem">
                     <Grid x:Name="ReaderItemGrid"
                           Margin="0,0,0,20"
                           Loaded="ReaderItemGrid_Loaded"
                           Unloaded="ReaderItemGrid_Unloaded">
                         <StackPanel MaxWidth="700"
                                     HorizontalAlignment="Center">
-                            <TextBlock Text="{Binding BookTitle}"
+                            <TextBlock Text="{x:Bind BookTitle}"
                                        Tag="bookheading"
                                        FontSize="34"
                                        FontWeight="Bold"
                                        HorizontalAlignment="Center"
                                        TextAlignment="Center"
                                        Margin="0,68,0,0"
-                                       Visibility="{Binding IsBookHeader, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                            <Border Height="{Binding SpacerHeight}"
-                                    Visibility="{Binding IsBottomSpacer, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                       Visibility="{x:Bind IsBookHeader, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                            <Border Height="{x:Bind SpacerHeight}"
+                                    Visibility="{x:Bind IsBottomSpacer, Converter={StaticResource BoolToVisibilityConverter}}"/>
                             <TextBlock FontSize="28"
                                         Tag="chapterheading"
                                         FontWeight="Bold"
                                         HorizontalAlignment="Center"
                                         TextAlignment="Center"
                                         Margin="0,24,0,8"
-                                        Visibility="{Binding IsChapter, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        Visibility="{x:Bind IsChapter, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <Run Text="Chapter " />
-                                <Run Text="{Binding ChapterIndex}" />
+                                <Run Text="{x:Bind ChapterIndex}" />
                             </TextBlock>
-                            <ItemsControl ItemsSource="{Binding DisplayLines}">
+                            <ItemsControl ItemsSource="{x:Bind DisplayLines}">
                                 <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
+                                    <DataTemplate x:DataType="models:ChapterDisplayLine">
                                         <StackPanel Loaded="DisplayLineContainer_Loaded">
-                                            <Grid Visibility="{Binding IsVerse, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,6">
+                                            <Grid Visibility="{x:Bind IsVerse, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,6">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Text="{Binding VerseNumberText}" Tag="versenum" Margin="0,4,6,0" VerticalAlignment="Top" Opacity="0.72"/>
+                                                <TextBlock Text="{x:Bind VerseNumberText}" Tag="versenum" Margin="0,4,6,0" VerticalAlignment="Top" Opacity="0.72"/>
                                                 <TextBlock Grid.Column="1"
-                                                           Text="{Binding Text}"
+                                                           Text="{x:Bind Text}"
                                                            Tag="body"
                                                            TextWrapping="WrapWholeWords"/>
                                             </Grid>
-                                            <TextBlock Text="{Binding Text}"
+                                            <TextBlock Text="{x:Bind Text}"
                                                        Tag="heading"
-                                                       Visibility="{Binding IsHeading, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                       Visibility="{x:Bind IsHeading, Converter={StaticResource BoolToVisibilityConverter}}"
                                                        FontSize="20"
                                                        FontWeight="SemiBold"
                                                        HorizontalAlignment="Center"
                                                        TextAlignment="Center"
                                                        Margin="0,14,0,8"
                                                        TextWrapping="WrapWholeWords"/>
-                                            <TextBlock Text="{Binding Text}" Tag="body" Visibility="{Binding IsPoetry, Converter={StaticResource BoolToVisibilityConverter}}" Margin="20,0,0,6" TextWrapping="WrapWholeWords"/>
-                                            <TextBlock Text="{Binding Text}" Tag="body" Visibility="{Binding IsText, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,6" TextWrapping="WrapWholeWords"/>
-                                            <TextBlock Text="{Binding Text}" Tag="footnote" Visibility="{Binding IsFootnote, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,4,0,0" Opacity="0.75" TextWrapping="WrapWholeWords"/>
-                                            <Border Visibility="{Binding IsParagraphBreak, Converter={StaticResource BoolToVisibilityConverter}}" Height="8" Background="Transparent"/>
+                                            <TextBlock Text="{x:Bind Text}" Tag="body" Visibility="{x:Bind IsPoetry, Converter={StaticResource BoolToVisibilityConverter}}" Margin="20,0,0,6" TextWrapping="WrapWholeWords"/>
+                                            <TextBlock Text="{x:Bind Text}" Tag="body" Visibility="{x:Bind IsText, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,6" TextWrapping="WrapWholeWords"/>
+                                            <TextBlock Text="{x:Bind Text}" Tag="footnote" Visibility="{x:Bind IsFootnote, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,4,0,0" Opacity="0.75" TextWrapping="WrapWholeWords"/>
+                                            <Border Visibility="{x:Bind IsParagraphBreak, Converter={StaticResource BoolToVisibilityConverter}}" Height="8" Background="Transparent"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -125,26 +126,31 @@
 		<Border x:Name="TopFadeBorder" Grid.RowSpan="2" VerticalAlignment="Top"
 		        Height="78" IsHitTestVisible="False" Margin="-22,0,-22,0" />
 
- 		<Border x:Name="ChooserBorder" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="12" Padding="6" CornerRadius="6" Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}" Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
+        <Border x:Name="ChooserBorder" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="12" Padding="6" CornerRadius="6" Visibility="{x:Bind ViewModel.IsLoaded, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}">
 			<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
                 <ComboBox x:Name="BibleBookComboBox"
                           Width="200"
                           FontSize="12"
                           IsEnabled="True"
-                          ItemsSource="{Binding Bible.Books}"
-                          DisplayMemberPath="Title"
+                          ItemsSource="{x:Bind ViewModel.Bible.Books, Mode=OneWay}"
                           PlaceholderText="Bible" 
-                          Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
-                          SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged"/>
+                          Visibility="{x:Bind ViewModel.IsLoaded, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
+                          SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="models:Book">
+                            <TextBlock Text="{x:Bind Title}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
 
                 <ComboBox x:Name="BookChapterComboBox" 
                           Width="100"
                           FontSize="12"
                           IsEnabled="True"
                           PlaceholderText="Chapter" 
-                          Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibilityConverter}}"
+                          Visibility="{x:Bind ViewModel.IsLoaded, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
                           DropDownClosed="BookChapterComboBox_DropDownClosed"
-                          SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged"/>
+                          SelectionChanged="BibleBookChapterComboBoxes_SelectionChanged" />
 			</StackPanel>
 		</Border>
 

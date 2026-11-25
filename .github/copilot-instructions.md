@@ -8,16 +8,16 @@
 - Build the main test project:
   - `dotnet build .\src\Elementary.Tests\Elementary.Tests.csproj --nologo`
 - Run the unit tests:
-  - `dotnet test .\src\Elementary.Tests\Elementary.Tests.csproj --nologo`
+  - `dotnet test --project .\src\Elementary.Tests\Elementary.Tests.csproj --nologo`
 - Run one test method:
-  - `dotnet test .\src\Elementary.Tests\Elementary.Tests.csproj --nologo --filter "FullyQualifiedName~UsfmParserTests.ParseBook_ShouldExtractTitleAndChapters"`
-- UWP projects (`src\Elementary.UWP`, `src\Elementary.Tests.UWP`) are classic UWP projects and are typically built/run from Visual Studio with x86/x64/ARM64 configs.
+  - `dotnet test --project .\src\Elementary.Tests\Elementary.Tests.csproj --nologo --filter "FullyQualifiedName~UsfmParserTests.ParseBook_ShouldExtractTitleAndChapters"`
+- UWP projects (`src\Elementary.UWP`, `src\Elementary.Tests.UWP`) are SDK-style .NET 11 UWP projects and are typically built/run from Visual Studio with x86/x64/ARM64 configs.
 - No dedicated lint/analyzer script is configured.
 
 ## High-level architecture
 
-- `src\Elementary.slnx` includes `Elementary.Core`, `Elementary.VerseOfTheDay`, `Elementary.WidgetApp`, `Elementary.Packaging`, `Elementary.Tests.UWP`, `Elementary.Tests`, `Elementary.VerseOfTheDay.ConsolePreview`, and `Elementary.UWP`.
-- `Elementary.Core` (`netstandard2.0`) holds the Bible domain model, parsing, and shared services: settings, file access, Bible loading, search, and reading streak logic.
+- `src\Elementary.slnx` includes `Elementary.Core`, `Elementary.Uno`, `Elementary.VerseOfTheDay`, `Elementary.WidgetApp`, `Elementary.Tests.UWP`, `Elementary.Tests`, `Elementary.VerseOfTheDay.ConsolePreview`, and `Elementary.UWP`.
+- `Elementary.Core` (`net11.0`) holds the Bible domain model, parsing, and shared services for settings, file access, Bible loading, search, and reading streaks.
 - `Elementary.UWP` is the main app shell. XAML pages and viewmodels live here, and `App.Configuration.xaml.cs` is the composition root that registers platform services and shared core services.
 - `Elementary.VerseOfTheDay` is the shared Verse-of-the-Day library used by the widget app, console preview, and UWP app. `Elementary.WidgetApp` is the Windows App SDK entry point; `Elementary.VerseOfTheDay.ConsolePreview` is a .NET console app for preview/debugging.
 - `Elementary.Tests` covers core behavior with MSTest + Moq, and `Elementary.Tests.UWP` covers Windows-specific provider behavior.

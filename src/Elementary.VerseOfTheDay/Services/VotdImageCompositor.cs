@@ -94,7 +94,6 @@ namespace Elementary.VerseOfTheDay.Services
             for (var i = 0; i < 3; i++)
             {
                 var startY = NextFloat(random, -0.1f, 1.1f) * height;
-#if NET11_0_OR_GREATER
                 using var pathBuilder = new SKPathBuilder();
                 pathBuilder.MoveTo(-width * 0.15f, startY);
                 pathBuilder.CubicTo(
@@ -102,14 +101,6 @@ namespace Elementary.VerseOfTheDay.Services
                     width * 0.65f, NextFloat(random, -0.2f, 1.2f) * height,
                     width * 1.15f, NextFloat(random, -0.1f, 1.1f) * height);
                 using var path = pathBuilder.Detach();
-#else
-                using var path = new SKPath();
-                path.MoveTo(-width * 0.15f, startY);
-                path.CubicTo(
-                    width * 0.25f, NextFloat(random, -0.2f, 1.2f) * height,
-                    width * 0.65f, NextFloat(random, -0.2f, 1.2f) * height,
-                    width * 1.15f, NextFloat(random, -0.1f, 1.1f) * height);
-#endif
 
                 using var ribbonPaint = new SKPaint
                 {
@@ -288,11 +279,7 @@ namespace Elementary.VerseOfTheDay.Services
             SKFont font,
             SKPaint paint)
         {
-#if NET10_0_OR_GREATER
             canvas.DrawText(text, x, y, SKTextAlign.Left, font, paint);
-#else
-            canvas.DrawText(text, x, y, font, paint);
-#endif
         }
 
         internal static float CalculateFontSize(string text, float textAreaWidth, float textAreaHeight, int imageWidth)
@@ -422,14 +409,7 @@ namespace Elementary.VerseOfTheDay.Services
 
         private static float MeasureText(string text, SKFont font, SKPaint paint)
         {
-#if NET10_0_OR_GREATER
             return font.MeasureText(text, paint);
-#else
-            var glyphCount = font.CountGlyphs(text);
-            var glyphs = new ushort[glyphCount];
-            font.GetGlyphs(text, glyphs);
-            return font.MeasureText(new ReadOnlySpan<ushort>(glyphs, 0, glyphCount), paint);
-#endif
         }
     }
 }

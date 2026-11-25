@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Data;
 
 namespace Elementary.UWP.Converters
 {
-    public class BoolToVisibilityConverter : IValueConverter
+    public partial class BoolToVisibilityConverter : IValueConverter
     {
         public bool IsInverted { get; set; } = false;
 

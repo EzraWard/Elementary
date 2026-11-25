@@ -21,7 +21,7 @@
     <Application Id="App"
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
-      <uap:VisualElements />
+      <uap:VisualElements Square44x44Logo="Assets\Square44x44Logo.png" BackgroundColor="transparent" />
     </Application>
   </Applications>
 

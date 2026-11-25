@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
@@ -7,7 +7,7 @@
 
   <Identity Name="7208e7df-b58e-4bc9-bdf5-27daad386ef5"
             Publisher="CN=EzraW"
-            Version="1.0.1.0" />
+            Version="1.1.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="7208e7df-b58e-4bc9-bdf5-27daad386ef5" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
@@ -25,7 +25,7 @@
     <Resource Language="x-generate" />
   </Resources>
   <Applications>
-    <Application Id="vstest.executionengine.universal.App"
+    <Application Id="App"
         Executable="$targetnametoken$.exe"
         EntryPoint="Elementary.Tests.UWP.App">
       <uap:VisualElements

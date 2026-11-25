@@ -9,7 +9,7 @@
   <Identity
     Name="GrantStreetDesign.ElementaryBible.Debug"
     Publisher="CN=16499A74-7239-425D-8D4D-A75684AF24BE"
-    Version="1.0.1.0" />
+    Version="1.1.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="97902179-61ec-445c-81c0-f117ffd6bcd6" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 

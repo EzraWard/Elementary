@@ -13,6 +13,14 @@ internal sealed partial class LocalSettingsProvider : ISettingsProvider
 
     public void DeleteSetting(string key) => Remove(Prefix + key);
 
+#if WINDOWS
+    private static Windows.Foundation.Collections.IPropertySet Values =>
+        Windows.Storage.ApplicationData.Current.LocalSettings.Values;
+
+    private static string? Read(string key) => Values.TryGetValue(key, out var value) ? value as string : null;
+    private static void Write(string key, string value) => Values[key] = value;
+    private static void Remove(string key) => Values.Remove(key);
+#else
     [JSImport("globalThis.localStorage.getItem")]
     private static partial string? Read(string key);
 
@@ -21,4 +29,5 @@ internal sealed partial class LocalSettingsProvider : ISettingsProvider
 
     [JSImport("globalThis.localStorage.removeItem")]
     private static partial void Remove(string key);
+#endif
 }

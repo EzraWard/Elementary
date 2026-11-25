@@ -1,9 +1,8 @@
-﻿using CommunityToolkit.WinUI.Helpers;
+using CommunityToolkit.WinUI.Helpers;
 using Elementary.Helpers;
 using Elementary.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Reflection;
 using System.Threading.Tasks;
 using Windows.UI.Core;
 using Windows.UI.ViewManagement;
@@ -163,9 +162,16 @@ namespace Elementary
 
         private bool NavigateToView(string clickedView, object parameter = null)
         {
-            var view = Assembly.GetExecutingAssembly().GetType($"Elementary.{clickedView}");
+            var view = clickedView switch
+            {
+                "BiblePage" => typeof(BiblePage),
+                "SettingsPage" => typeof(SettingsPage),
+                "StreakPage" => typeof(StreakPage),
+                "VerseOfTheDayPage" => typeof(VerseOfTheDayPage),
+                _ => null
+            };
 
-            if (string.IsNullOrWhiteSpace(clickedView) || view == null) return false;
+            if (view == null) return false;
 
             if (parameter == null && clickedView == "BiblePage" && ContentFrame.CanGoBack)
             {

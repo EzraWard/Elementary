@@ -30,7 +30,7 @@ public sealed partial class MainPage
             await NavigateToBookAsync(_catalog.Books.FirstOrDefault(book => book.Id == bookId) ?? _catalog.Books[0], chapter);
         };
         panel.Children.Add(SettingsCard("Translation", "The translation of the Bible you would like to use", translation, "\uE736"));
-        var numbers = new ToggleSwitch { IsOn = _settings.ShowVerseNumbers ?? true };
+        var numbers = new ToggleSwitch { MinWidth = 0, HorizontalAlignment = HorizontalAlignment.Right, OnContent = null, OffContent = null, IsOn = _settings.ShowVerseNumbers ?? true };
         numbers.Toggled += (_, _) => { if (_initializingSettings) return; _settings.ShowVerseNumbers = numbers.IsOn; ApplyReaderSettings(); };
         panel.Children.Add(SettingsCard("Show verse numbers", "Choose whether to show verse numbers inline", numbers, "\uE8A4"));
         var font = new ComboBox { ItemsSource = new[] { "Segoe UI", "Georgia" }, SelectedIndex = _settings.Font == EFont.Georgia ? 1 : 0 };
@@ -51,15 +51,27 @@ public sealed partial class MainPage
         panel.Children.Add(SectionHeading("Acknowledgements"));
         panel.Children.Add(SettingsExpander(
             "NET Bible", "Acknowledgement for the NET Bible", SettingsIcon("\uE716"),
-            "Scripture quoted by permission. Quotations designated (NET) are from the NET Bible® copyright ©1996, 2019 by Biblical Studies Press, L.L.C. http://netbible.com All rights reserved."));
+            new TextBlock { TextWrapping = TextWrapping.Wrap, Text = "Scripture quoted by permission. Quotations designated (NET) are from the NET Bible® copyright ©1996, 2019 by Biblical Studies Press, L.L.C. http://netbible.com All rights reserved." }));
         panel.Children.Add(SectionHeading("About"));
-        var logo = new BitmapIcon { UriSource = new Uri("ms-appx:///Assets/StoreLogo.png"), ShowAsMonochrome = false, Width = 32, Height = 32 };
+        var logo = new ImageIcon { Source = new BitmapImage(new Uri("ms-appx:///Assets/AboutIcon.png")), Width = 24, Height = 24 };
         var version = new TextBlock { Text = typeof(MainPage).Assembly.GetName().Version!.ToString(3), IsTextSelectionEnabled = true, Opacity = 0.75 };
         panel.Children.Add(SettingsExpander("Elementary", "© 2026. All rights reserved.", logo,
-            "👨🏻‍👩🏻‍👧🏻‍👦🏻 Hello from Williamstown", version));
+            CreateAboutGreeting(), version));
         panel.Children.Add(new HyperlinkButton { Content = "Send feedback", NavigateUri = new Uri("mailto:ezra.ward@outlook.com") });
         _initializingSettings = false;
-        return new ScrollViewer { Content = panel, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+        var scroll = new ScrollViewer
+        {
+            Content = panel,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            HorizontalScrollMode = ScrollMode.Disabled
+        };
+        scroll.LayoutUpdated += (_, _) =>
+        {
+            var width = Math.Clamp(scroll.ViewportWidth - panel.Margin.Left - panel.Margin.Right, 0, panel.MaxWidth);
+            if (double.IsFinite(width) && panel.Width != width) panel.Width = width;
+        };
+        return scroll;
     }
 
     private ScrollViewer CreateStreakView()
@@ -174,25 +186,43 @@ public sealed partial class MainPage
         return Card(SettingsHeader(title, description, SettingsIcon(glyph), control));
     }
 
-    private static Expander SettingsExpander(string title, string description, IconElement icon, string details, FrameworkElement? trailing = null)
+    private static Expander SettingsExpander(string title, string description, IconElement icon, UIElement details, FrameworkElement? trailing = null)
     {
+        var header = SettingsHeader(title, description, icon, trailing);
+        header.Margin = new Thickness(0, 16, 0, 16);
         return new Expander
         {
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            Header = SettingsHeader(title, description, icon, trailing),
-            Content = new TextBlock { Text = details, TextWrapping = TextWrapping.Wrap }
+            Padding = new Thickness(0),
+            Header = header,
+            Content = new Border { Padding = new Thickness(16), Child = details }
         };
+    }
+
+    private static StackPanel CreateAboutGreeting()
+    {
+        var greeting = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        var family = new Image
+        {
+            Source = new BitmapImage(new Uri("ms-appx:///Assets/FamilyEmoji.png")),
+            Width = 24,
+            Height = 24
+        };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(family, "Family");
+        greeting.Children.Add(family);
+        greeting.Children.Add(new TextBlock { Text = "Hello from Williamstown", VerticalAlignment = VerticalAlignment.Center });
+        return greeting;
     }
 
     private static Grid SettingsHeader(string title, string description, IconElement icon, FrameworkElement? trailing)
     {
         var row = new Grid { ColumnSpacing = 16, MinHeight = 36 };
-        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(32) });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-        icon.Width = 32;
+        icon.HorizontalAlignment = HorizontalAlignment.Center;
         icon.VerticalAlignment = VerticalAlignment.Center;
         row.Children.Add(icon);
         var labels = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 2 };

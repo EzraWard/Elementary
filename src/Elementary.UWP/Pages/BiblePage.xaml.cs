@@ -6,6 +6,7 @@ using Elementary.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -26,6 +27,7 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Hosting;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+using WinRT;
 
 namespace Elementary
 {
@@ -50,6 +52,7 @@ namespace Elementary
         private const double InfiniteScrollEdgeThreshold = 900d;
 
         private readonly BiblePageViewModel _viewModel;
+        private BiblePageViewModel ViewModel => _viewModel;
         private ScrollViewer _readerScrollViewer;
         private bool _isLoaded;
         private bool _isInitializing;
@@ -818,7 +821,7 @@ namespace Elementary
         {
             if (!_isLoaded || _isUpdatingFromScroll || _suppressComboHandling) return;
 
-            if (sender == BibleBookComboBox)
+            if (sender is ComboBox comboBox && comboBox == BibleBookComboBox)
             {
                 if (!(BibleBookComboBox.SelectedItem is Book selectedBook))
                 {
@@ -838,7 +841,9 @@ namespace Elementary
                 return;
             }
 
-            if (!(BookChapterComboBox.SelectedItem is int selectedChapterIndex)) return;
+            var selectedIndex = BookChapterComboBox.SelectedIndex;
+            if (selectedIndex < 0 || selectedIndex >= _viewModel.ChapterIndices.Count) return;
+            var selectedChapterIndex = _viewModel.ChapterIndices[selectedIndex];
 
             var targetBook = _isAwaitingChapterSelection && BibleBookComboBox.SelectedItem is Book pendingBook
                 ? pendingBook
@@ -982,6 +987,7 @@ namespace Elementary
             await ScrollToCurrentChapterAsync();
         }
 
+        [DynamicDependency(DynamicallyAccessedMemberTypes.NonPublicConstructors, typeof(ListViewItem))]
         private FrameworkElement GetChapterElement(BibleReaderItem readerItem)
         {
             if (readerItem == null)
@@ -990,7 +996,7 @@ namespace Elementary
             }
 
             var itemIndex = _viewModel.ReaderItems.IndexOf(readerItem);
-            if (itemIndex >= 0 && BibleChaptersListView.ContainerFromIndex(itemIndex) is ListViewItem container)
+            if (itemIndex >= 0 && GetProjectedElement<ListViewItem>(BibleChaptersListView.ContainerFromIndex(itemIndex)) is { } container)
             {
                 if (container.ContentTemplateRoot is FrameworkElement contentTemplateRoot)
                 {
@@ -1459,10 +1465,7 @@ namespace Elementary
                     BookChapterComboBox.ItemsSource = _viewModel.ChapterIndices;
                 }
 
-                if (!(BookChapterComboBox.SelectedItem is int selectedChapterIndex) || selectedChapterIndex != _viewModel.SelectedChapterIndex)
-                {
-                    BookChapterComboBox.SelectedItem = _viewModel.SelectedChapterIndex;
-                }
+                BookChapterComboBox.SelectedIndex = _viewModel.ChapterIndices.IndexOf(_viewModel.SelectedChapterIndex);
             }
             finally
             {
@@ -1834,10 +1837,11 @@ namespace Elementary
             }
         }
 
-        private static T FindDescendant<T>(DependencyObject root) where T : DependencyObject
+        private static T FindDescendant<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.NonPublicConstructors)] T>(DependencyObject root)
+            where T : DependencyObject
         {
             if (root == null) return null;
-            if (root is T typedRoot) return typedRoot;
+            if (GetProjectedElement<T>(root) is { } typedRoot) return typedRoot;
 
             var childCount = VisualTreeHelper.GetChildrenCount(root);
             for (int i = 0; i < childCount; i++)
@@ -1847,6 +1851,21 @@ namespace Elementary
                 {
                     return result;
                 }
+            }
+
+            return null;
+        }
+
+        // Visual-tree APIs can return a base projection for a native template part under AOT.
+        // Use the native class name to request the concrete projection when needed.
+        private static T GetProjectedElement<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.NonPublicConstructors)] T>(DependencyObject element)
+            where T : DependencyObject
+        {
+            if (element is T projectedElement) return projectedElement;
+            if (element is IWinRTObject winrtElement &&
+                new IInspectable(winrtElement.NativeObject).GetRuntimeClassName(noThrow: true) == typeof(T).FullName)
+            {
+                return ComWrappersSupport.CreateRcwForComObject<T>(winrtElement.NativeObject.ThisPtr);
             }
 
             return null;

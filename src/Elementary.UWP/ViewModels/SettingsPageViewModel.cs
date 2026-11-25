@@ -174,25 +174,29 @@ namespace Elementary.ViewModels
     }
 
     // Helper classes for ComboBox binding
-    public class TranslationOption
+    [WinRT.GeneratedBindableCustomProperty]
+    public partial class TranslationOption
     {
         public string Display { get; set; }
         public ETranslation Value { get; set; }
     }
 
-    public class FontOption
+    [WinRT.GeneratedBindableCustomProperty]
+    public partial class FontOption
     {
         public string Display { get; set; }
         public EFont Value { get; set; }
     }
 
-    public class FontSizeOption
+    [WinRT.GeneratedBindableCustomProperty]
+    public partial class FontSizeOption
     {
         public string Display { get; set; }
         public EFontSize Value { get; set; }
     }
 
-    public class ThemeOption
+    [WinRT.GeneratedBindableCustomProperty]
+    public partial class ThemeOption
     {
         public string Display { get; set; }
         public ETheme Value { get; set; }

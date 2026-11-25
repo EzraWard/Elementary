@@ -19,6 +19,32 @@ public sealed partial class MainPage : Page
     public MainPage()
     {
         InitializeComponent();
+#if WINDOWS
+        if (App.MainWindow is { } window)
+        {
+            if (Microsoft.UI.Composition.SystemBackdrops.MicaController.IsSupported())
+            {
+                window.SystemBackdrop = new Microsoft.UI.Xaml.Media.MicaBackdrop();
+                Background = null;
+                ShellLayout.Background = null;
+            }
+            window.ExtendsContentIntoTitleBar = true;
+            window.Title = Windows.ApplicationModel.Package.Current.DisplayName;
+            var titleBar = new TitleBar
+            {
+                Title = window.Title,
+                IconSource = new BitmapIconSource { UriSource = new Uri("ms-appx:///Assets/TitleBarIcon.png"), ShowAsMonochrome = false }
+            };
+            // Keep the icon on the navigation rail centerline in both title-bar inset states.
+            const double iconSize = 16;
+            var inset = (MainNavigationView.CompactPaneLength - iconSize) / 2;
+            titleBar.Resources["TitleBarLeftPaddingWidth"] = 0d;
+            titleBar.Resources["TitleBarLeftHeaderPaddingWidth"] = inset;
+            titleBar.Resources["TitleBarHeaderNegativeInsetPaddingWidth"] = inset;
+            ShellLayout.Children.Add(titleBar);
+            window.SetTitleBar(titleBar);
+        }
+#endif
         InitializeShell();
         VerseList.ItemsSource = _readerLines;
         Loaded += MainPage_Loaded;
@@ -213,89 +239,89 @@ public sealed partial class MainPage : Page
         return System.Text.RegularExpressions.Regex.Replace(
             System.Net.WebUtility.HtmlDecode(text), "<[^>]+>", string.Empty);
     }
+}
 
-    private sealed class SearchResultRow
+public sealed class SearchResultRow
+{
+    public Services.ScriptureBook Book { get; }
+    public int Chapter { get; }
+    public int Verse { get; }
+    public string ReferenceText { get; }
+    public string VerseText { get; }
+
+    public SearchResultRow(Services.ScriptureBook book, int chapter, int verse, string referenceText, string verseText)
     {
-        public Services.ScriptureBook Book { get; }
-        public int Chapter { get; }
-        public int Verse { get; }
-        public string ReferenceText { get; }
-        public string VerseText { get; }
+        Book = book;
+        Chapter = chapter;
+        Verse = verse;
+        ReferenceText = referenceText;
+        VerseText = verseText;
+    }
+}
 
-        public SearchResultRow(Services.ScriptureBook book, int chapter, int verse, string referenceText, string verseText)
-        {
-            Book = book;
-            Chapter = chapter;
-            Verse = verse;
-            ReferenceText = referenceText;
-            VerseText = verseText;
-        }
+public sealed class ReaderLine : System.ComponentModel.INotifyPropertyChanged
+{
+    public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
+    public Microsoft.UI.Xaml.Media.Brush? HighlightBrush { get; private set; }
+    public void Highlight(bool active)
+    {
+        HighlightBrush = active ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Color.FromArgb(65, 80, 160, 240)) : null;
+        PropertyChanged?.Invoke(this, new(nameof(HighlightBrush)));
+    }
+    public string Text { get; }
+    public string Number { get; }
+    public Visibility VerseVisibility { get; }
+    public Visibility HeadingVisibility { get; }
+    public Visibility PoetryVisibility { get; }
+    public Visibility TextVisibility { get; }
+    public Visibility FootnoteVisibility { get; }
+    public Visibility ParagraphVisibility { get; }
+    public Visibility NumberVisibility { get; }
+    public double BodySize { get; } = 18;
+    public double NumberSize => BodySize * 0.7;
+    public double HeadingSize { get; private set; }
+    public Thickness HeadingMargin { get; private set; } = new(0, 14, 0, 8);
+    public Microsoft.UI.Xaml.Media.FontFamily ReaderFont { get; } = new("ms-appx:///Assets/Fonts/SegoeUI.ttf#Segoe UI");
+    public Microsoft.UI.Xaml.Media.FontFamily HeadingFont { get; private set; } = new("ms-appx:///Assets/Fonts/SegoeUIBold.ttf#Segoe UI");
+
+    public ReaderLine(ChapterDisplayLine line, Elementary.Core.Interfaces.ISettings settings)
+    {
+        BodySize = settings.FontSize == Elementary.Core.Enums.EFontSize.Small ? 14 : settings.FontSize == Elementary.Core.Enums.EFontSize.Large ? 22 : 18;
+        HeadingSize = BodySize * 1.2;
+        ReaderFont = new(settings.Font == Elementary.Core.Enums.EFont.Georgia ? "ms-appx:///Assets/Fonts/Georgia.ttf#Georgia" : "ms-appx:///Assets/Fonts/SegoeUI.ttf#Segoe UI");
+        HeadingFont = new(settings.Font == Elementary.Core.Enums.EFont.Georgia ? "ms-appx:///Assets/Fonts/GeorgiaBold.ttf#Georgia" : "ms-appx:///Assets/Fonts/SegoeUIBold.ttf#Segoe UI");
+        NumberVisibility = ToVisibility(settings.ShowVerseNumbers ?? true);
+        Text = line.Text ?? string.Empty;
+        Number = line.VerseNumberText;
+        VerseVisibility = ToVisibility(line.IsVerse);
+        HeadingVisibility = ToVisibility(line.IsHeading);
+        PoetryVisibility = ToVisibility(line.IsPoetry);
+        TextVisibility = ToVisibility(line.IsText);
+        FootnoteVisibility = ToVisibility(line.IsFootnote);
+        ParagraphVisibility = ToVisibility(line.IsParagraphBreak);
     }
 
-    private sealed class ReaderLine : System.ComponentModel.INotifyPropertyChanged
+    private ReaderLine(string text)
     {
-        public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
-        public Microsoft.UI.Xaml.Media.Brush? HighlightBrush { get; private set; }
-        public void Highlight(bool active)
-        {
-            HighlightBrush = active ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Color.FromArgb(65, 80, 160, 240)) : null;
-            PropertyChanged?.Invoke(this, new(nameof(HighlightBrush)));
-        }
-        public string Text { get; }
-        public string Number { get; }
-        public Visibility VerseVisibility { get; }
-        public Visibility HeadingVisibility { get; }
-        public Visibility PoetryVisibility { get; }
-        public Visibility TextVisibility { get; }
-        public Visibility FootnoteVisibility { get; }
-        public Visibility ParagraphVisibility { get; }
-        public Visibility NumberVisibility { get; }
-        public double BodySize { get; } = 18;
-        public double NumberSize => BodySize * 0.7;
-        public double HeadingSize { get; private set; }
-        public Thickness HeadingMargin { get; private set; } = new(0, 14, 0, 8);
-        public Microsoft.UI.Xaml.Media.FontFamily ReaderFont { get; } = new("ms-appx:///Assets/Fonts/SegoeUI.ttf#Segoe UI");
-        public Microsoft.UI.Xaml.Media.FontFamily HeadingFont { get; private set; } = new("ms-appx:///Assets/Fonts/SegoeUIBold.ttf#Segoe UI");
-
-        public ReaderLine(ChapterDisplayLine line, Elementary.Core.Interfaces.ISettings settings)
-        {
-            BodySize = settings.FontSize == Elementary.Core.Enums.EFontSize.Small ? 14 : settings.FontSize == Elementary.Core.Enums.EFontSize.Large ? 22 : 18;
-            HeadingSize = BodySize * 1.2;
-            ReaderFont = new(settings.Font == Elementary.Core.Enums.EFont.Georgia ? "ms-appx:///Assets/Fonts/Georgia.ttf#Georgia" : "ms-appx:///Assets/Fonts/SegoeUI.ttf#Segoe UI");
-            HeadingFont = new(settings.Font == Elementary.Core.Enums.EFont.Georgia ? "ms-appx:///Assets/Fonts/GeorgiaBold.ttf#Georgia" : "ms-appx:///Assets/Fonts/SegoeUIBold.ttf#Segoe UI");
-            NumberVisibility = ToVisibility(settings.ShowVerseNumbers ?? true);
-            Text = line.Text ?? string.Empty;
-            Number = line.VerseNumberText;
-            VerseVisibility = ToVisibility(line.IsVerse);
-            HeadingVisibility = ToVisibility(line.IsHeading);
-            PoetryVisibility = ToVisibility(line.IsPoetry);
-            TextVisibility = ToVisibility(line.IsText);
-            FootnoteVisibility = ToVisibility(line.IsFootnote);
-            ParagraphVisibility = ToVisibility(line.IsParagraphBreak);
-        }
-
-        private ReaderLine(string text)
-        {
-            Text = text;
-            Number = string.Empty;
-            VerseVisibility = Visibility.Collapsed;
-            HeadingVisibility = Visibility.Collapsed;
-            PoetryVisibility = Visibility.Collapsed;
-            TextVisibility = Visibility.Visible;
-            FootnoteVisibility = Visibility.Collapsed;
-            ParagraphVisibility = Visibility.Collapsed;
-        }
-
-        public static ReaderLine CreateText(string text) => new(text);
-
-        public static ReaderLine CreateSection(string text, Elementary.Core.Interfaces.ISettings settings, bool book)
-        {
-            var line = new ReaderLine(new ChapterDisplayLine { Type = ChapterDisplayLineType.Heading, Text = text }, settings);
-            line.HeadingSize = line.BodySize * (book ? 1.9 : 1.55);
-            line.HeadingMargin = new Thickness(0, book ? 48 : 24, 0, 8);
-            return line;
-        }
-
-        private static Visibility ToVisibility(bool value) => value ? Visibility.Visible : Visibility.Collapsed;
+        Text = text;
+        Number = string.Empty;
+        VerseVisibility = Visibility.Collapsed;
+        HeadingVisibility = Visibility.Collapsed;
+        PoetryVisibility = Visibility.Collapsed;
+        TextVisibility = Visibility.Visible;
+        FootnoteVisibility = Visibility.Collapsed;
+        ParagraphVisibility = Visibility.Collapsed;
     }
+
+    public static ReaderLine CreateText(string text) => new(text);
+
+    public static ReaderLine CreateSection(string text, Elementary.Core.Interfaces.ISettings settings, bool book)
+    {
+        var line = new ReaderLine(new ChapterDisplayLine { Type = ChapterDisplayLineType.Heading, Text = text }, settings);
+        line.HeadingSize = line.BodySize * (book ? 1.9 : 1.55);
+        line.HeadingMargin = new Thickness(0, book ? 48 : 24, 0, 8);
+        return line;
+    }
+
+    private static Visibility ToVisibility(bool value) => value ? Visibility.Visible : Visibility.Collapsed;
 }

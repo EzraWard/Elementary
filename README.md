@@ -10,7 +10,7 @@
   <p>A calm, focused Bible reader built for Windows.</p>
 
   <p>
-    <a href="https://github.com/EzraWard/Elementary/releases"><img src="https://img.shields.io/badge/version-1.0.1-2563eb?style=for-the-badge" alt="Version 1.0.1"></a>
+    <a href="https://github.com/EzraWard/Elementary/releases"><img src="https://img.shields.io/badge/version-1.1.0-2563eb?style=for-the-badge" alt="Version 1.1.0"></a>
     <a href="https://github.com/EzraWard/Elementary/stargazers"><img src="https://img.shields.io/github/stars/EzraWard/Elementary.svg?style=for-the-badge" alt="GitHub stars"></a>
     <a href="https://github.com/EzraWard/Elementary/issues"><img src="https://img.shields.io/github/issues/EzraWard/Elementary.svg?style=for-the-badge" alt="Open issues"></a>
     <a href="LICENSE.txt"><img src="https://img.shields.io/github/license/EzraWard/Elementary.svg?style=for-the-badge" alt="MIT License"></a>
@@ -33,7 +33,7 @@
 
 Elementary is a distraction-free Bible reader for Windows. It opens directly to Scripture, works without an account, and keeps reading position, history, preferences, and streak progress on the device.
 
-Version 1.0.1 brings together offline translations, continuous reading across chapters and books, full-Bible search, reading history, reading streaks and badges, flexible typography, theme controls, and a refreshed Windows visual identity.
+Version 1.1.0 moves the UWP reader to .NET 11 with Native AOT for Release publishing.
 
 ## Features
 
@@ -90,7 +90,7 @@ MSBuild src\Elementary.UWP\Elementary.UWP.csproj `
 Run the portable test suite with:
 
 ```powershell
-dotnet test src\Elementary.Tests\Elementary.Tests.csproj
+dotnet test --project src\Elementary.Tests\Elementary.Tests.csproj
 ```
 
 ## Project structure

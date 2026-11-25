@@ -34,7 +34,9 @@ public partial class App : Application
             );
         MainWindow = builder.Window;
 
+#if !WINDOWS
         MainWindow.SetWindowIcon();
+#endif
 
         Host = builder.Build();
 
@@ -58,5 +60,8 @@ public partial class App : Application
         }
         // Ensure the current window is active
         MainWindow.Activate();
+#if WINDOWS
+        MainWindow.AppWindow.SetTaskbarIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "Icons", "Elementary.ico"));
+#endif
     }
 }
