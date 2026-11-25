@@ -21,6 +21,7 @@
         // The navigation layout is shared by iOS browsers and Home Screen apps.
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
             || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+        globalThis.elementaryPrefersReducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
         globalThis.elementaryIsIos = () => isIOS;
 
         // The gesture shim is only for iOS/iPadOS Home Screen apps.

@@ -27,6 +27,7 @@ public sealed partial class MainPage : Page
                 window.SystemBackdrop = new Microsoft.UI.Xaml.Media.MicaBackdrop();
                 Background = null;
                 ShellLayout.Background = null;
+                BibleSurface.Background = null;
             }
             window.ExtendsContentIntoTitleBar = true;
             window.Title = Windows.ApplicationModel.Package.Current.DisplayName;

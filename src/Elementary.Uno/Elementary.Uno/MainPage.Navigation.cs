@@ -7,6 +7,7 @@ using Elementary.VerseOfTheDay.Models;
 using Elementary.VerseOfTheDay.Services;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Media.Animation;
 using System.Diagnostics;
 
 namespace Elementary.Uno;
@@ -168,6 +169,7 @@ public sealed partial class MainPage
     private void ShowPage(string page)
     {
         _readingClock.Restart();
+        var changedPage = _currentPage != page;
         _currentPage = page;
         var reading = page == "Bible";
         ReaderLayout.Visibility = reading ? Visibility.Visible : Visibility.Collapsed;
@@ -181,6 +183,7 @@ public sealed partial class MainPage
         }
         if (page == "Streak") SecondaryContent.Content = CreateStreakView();
         if (page == "Settings") SecondaryContent.Content = CreateSettingsView();
+        if (changedPage) AnimatePageEntrance(reading ? ReaderLayout : SecondaryContent);
         if (reading) MainNavigationView.SelectedItem = BibleNavigationItem;
         if (reading && _readerNeedsPosition && _book is not null)
         {
@@ -189,6 +192,43 @@ public sealed partial class MainPage
         }
         if (MainNavigationView.DisplayMode == NavigationViewDisplayMode.Minimal)
             MainNavigationView.IsPaneOpen = false;
+    }
+
+    private Action? _finishPageEntrance;
+
+    private void AnimatePageEntrance(FrameworkElement content)
+    {
+        _finishPageEntrance?.Invoke();
+#if WINDOWS
+        if (!new Windows.UI.ViewManagement.UISettings().AnimationsEnabled) return;
+#else
+        if (BrowserActivity.PrefersReducedMotion()) return;
+#endif
+        var offset = new TranslateTransform { Y = 72 };
+        content.RenderTransform = offset;
+        content.Opacity = 0;
+        var clock = new Stopwatch();
+        void Finish()
+        {
+            CompositionTarget.Rendering -= Render;
+            content.Unloaded -= Unloaded;
+            offset.Y = 0;
+            content.Opacity = 1;
+            _finishPageEntrance = null;
+        }
+        void Unloaded(object sender, RoutedEventArgs args) => Finish();
+        void Render(object? sender, object args)
+        {
+            // Start timing on the first rendered frame, after the destination is laid out.
+            if (!clock.IsRunning) clock.Start();
+            var elapsed = clock.Elapsed.TotalMilliseconds;
+            if (elapsed >= 550) { Finish(); return; }
+            offset.Y = 72 * Math.Pow(1 - elapsed / 550, 4);
+            content.Opacity = Math.Min(1, elapsed / 200);
+        }
+        _finishPageEntrance = Finish;
+        content.Unloaded += Unloaded;
+        CompositionTarget.Rendering += Render;
     }
 
     private void RecordLocation(int chapter)
